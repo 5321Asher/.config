@@ -1,6 +1,6 @@
 """Building blocks for a setup's own icon and cursor themes (used by setups/<setup>/style.py).
 
-    cursor_theme(name, comment, shapes, key)   Xcursor theme in ~/.local/share/icons/<name>
+    cursor_theme(name, comment, shapes, key)   Xcursor theme in ~/.local/share/icons/<name>-<key>
     folder_theme(name, comment, draw, key)     icon theme of Papirus's folders, redrawn by the setup
 
 Both rebuild only when `key` (a hash of the colours they use) changes, and return the theme name.
@@ -83,32 +83,49 @@ def render(svg_text, px):
     return bytes(out)
 
 
-def cursor_theme(name, comment, shapes, key, inherits="Adwaita"):
-    """shapes: {shape: (svg-maker(frame, frames), (xhot, yhot) on the 64 grid, frames)}."""
-    root = f"{ICONS}/{name}"
-    if _fresh(root, key):
-        return name
-    cdir = f"{root}/cursors"
-    os.makedirs(cdir, exist_ok=True)
-    for shape, (make, (hx, hy), frames) in shapes.items():
-        images = []
-        for size in CURSOR_SIZES:
-            for f in range(frames):
-                images.append((size, size, size, round(hx * size / 64), round(hy * size / 64),
-                               60 if frames > 1 else 0, render(make(f, frames), size)))
-        with open(f"{cdir}/{shape}", "wb") as fh:
-            fh.write(xcursor(images))
-        for alias in CURSOR_NAMES.get(shape, []):
-            if alias == shape:
-                continue
-            link = f"{cdir}/{alias}"
-            if os.path.lexists(link):
-                os.unlink(link)
-            os.symlink(shape, link)
-    with open(f"{root}/index.theme", "w") as fh:
-        fh.write(f"[Icon Theme]\nName={name.replace('-', ' ')}\nComment={comment}\nInherits={inherits}\n")
-    _mark(root, key)
-    return name
+def cursor_theme(name, comment, shapes, key, inherits="Adwaita", keep=2):
+    """shapes: {shape: (svg-maker(frame, frames), (xhot, yhot) on the 64 grid, frames)}.
+
+    Each palette gets its own theme, <name>-<key>: Hyprland and GTK cache cursors by theme name, so
+    redrawing one in place never shows until a restart. The newest `keep` versions stay (apps that
+    haven't switched yet keep working); older ones, and the unversioned <name>, are removed.
+    Returns the versioned name."""
+    versioned = f"{name}-{key[:8]}"
+    root = f"{ICONS}/{versioned}"
+    if not _fresh(root, key):
+        cdir = f"{root}/cursors"
+        os.makedirs(cdir, exist_ok=True)
+        for shape, (make, (hx, hy), frames) in shapes.items():
+            images = []
+            for size in CURSOR_SIZES:
+                for f in range(frames):
+                    images.append((size, size, size, round(hx * size / 64), round(hy * size / 64),
+                                   60 if frames > 1 else 0, render(make(f, frames), size)))
+            with open(f"{cdir}/{shape}", "wb") as fh:
+                fh.write(xcursor(images))
+            for alias in CURSOR_NAMES.get(shape, []):
+                if alias == shape:
+                    continue
+                link = f"{cdir}/{alias}"
+                if os.path.lexists(link):
+                    os.unlink(link)
+                os.symlink(shape, link)
+        with open(f"{root}/index.theme", "w") as fh:
+            fh.write(f"[Icon Theme]\nName={name.replace('-', ' ')}\nComment={comment}\nInherits={inherits}\n")
+        _mark(root, key)
+    os.utime(root)      # newest first when pruning
+    _prune(name, versioned, keep)
+    return versioned
+
+
+def _prune(name, current, keep):
+    import shutil
+    olds = [d for d in os.listdir(ICONS) if d == name or (d.startswith(name + "-") and len(d) == len(current))]
+    olds.sort(key=lambda d: os.path.getmtime(f"{ICONS}/{d}"), reverse=True)
+    survivors = [current] + [d for d in olds if d != current and d != name][:keep - 1]
+    for d in olds:
+        if d not in survivors:
+            shutil.rmtree(f"{ICONS}/{d}", ignore_errors=True)
 
 
 # ---------------------------------------------------------------- folder icons

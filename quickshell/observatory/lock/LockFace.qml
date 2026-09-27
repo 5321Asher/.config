@@ -13,6 +13,18 @@ Item {
     // Only the surface that has the keyboard shows the cursor line; all of them show the ring
     property bool preview: false
 
+    // 0 = the desktop snapshot only, 1 = the full lock face. Arriving, the sky fades in, the hour
+    // circle turns into place and the ring grows into position; leaving (unlock), the ring flares
+    // outward and everything fades back to the desktop.
+    property real presence: LockState.revealed ? 1 : 0
+    Behavior on presence {
+        NumberAnimation {
+            duration: LockState.revealed ? Theme.lockIntro : Theme.lockOutro
+            easing.type: LockState.revealed ? Easing.OutCubic : Easing.InOutCubic
+        }
+    }
+    readonly property bool leaving: LockState.leaving
+
     SystemClock { id: clock; precision: SystemClock.Minutes }
 
     readonly property real cx: width / 2
@@ -24,6 +36,7 @@ Item {
     // ---------------------------------------------------------------- sky
     Rectangle {
         anchors.fill: parent
+        opacity: root.presence * Theme.lockSkyOpacity
         gradient: Gradient {
             GradientStop { position: 0; color: Theme.bgDark }
             GradientStop { position: 0.55; color: Theme.bg }
@@ -42,6 +55,8 @@ Item {
             id: layerItem
             required property var modelData
             readonly property real side: Math.hypot(root.width, root.height)
+            opacity: root.presence
+            scale: 1.06 - 0.06 * root.presence
             x: root.cx - side / 2
             y: root.cy - side / 2
             width: side
@@ -81,6 +96,9 @@ Item {
     Canvas {
         id: hourCircle
         anchors.fill: parent
+        opacity: root.presence
+        rotation: (1 - root.presence) * (root.leaving ? 18 : -30)
+        scale: root.leaving ? 1 + (1 - root.presence) * 0.12 : 0.92 + 0.08 * root.presence
         onPaint: {
             const ctx = getContext("2d");
             ctx.reset();
@@ -115,6 +133,9 @@ Item {
     Item {
         id: ringLayer
         anchors.fill: parent
+        opacity: root.presence
+        // arrives growing into place; on unlock flares outward
+        scale: root.leaving ? 1 + (1 - root.presence) * 0.7 : 0.55 + 0.45 * root.presence
 
         // Shake on a wrong password
         property real shake: 0
@@ -260,8 +281,9 @@ Item {
     // ---------------------------------------------------------------- status, under the ring
     Column {
         x: root.cx - width / 2
-        y: root.cy + root.ringR + 38
+        y: root.cy + root.ringR + 38 + (1 - root.presence) * 24
         width: 560
+        opacity: root.presence
         spacing: 4
 
         Text {

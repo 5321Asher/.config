@@ -28,3 +28,9 @@ border = "accent"   # one brass line, no gradient
 [menus]
 root = "qs ipc call console toggle"
 apps = "qs ipc call starchart toggle"
+
+# How switching to this setup, or between its themes, is revealed: fade | wipe | iris (ms)
+# (a circle opening from the centre, edged with a ring in the new accent (the dome shutter))
+[transition]
+style    = "iris"
+duration = 900

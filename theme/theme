@@ -491,12 +491,18 @@ def link_setup(sid, old=None):
         point(f"{CONFIG}/walker/themes/active", f"{CONFIG}/walker/themes/{sid}")
 
 
+def shell_running():
+    out = subprocess.run(["qs", "list", "-c", "default"], capture_output=True, text=True).stdout
+    return "Instance" in out
+
+
 def restart_shell():
     """Quickshell for the active setup (~/.config/quickshell/default). The old one goes first:
-    only one process can own notifications and the tray."""
-    writers.run("pkill", "-x", "qs")
-    for _ in range(20):
-        if subprocess.run(["pgrep", "-x", "qs"], stdout=subprocess.DEVNULL).returncode:
+    only one process can own notifications and the tray. (Only that instance: the switch transition
+    is a Quickshell too.)"""
+    writers.run("qs", "kill", "-c", "default")
+    for _ in range(30):
+        if not shell_running():
             break
         subprocess.run(["sleep", "0.1"])
     # Started by Hyprland, so it lands in the login session's cgroup: polkit only accepts an
@@ -507,11 +513,98 @@ def restart_shell():
         subprocess.Popen(["qs"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
 
+# ---------------------------------------------------------------- the switch transition
+
+TRANSITION = f"{HERE}/transition"                # the overlay (a small Quickshell config)
+TRANSITION_DIR = f"{os.environ.get('XDG_RUNTIME_DIR', '/tmp')}/theme-transition"
+
+
+class Transition:
+    """Hides a switch behind a snapshot of the screens, then reveals the result in the target setup's
+    style (setup.toml [transition] style = fade | wipe | iris, duration = ms). Reentrant: a theme
+    switch inside a setup switch shares the setup's transition. Anything going wrong just means no
+    transition, never a failed switch. settings.toml [transition] enabled = false turns it off."""
+    depth = 0
+
+    def __init__(self, sid, tid=None, new_shell=False):
+        self.sid, self.tid, self.new_shell = sid, tid, new_shell
+        self.proc = None
+
+    def __enter__(self):
+        Transition.depth += 1
+        if Transition.depth > 1 or not self.wanted():
+            return self
+        try:
+            self.start()
+        except Exception:        # noqa: BLE001 - a transition must never stop a switch
+            self.stop()
+        return self
+
+    def wanted(self):
+        return (load_settings().get("transition", {}).get("enabled", True) and os.environ.get("WAYLAND_DISPLAY")
+                and shutil.which("grim") and shutil.which("qs") and os.path.isfile(f"{TRANSITION}/shell.qml"))
+
+    def start(self):
+        setup = load_setup(self.sid)
+        conf = setup.get("transition", {})
+        accent = "#ffffff"
+        try:
+            with open(f"{SETUPS}/{self.sid}/themes/{self.tid}.toml", "rb") as f:
+                accent = tomllib.load(f)["palette"]["accent"]
+        except (OSError, KeyError, tomllib.TOMLDecodeError):
+            pass
+        os.makedirs(TRANSITION_DIR, exist_ok=True)
+        for name in os.listdir(TRANSITION_DIR):
+            os.unlink(f"{TRANSITION_DIR}/{name}")
+        outputs = [m["name"] for m in json.loads(subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True,
+                                                                 text=True, timeout=3).stdout or "[]")]
+        grabs = [subprocess.Popen(["grim", "-t", "ppm", "-o", o, f"{TRANSITION_DIR}/{o}.ppm"]) for o in outputs]
+        for g in grabs:
+            g.wait(timeout=3)
+        with open(f"{TRANSITION_DIR}/params.json", "w") as f:
+            json.dump({"style": conf.get("style", "fade"), "accent": accent,
+                       "duration": int(conf.get("duration", 700))}, f)
+        self.proc = subprocess.Popen(["qs", "-p", TRANSITION], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                     start_new_session=True)
+        for _ in range(40):                        # up to 2 s for the covers to be on screen
+            if os.path.exists(f"{TRANSITION_DIR}/ready"):
+                return
+            subprocess.run(["sleep", "0.05"])
+        self.stop()
+
+    def stop(self):
+        if self.proc and self.proc.poll() is None:
+            self.proc.kill()
+        self.proc = None
+
+    def __exit__(self, *exc):
+        Transition.depth -= 1
+        if Transition.depth > 0 or not self.proc:
+            return False
+        if self.new_shell:                         # wait for the new shell to answer, up to 4 s
+            for _ in range(40):
+                r = subprocess.run(["qs", "ipc", "-c", "default", "show"], capture_output=True, text=True)
+                if "target" in r.stdout:
+                    break
+                subprocess.run(["sleep", "0.1"])
+            subprocess.run(["sleep", "0.35"])      # its first frames
+        else:
+            subprocess.run(["sleep", "0.15"])
+        subprocess.Popen(["qs", "ipc", "-p", TRANSITION, "call", "transition", "go"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+        return False
+
+
 # ---------------------------------------------------------------- commands
 
 def cmd_set(tid, quiet=False):
     if tid not in theme_ids():
         sys.exit(f"no theme '{tid}' in {SETUP} (have: {', '.join(theme_ids())})")
+    with Transition(SETUP, tid):
+        return _set(tid, quiet)
+
+
+def _set(tid, quiet):
     theme = load_theme(tid)
     state = load_state()
     remember_wallpaper(state)
@@ -542,13 +635,14 @@ def cmd_setup(sid, quiet=False):
     save_state(state)
 
     use(sid)
-    link_setup(sid, old)
     tid = current()
     if not tid:
         sys.exit(f"setup '{sid}' has no themes in {THEMES}")
-    pooled = cmd_set(tid, quiet=True)   # colours, fonts, cursor, wallpapers, Walker restart
-    writers.run("hyprctl", "reload")    # the new look.lua (colors.lua is already written)
-    restart_shell()
+    with Transition(sid, tid, new_shell=True):
+        link_setup(sid, old)
+        pooled = cmd_set(tid, quiet=True)   # colours, fonts, cursor, wallpapers, Walker restart
+        writers.run("hyprctl", "reload")    # the new look.lua (colors.lua is already written)
+        restart_shell()
     if not quiet:
         setup = load_setup(sid)
         notify(f"Setup: {setup['name']}", f"theme {load_theme(tid)['name']}")

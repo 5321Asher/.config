@@ -26,7 +26,26 @@ walker/themes/<id>/                     its Walker theme (walker/themes/active p
 ```
 
 `theme/iconkit.py` builds icon and cursor themes from a style.py (Sharp: square folders, flat
-mitred cursors; Observatory: brass folders, brass cursors).
+mitred cursors; Observatory: brass folders, brass cursors). Cursor themes are written under a new
+name per palette (`<Name>-Cursors-<hash>`, the newest two kept): Hyprland and GTK cache cursors by
+theme name, so a theme redrawn under the same name wouldn't change colour until a restart.
+
+## Switch transitions
+
+`theme set` and `theme setup` hide the switch behind a snapshot of the screens (`theme/transition/`,
+a small Quickshell config run as its own process), then reveal the result in the target setup's
+style, from `setup.toml`:
+
+```toml
+[transition]
+style    = "iris"   # fade | wipe | iris
+duration = 900      # ms
+```
+
+Sharp wipes from the left with an accent line, Observatory opens an iris edged with a brass ring;
+a setup without the table crossfades. `settings.toml` → `[transition] enabled = false` turns it
+off. The shell restart on a setup switch stops only `qs -c default` (never `pkill qs`, which
+would take the transition down with it).
 
 ## Making a new setup
 

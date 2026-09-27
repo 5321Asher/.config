@@ -10,6 +10,7 @@ import "../theme"
 //
 //   qs ipc call lock lock       lock the session (what `theme lock` / hypridle / SUPER+L run)
 //   qs ipc call lock preview    show the lock screen in a normal window, to look at it safely
+//   qs ipc call lock close      close the preview (never a real lock)
 //                               (Esc closes it; a correct password just closes it too)
 //
 // Never locks you out: authentication uses lock/pam/observatory-lock (pam_unix only, no faillock),
@@ -21,6 +22,17 @@ Singleton {
     property bool locked: false
     property bool previewing: false
 
+    // The animation: false -> true runs the intro (Theme.lockIntro), true -> false the outro.
+    // `leaving` says which way the ring should go when it disappears (out = unlocking).
+    property bool revealed: false
+    property bool leaving: false
+
+    // A snapshot of each monitor taken just before locking, so the lock can start from exactly what
+    // was on screen and end on it again: $XDG_RUNTIME_DIR/observatory-lock/<screen>-<shot>.ppm
+    readonly property string shotDir: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/observatory-lock"
+    property string shot: ""
+    function shotPath(screenName) { return shot === "" ? "" : `file://${shotDir}/${screenName}-${shot}.ppm`; }
+
     property string buffer: ""
     // "idle" | "verifying" | "denied" | "error" | "granted"
     property string status: "idle"
@@ -30,24 +42,65 @@ Singleton {
     readonly property string user: Quickshell.env("USER") ?? ""
 
     function lock() {
+        if (locked || (snapping.running && !snapFor)) return;
         buffer = "";
         status = "idle";
         detail = "";
         previewing = false;
-        locked = true;
+        snap(false);
     }
     function preview() {
-        if (locked) return;
+        if (locked || previewing || snapping.running) return;
         buffer = "";
         status = "idle";
         detail = "";
-        previewing = true;
+        snap(true);
     }
     function closePreview() {
         if (pam.active) pam.abort();
-        previewing = false;
         buffer = "";
         status = "idle";
+        leaveTo();
+    }
+
+    // Snapshot every monitor (in parallel, uncompressed, into tmpfs), then lock / preview. If grim
+    // fails or hangs, it locks anyway after Theme.slow ms: the lock must never wait on a picture.
+    property bool snapFor: false        // true = preview
+    function snap(forPreview) {
+        snapFor = forPreview;
+        leaving = false;
+        revealed = false;
+        const id = String(Date.now());
+        snapping.command = ["sh", "-c", `d="$1"; id="$2"; shift 2; mkdir -p "$d"; rm -f "$d"/*.ppm
+            for o in "$@"; do grim -t ppm -o "$o" "$d/$o-$id.ppm" & done; wait`,
+            "sh", shotDir, id].concat(Quickshell.screens.map(s => s.name));
+        shot = id;
+        snapping.running = true;
+        snapGuard.restart();
+    }
+    function engage() {
+        snapGuard.stop();
+        if (snapFor) previewing = true;
+        else { previewing = false; locked = true; }
+        arrive.restart();
+    }
+    Process {
+        id: snapping
+        onExited: root.engage()
+    }
+    Timer { id: snapGuard; interval: Theme.slow; onTriggered: { snapping.running = false; root.engage(); } }
+    // one frame for the surfaces to map on the snapshot, then run the intro
+    Timer { id: arrive; interval: 40; onTriggered: root.revealed = true }
+
+    // Run the outro, then really unlock (or close the preview) and drop the snapshots
+    function leaveTo() {
+        leaving = true;
+        revealed = false;
+        leave.restart();
+    }
+    Process {
+        id: cleanup
+        command: ["sh", "-c", 'rm -f "$1"/*.ppm', "sh", root.shotDir]
     }
 
     function submit() {
@@ -62,12 +115,18 @@ Singleton {
         status = "granted";
         buffer = "";
         attempts = 0;
-        leave.restart();
+        leaveTo();
     }
     Timer {
         id: leave
-        interval: Theme.normal
-        onTriggered: { root.locked = false; root.previewing = false; root.status = "idle"; }
+        interval: Theme.lockOutro + 60
+        onTriggered: {
+            root.locked = false;
+            root.previewing = false;
+            root.status = "idle";
+            root.leaving = false;
+            cleanup.running = true;
+        }
     }
 
     function refused(why, message) {
@@ -101,5 +160,7 @@ Singleton {
 
         function lock(): void { root.lock(); }
         function preview(): void { root.preview(); }
+        // closes a preview only; a real lock only ever opens with the password
+        function close(): void { if (root.previewing && !root.locked) root.closePreview(); }
     }
 }

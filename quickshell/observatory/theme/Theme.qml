@@ -143,6 +143,10 @@ Singleton {
     readonly property int lockBeads: 24             // beads per lap of the ring
     readonly property int lockTimeSize: 64
     readonly property int lockSkyPeriod: 1200000    // ms per turn of the star field (20 min)
+    readonly property int lockIntro: 900            // lock: desktop blurs away, sky and ring arrive
+    readonly property int lockOutro: 750            // unlock: ring flares out, desktop comes back
+    readonly property real lockBackdropBlur: 1.0    // how blurred the desktop gets behind the sky (0-1)
+    readonly property real lockSkyOpacity: 0.9      // the sky over it (1 hides the desktop entirely)
 
     // ---------------------------------------------------------------- utilities
     readonly property int overviewArc: 44           // how far the middle plates dip

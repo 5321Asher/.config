@@ -27,3 +27,9 @@ border = "gradient"   # accent -> second accent; "accent" = solid
 
 [icons]
 theme = "Papirus-Dark"
+
+# How switching to this setup, or between its themes, is revealed: fade | wipe | iris (ms)
+# (a hard-edged sweep from the left, with a line in the new accent)
+[transition]
+style    = "wipe"
+duration = 450
