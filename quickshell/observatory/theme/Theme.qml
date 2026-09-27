@@ -159,10 +159,12 @@ Singleton {
     readonly property int deckRight: 16
     readonly property int deckRail: 64             // width of the page rail
     readonly property int deckRailKnob: 38
+    readonly property int deckTagGap: 14            // rail knob labels hang this far left of the deck
     readonly property int deckKnob: 44
     readonly property int deckTile: 54
     readonly property int trayIcon: 16
     readonly property int traySlot: 24
+    readonly property int trayMenuWidth: 260        // a tray app's menu plate
     readonly property int coverSize: 104            // album art planet on the radio page
     readonly property int lampRing: 92              // hue ring radius on the lamps page
     readonly property int chronoDial: 130           // chronometer dial radius

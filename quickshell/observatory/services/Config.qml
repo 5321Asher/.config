@@ -11,4 +11,8 @@ Singleton {
     readonly property string tempUnit: "celsius"
     // "kmh", "mph", "ms" or "kn"
     readonly property string windUnit: "kmh"
+    // The live sky's location. NaN = use the weather's location (weatherCity, or IP lookup).
+    readonly property real skyLatitude: NaN
+    readonly property real skyLongitude: NaN
+    readonly property string skyPlace: ""
 }

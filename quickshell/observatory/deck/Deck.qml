@@ -185,21 +185,48 @@ PanelWindow {
     Component { id: commsPage; Comms {} }
     Component { id: claudePage; Claude {} }
 
-    // Small hover label beside a rail knob
-    component ToolTipLabel: Text {
+    // Hover label for a rail knob: a small brass tag outside the plate, to its left, with a hairline
+    // to the knob (inside the plate it covered the page title)
+    component ToolTipLabel: Item {
+        id: tag
         property Item target
+        property alias text: label.text
         parent: plate
-        visible: target ? target.hovered : false
-        x: Theme.deckRail + 8
-        y: target ? target.mapToItem(plate, 0, 0).y + (Theme.deckRailKnob - height) / 2 : 0
         z: 10
-        color: Theme.brassBright
-        font.family: Theme.fontLabel
-        font.pixelSize: Theme.labelSize
-        font.capitalization: Font.SmallCaps
-        font.letterSpacing: Theme.labelSpacing
-        font.weight: Font.DemiBold
-        style: Text.Outline
-        styleColor: Theme.bgDark
+        readonly property bool shown: target ? target.hovered : false
+        opacity: shown ? 1 : 0
+        visible: opacity > 0.01
+        Behavior on opacity { NumberAnimation { duration: Theme.fast; easing.type: Theme.easing } }
+        width: label.implicitWidth + 24
+        height: label.implicitHeight + 8
+        x: -width - Theme.deckTagGap + (shown ? 0 : 6)
+        Behavior on x { NumberAnimation { duration: Theme.fast; easing.type: Theme.easing } }
+        y: target ? rail.y + target.y + (Theme.deckRailKnob - height) / 2 : 0     // knobs sit in the rail column
+
+        Rectangle {
+            anchors.fill: parent
+            radius: 3
+            color: Theme.alpha(Theme.bgDark, 0.94)
+            border.width: 1
+            border.color: Theme.alpha(Theme.brass, 0.8)
+        }
+        // hairline from the tag, across the gap, to the knob
+        Rectangle {
+            x: parent.width
+            y: parent.height / 2
+            width: Theme.deckTagGap + (Theme.deckRail - Theme.deckRailKnob) / 2
+            height: 1
+            color: Theme.alpha(Theme.brass, 0.6)
+        }
+        Text {
+            id: label
+            anchors.centerIn: parent
+            color: Theme.brassBright
+            font.family: Theme.fontLabel
+            font.pixelSize: Theme.labelSize
+            font.capitalization: Font.SmallCaps
+            font.letterSpacing: Theme.labelSpacing
+            font.weight: Font.DemiBold
+        }
     }
 }
