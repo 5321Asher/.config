@@ -71,6 +71,10 @@ Singleton {
     readonly property real tickOpacity: 0.32
     readonly property int edgeFade: 160             // px over which the line fades out at screen edges
 
+    // ---------------------------------------------------------------- radio waveform (on the horizon)
+    readonly property real waveAmplitude: 9         // px either side of the line at full level
+    readonly property int waveStep: 7               // px between waveform points
+
     // ---------------------------------------------------------------- sundial (in the dome)
     readonly property int sundialCenterY: 28        // from the top of the panel
     readonly property int sundialRadius: 20

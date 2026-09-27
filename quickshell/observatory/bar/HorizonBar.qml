@@ -4,6 +4,7 @@ import QtQuick.Shapes
 import Quickshell
 import Quickshell.Wayland
 import "../theme"
+import "../services"
 
 // 1 · Horizon bar. A 2px glowing brass line along the top of the screen, graduated like an
 // instrument scale. Hover the top edge (or `qs ipc call horizon toggle`) and it drops into a
@@ -25,7 +26,9 @@ PanelWindow {
     Behavior on reveal { NumberAnimation { duration: Theme.slow; easing.type: Theme.easing } }
 
     // Geometry shared by the fill, the line and the input mask
+    // While music plays, the collapsed line drops a little so the waveform can swing both ways
     readonly property real lineY: Theme.lineTop + Theme.lineWidth / 2 + reveal * Theme.barHeight
+                                  + Radio.gain * (1 - reveal) * Theme.waveAmplitude
     readonly property real dome: reveal * Theme.bulgeDepth
     readonly property real cx: width / 2
     readonly property real bw: Theme.bulgeWidth
@@ -129,12 +132,38 @@ PanelWindow {
                 g.addColorStop(1 - fade, Theme.brass);
                 g.addColorStop(1, Theme.alpha(Theme.brass, 0));
 
+                // 5 · Radio waveform: while music plays the straight parts of the line carry cava's
+                // levels as an oscilloscope trace, bass beside the dome, treble towards the edges
+                const radio = Radio.active;
+                const bars = Radio.bars, nb = bars.length, amp = Theme.waveAmplitude * Radio.gain;
+                const level = t => {           // t: 0 at the dome .. 1 at the screen edge
+                    const f = t * (nb - 1), i = Math.floor(f), k = f - i;
+                    const v = (bars[i] ?? 0) * (1 - k) + (bars[Math.min(nb - 1, i + 1)] ?? 0) * k;
+                    const env = Math.min(1, t / 0.06) * Math.min(1, (1 - t) / 0.12);
+                    return v * Math.max(0, env);
+                };
+                const wave = (from, to, len) => {   // x from -> to, t measured from the dome
+                    const n = Math.max(2, Math.round(Math.abs(to - from) / Theme.waveStep));
+                    let px = from, py = y;
+                    for (let j = 1; j <= n; j++) {
+                        const x = from + (to - from) * j / n;
+                        const t = from === 0 ? (to - x) / len : (x - from) / len;
+                        const dy = j === n ? 0 : (j % 2 ? 1 : -1) * amp * level(t);
+                        // smooth: curve through midpoints
+                        ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y + dy) / 2);
+                        px = x; py = y + dy;
+                    }
+                    ctx.lineTo(to, y);
+                };
+
                 ctx.beginPath();
-                for (const c of bar.contour()) {
-                    if (c[0] === "M") ctx.moveTo(c[1], c[2]);
-                    else if (c[0] === "L") ctx.lineTo(c[1], c[2]);
-                    else ctx.bezierCurveTo(c[1], c[2], c[3], c[4], c[5], c[6]);
-                }
+                const cs = bar.contour();
+                const a0 = cs[1][1];
+                ctx.moveTo(0, y);
+                if (radio) wave(0, a0, a0); else ctx.lineTo(a0, y);
+                for (const c of cs.slice(2, 4)) ctx.bezierCurveTo(c[1], c[2], c[3], c[4], c[5], c[6]);
+                const b0 = cs[3][5];
+                if (radio) wave(b0, w, w - b0); else ctx.lineTo(w, y);
                 ctx.strokeStyle = g;
                 ctx.lineWidth = Theme.lineWidth;
                 ctx.stroke();
@@ -192,11 +221,17 @@ PanelWindow {
             Connections {
                 target: bar
                 function onRevealChanged() { line.requestPaint(); }
+                function onLineYChanged() { line.requestPaint(); }
                 function onWidthChanged() { line.requestPaint(); }
             }
             Connections {
                 target: Theme
                 function onPaletteChanged() { line.requestPaint(); }
+            }
+            Connections {
+                target: Radio
+                function onBarsChanged() { line.requestPaint(); }
+                function onGainChanged() { line.requestPaint(); }
             }
         }
 
@@ -205,8 +240,8 @@ PanelWindow {
         layer.effect: MultiEffect {
             shadowEnabled: true
             shadowColor: Theme.brass
-            shadowBlur: Theme.glowBlur
-            shadowOpacity: Theme.glowStrength
+            shadowBlur: Math.min(1, Theme.glowBlur + Radio.level * Radio.gain * 0.4)
+            shadowOpacity: Math.min(1, Theme.glowStrength + Radio.level * Radio.gain * 0.8)
             shadowHorizontalOffset: 0
             shadowVerticalOffset: 0
             blurMax: Theme.glowRadius
