@@ -120,6 +120,12 @@ Singleton {
     readonly property int scanlineSpacing: 3
     readonly property real scanlineOpacity: 0.07
 
+    // ---------------------------------------------------------------- star-chart launcher
+    readonly property int chartRadius: 400          // dial radius (smaller on small screens)
+    readonly property real chartDim: 0.55           // darkening over the desktop behind it
+    readonly property int constellationMax: 12      // matches joined by lines
+    readonly property int launchBoost: 45           // max score added for apps you launch often
+
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms
     readonly property int fast: 250

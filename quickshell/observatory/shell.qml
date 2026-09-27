@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import "bar"
 import "notifications"
+import "launcher"
 
 // Observatory: the control panel of a deep-space observatory.
 // Structure and theming notes: README.md
@@ -17,4 +18,7 @@ ShellRoot {
 
     // 6 · Transmissions (notifications), on the focused monitor
     TransmissionStack {}
+
+    // 7 · Star-chart launcher: qs ipc call starchart toggle
+    StarChart {}
 }
