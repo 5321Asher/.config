@@ -29,7 +29,7 @@ SUPER + mouse:272       | Move window with mouse drag
 SUPER + mouse:273       | Resize window with mouse drag
 SUPER + D               | Toggle scratchpad
 SUPER + SHIFT + D       | Move window to scratchpad
-SUPER + CTRL + Space    | Walker app launcher
+SUPER + CTRL + Space    | App launcher (Walker, or the setup's own)
 SUPER + Return          | kitty
 SUPER + B               | Brave
 SUPER + N               | Obsidian

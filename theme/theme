@@ -175,6 +175,9 @@ def load_state():
 
 def save_state(state):
     writers.write(STATE, json.dumps(state, indent=2) + "\n")
+    # The active setup on its own, for quick readers like ~/.config/theme/menu
+    if state.get("setup"):
+        writers.write(os.path.join(os.path.dirname(STATE), "setup"), state["setup"] + "\n")
 
 
 def setup_state(state, sid=None):

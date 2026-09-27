@@ -126,6 +126,16 @@ Singleton {
     readonly property int constellationMax: 12      // matches joined by lines
     readonly property int launchBoost: 45           // max score added for apps you launch often
 
+    // ---------------------------------------------------------------- console (root menu)
+    readonly property int consoleHub: 150           // hub radius
+    readonly property int consoleRing: 300          // instrument ring radius (grows for long menus)
+    readonly property int consoleKnob: 64           // instrument diameter
+    readonly property int consoleKnobPitch: 150     // px of ring per instrument
+    readonly property int consoleGlyph: 24
+    readonly property int consoleLabel: 150
+    readonly property int consoleRingMax: 14        // more than this: a ledger list instead
+    readonly property int consoleLedgerWidth: 560
+
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms
     readonly property int fast: 250

@@ -12,7 +12,7 @@ action = "%VALUE%"
 text = "Lock"
 icon = "󰌾"
 keywords = ["lock"]
-value = "hyprlock"   # hyprlock is not installed yet: pacman -S hyprlock
+value = "loginctl lock-session"   # the active setup's lock screen (theme lock)
 
 [[entries]]
 text = "Suspend"

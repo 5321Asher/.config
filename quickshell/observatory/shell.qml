@@ -19,6 +19,9 @@ ShellRoot {
     // 6 · Transmissions (notifications), on the focused monitor
     TransmissionStack {}
 
-    // 7 · Star-chart launcher: qs ipc call starchart toggle
+    // 7 · Star-chart launcher (SUPER + CTRL + Space): qs ipc call starchart toggle
     StarChart {}
+
+    // The console, Observatory's root menu (SUPER + Space): qs ipc call console toggle
+    Console {}
 }

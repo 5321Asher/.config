@@ -1,5 +1,6 @@
 # ~/.config/elephant/menus/start.toml
-# Root panel opened by SUPER + Space (walker -m menus:start).
+# Root panel opened by SUPER + Space (~/.config/theme/menu root: Walker, or the setup's own UI,
+# which reads these same menus through elephant).
 # Rendered as a row of 4 tiles — see walker/themes/<setup>/item_menus-start_grid.xml
 name = "start"
 name_pretty = "Menu"
@@ -14,7 +15,7 @@ subtext = "launch"
 icon = "󰀻"
 keywords = ["apps", "applications", "launch"]
 # elephant can't nest a non-menu provider, so re-open walker in app mode
-value = "sleep 0.15 && walker -m desktopapplications"
+value = "sleep 0.15 && ~/.config/theme/menu apps"
 
 [[entries]]
 text = "Trigger"

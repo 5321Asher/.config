@@ -3,7 +3,7 @@
 -- one hl.bind(...) per line, an optional "-- description" comment at the end shows in the cheat sheet.
 
 -- Bootstrap: opens the Walker menu, where "Add keybind" lives. Remove it once you have your own.
-hl.bind("SUPER + Space", hl.dsp.exec_cmd("walker -m menus:start")) -- Menu
+hl.bind("SUPER + Space", hl.dsp.exec_cmd("~/.config/theme/menu root")) -- Menu (the setup's root menu: Walker, or its own)
 hl.bind("SUPER + C", hl.dsp.window.close()) -- Close window
 hl.bind("SUPER + F", hl.dsp.window.fullscreen()) -- Toggle fullscreen
 hl.bind("SUPER + I", hl.dsp.layout("togglesplit")) -- Toggle split direction
@@ -48,7 +48,7 @@ hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true }) -- Move win
 hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true }) -- Resize window with mouse drag
 hl.bind("SUPER + D", hl.dsp.workspace.toggle_special("magic")) -- Toggle scratchpad
 hl.bind("SUPER + SHIFT + D", hl.dsp.window.move({ workspace = "special:magic" })) -- Move window to scratchpad
-hl.bind("SUPER + CTRL + Space", hl.dsp.exec_cmd("walker -m desktopapplications")) -- Walker app launcher
+hl.bind("SUPER + CTRL + Space", hl.dsp.exec_cmd("~/.config/theme/menu apps")) -- App launcher (the setup's: Walker, or its own)
 hl.bind("SUPER + Return", hl.dsp.exec_cmd("gtk-launch kitty")) -- kitty
 hl.bind("SUPER + B", hl.dsp.exec_cmd("gtk-launch brave-browser")) -- Brave
 hl.bind("SUPER + N", hl.dsp.exec_cmd("gtk-launch obsidian")) -- Obsidian

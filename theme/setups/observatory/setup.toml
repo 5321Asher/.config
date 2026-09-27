@@ -22,3 +22,8 @@ size  = 24
 
 [hyprland]
 border = "accent"   # one brass line, no gradient
+
+# What SUPER + Space and SUPER + CTRL + Space open here (~/.config/theme/menu). Other setups: Walker.
+[menus]
+root = "qs ipc call console toggle"
+apps = "qs ipc call starchart toggle"

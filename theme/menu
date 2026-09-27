@@ -1,0 +1,24 @@
+#!/bin/sh
+# Open the active setup's menu. The keybinds call this, so the same keys open whatever UI the setup
+# uses: Walker by default, or what setups/<setup>/setup.toml's [menus] table says.
+#
+#   menu root    the root menu (SUPER + Space)
+#   menu apps    the app launcher (SUPER + CTRL + Space)
+#
+# [menus] values are shell commands in double quotes, e.g.  root = "qs ipc call console toggle"
+
+what=${1:-root}
+dir=$(dirname "$(readlink -f "$0")")
+setup=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/theme/setup" 2>/dev/null || echo sharp)
+
+cmd=$(sed -n '/^\[menus\]/,/^\[/p' "$dir/setups/$setup/setup.toml" 2>/dev/null \
+      | sed -n "s/^$what[[:space:]]*=[[:space:]]*\"\(.*\)\".*/\1/p" | head -1)
+
+if [ -z "$cmd" ]; then
+    case $what in
+        root) cmd="walker -m menus:start" ;;
+        apps) cmd="walker -m desktopapplications" ;;
+        *) echo "menu: unknown menu '$what'" >&2; exit 2 ;;
+    esac
+fi
+exec sh -c "$cmd"
