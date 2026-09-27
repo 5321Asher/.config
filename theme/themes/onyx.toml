@@ -1,0 +1,44 @@
+# Black: true-black (OLED) and monochrome. White is the accent; colour only where it means something
+# (errors, warnings, diffs, terminal output).
+name = "Onyx"
+appearance = "dark"
+
+[palette]
+bg          = "#000000"
+bgDark      = "#000000"
+surface     = "#111111"
+hover       = "#1c1c1c"
+border      = "#2b2b2b"
+dim         = "#6e6e6e"
+fg          = "#e8e8e8"
+accent      = "#ffffff"
+accentText  = "#000000"
+accentMuted = "#3a3a3a"
+purple      = "#8a8a8a"   # second accent: mid grey
+warn        = "#d9b36c"
+danger      = "#ff6b6b"
+green       = "#8fd18f"
+
+[ansi]
+black   = "#1a1a1a"
+red     = "#ff6b6b"
+green   = "#8fd18f"
+yellow  = "#d9b36c"
+blue    = "#8fb3e0"
+magenta = "#c9a3d9"
+cyan    = "#8fd1d1"
+white   = "#c8c8c8"
+bright_black = "#5a5a5a"
+bright_white = "#ffffff"
+
+[syntax]
+keyword   = "#ffffff"
+function  = "#d6d6d6"
+string    = "#a8a8a8"
+type      = "#c2c2c2"
+constant  = "#ededed"
+property  = "#b5b5b5"
+tag       = "#ffffff"
+attribute = "#9a9a9a"
+operator  = "#8a8a8a"
+comment   = "#5c5c5c"

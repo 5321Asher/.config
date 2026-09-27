@@ -1,0 +1,68 @@
+/* Generated from the Everforest theme by ~/.config/theme/theme */
+@define-color accent_color        #a7c080;
+@define-color accent_bg_color     #a7c080;
+@define-color accent_fg_color     #232a2e;
+@define-color window_bg_color     #2d353b;
+@define-color window_fg_color     #d3c6aa;
+@define-color view_bg_color       #232a2e;
+@define-color view_fg_color       #d3c6aa;
+@define-color headerbar_bg_color  #2d353b;
+@define-color headerbar_fg_color  #d3c6aa;
+@define-color popover_bg_color    #343f44;
+@define-color popover_fg_color    #d3c6aa;
+@define-color dialog_bg_color     #2d353b;
+@define-color dialog_fg_color     #d3c6aa;
+@define-color borders             #475258;
+
+:root {
+  --accent-color: #a7c080;
+  --accent-bg-color: #a7c080;
+  --accent-fg-color: #232a2e;
+  --window-bg-color: #2d353b;
+  --window-fg-color: #d3c6aa;
+  --view-bg-color: #232a2e;
+  --view-fg-color: #d3c6aa;
+  --headerbar-bg-color: #2d353b;
+  --headerbar-fg-color: #d3c6aa;
+  --popover-bg-color: #343f44;
+  --popover-fg-color: #d3c6aa;
+  --dialog-bg-color: #2d353b;
+  --dialog-fg-color: #d3c6aa;
+  --border-color: #475258;
+}
+
+/* Flat and sharp like the Quickshell bar */
+window, .outer_box, .toolbar {
+  color: #d3c6aa;
+  background-color: #2d353b;
+  border-radius: 0;
+}
+.inner_box { background-color: #232a2e; }
+.toolbar { border: 1px solid #475258; box-shadow: none; }
+.overlay .toolbar-top, .overlay .toolbar-bottom { border-radius: 0; }
+.toolbar button, .toolbar togglebutton > button, .toolbar menubutton > button {
+  color: #d3c6aa;
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.toolbar button:hover { background-color: #3d484d; }
+.toolbar button:checked, .toolbar button.editing {
+  color: #a7c080;
+  background-color: #343f44;
+  box-shadow: inset 0 -2px #a7c080;
+}
+.toolbar separator { background-color: #475258; }
+popover > contents {
+  color: #d3c6aa;
+  background-color: #343f44;
+  border: 1px solid #475258;
+  border-radius: 0;
+}
+entry, spinbutton { background-color: #232a2e; color: #d3c6aa; border-radius: 0; }
+.toast {
+  color: #d3c6aa;
+  background-color: alpha(#232a2e, 0.9);
+  border: 1px solid #a7c080;
+  border-radius: 0;
+}

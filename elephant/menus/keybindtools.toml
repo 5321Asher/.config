@@ -1,0 +1,36 @@
+# ~/.config/elephant/menus/keybindtools.toml
+name = "keybindtools"
+name_pretty = "Keybinds"
+icon = "󰌌"
+parent = "trigger"
+fixed_order = true
+hide_from_providerlist = true
+action = "%VALUE%"
+
+[[entries]]
+text = "Add keybind"
+subtext = "keys → action · saved to hypr/binds.lua"
+icon = "󰌌"
+keywords = ["keybind", "bind", "shortcut", "hotkey", "add", "new"]
+value = "sleep 0.15 && ~/.config/walker/scripts/keybind.py add"
+
+[[entries]]
+text = "Remove keybind"
+subtext = "delete one from hypr/binds.lua"
+icon = "󰌐"
+keywords = ["keybind", "bind", "shortcut", "remove", "delete"]
+value = "sleep 0.15 && ~/.config/walker/scripts/keybind.py remove"
+
+[[entries]]
+text = "Cheat sheet"
+subtext = "all your keybinds"
+icon = "󰋖"
+keywords = ["keybinds", "shortcuts", "keys", "cheat", "sheet"]
+submenu = "keybinds"
+
+[[entries]]
+text = "Edit cheat sheet"
+subtext = "~/.config/walker/keybinds.txt"
+icon = "󰏫"
+keywords = ["keybinds", "edit", "cheat"]
+value = "kitty -e nvim ~/.config/walker/keybinds.txt"

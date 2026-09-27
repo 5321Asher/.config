@@ -1,0 +1,38 @@
+# ~/.config/elephant/menus/start.toml
+# Root panel opened by SUPER + Space (walker -m menus:start).
+# Rendered as a row of 4 tiles — see themes/tokyonight/item_menus-start_grid.xml
+name = "start"
+name_pretty = "Menu"
+icon = "󰍜"
+fixed_order = true
+hide_from_providerlist = true
+action = "%VALUE%"
+
+[[entries]]
+text = "Apps"
+subtext = "launch"
+icon = "󰀻"
+keywords = ["apps", "applications", "launch"]
+# elephant can't nest a non-menu provider, so re-open walker in app mode
+value = "sleep 0.15 && walker -m desktopapplications"
+
+[[entries]]
+text = "Trigger"
+subtext = "capture · toggle"
+icon = "󱐋"
+keywords = ["trigger", "capture", "screenshot", "toggle"]
+submenu = "trigger"
+
+[[entries]]
+text = "Style"
+subtext = "look · feel"
+icon = "󰏘"
+keywords = ["style", "theme", "font", "look"]
+submenu = "style"
+
+[[entries]]
+text = "Power"
+subtext = "session"
+icon = "󰐥"
+keywords = ["power", "shutdown", "reboot", "lock", "logout"]
+submenu = "power"

@@ -1,0 +1,27 @@
+# Rice configs only: everything is ignored unless listed below
+/*
+!/.gitignore
+!/theme/
+!/quickshell/
+!/walker/
+!/elephant/
+!/hypr/
+!/kitty/
+!/cava/
+!/fastfetch/
+!/fontconfig/
+!/gtk-3.0/
+!/gtk-4.0/
+!/qt6ct/
+!/satty/
+!/btop/
+!/skwd-wall-v2/
+!/voxtype/
+!/starship.toml
+*.bak*
+__pycache__/
+/theme/images/
+/fastfetch/*.png
+/fastfetch/*.jpg
+/btop/themes/
+/nvim/

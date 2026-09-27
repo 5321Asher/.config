@@ -1,0 +1,48 @@
+# ~/.config/walker/keybinds.txt — your keybind cheat sheet (shown by walker, SUPER+Space → Trigger → Keybinds, or type "?")
+# Format:  KEYS | description        Lines starting with # are ignored. Order is kept.
+# Trigger → Add keybind appends here automatically.
+
+SUPER + Space           | Menu (apps · trigger · style · power)
+SUPER + C               | Close window
+SUPER + F               | Toggle fullscreen
+SUPER + I               | Toggle split direction
+SUPER + P               | Toggle pseudo-tiling
+SUPER + G               | Toggle window group (tabs)
+SUPER + Tab             | Next window in group
+SUPER + SHIFT + Tab     | Previous window in group
+SUPER + left            | Focus left
+SUPER + right           | Focus right
+SUPER + up              | Focus up
+SUPER + down            | Focus down
+SUPER + SHIFT + left    | Swap window left (or move to empty monitor)
+SUPER + SHIFT + right   | Swap window right (or move to empty monitor)
+SUPER + SHIFT + up      | Swap window up (or move to empty monitor)
+SUPER + SHIFT + down    | Swap window down (or move to empty monitor)
+SUPER + CTRL + left     | Shrink window width
+SUPER + CTRL + right    | Grow window width
+SUPER + CTRL + up       | Shrink window height
+SUPER + CTRL + down     | Grow window height
+SUPER + 1‥0             | Go to workspace
+SUPER + SHIFT + 1‥0     | Move window to workspace
+SUPER + ALT + 1‥0       | Send window to workspace (stay here)
+SUPER + mouse:272       | Move window with mouse drag
+SUPER + mouse:273       | Resize window with mouse drag
+SUPER + D               | Toggle scratchpad
+SUPER + SHIFT + D       | Move window to scratchpad
+SUPER + CTRL + Space    | Walker app launcher
+SUPER + Return          | kitty
+SUPER + B               | Brave
+SUPER + N               | Obsidian
+SUPER + E               | File manager (Thunar)
+SUPER + X               | Toggle floating
+SUPER + SHIFT + X       | Pin floating window (show on every workspace)
+SUPER + K               | Wallpaper picker (skwd-wall)
+SUPER + SHIFT + S       | Screenshot region
+SUPER + SHIFT + T       | Copy text from region (OCR)
+SUPER + SHIFT + P       | Colour picker (copies hex)
+SUPER + V               | Clipboard history
+SUPER + Z               | Dictation start / stop (voxtype)
+SUPER + SHIFT + Z       | Cancel dictation
+SUPER + L               | Lock screen
+SUPER + SHIFT + R       | Reload Hyprland
+SUPER + SHIFT + Escape  | System monitor (btop)

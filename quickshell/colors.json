@@ -1,0 +1,16 @@
+{
+  "bg": "#2d353b",
+  "bgDark": "#232a2e",
+  "surface": "#343f44",
+  "hover": "#3d484d",
+  "border": "#475258",
+  "dim": "#7a8478",
+  "fg": "#d3c6aa",
+  "accent": "#a7c080",
+  "accentText": "#232a2e",
+  "accentMuted": "#5c6b52",
+  "purple": "#83c092",
+  "warn": "#dbbc7f",
+  "danger": "#e67e80",
+  "green": "#a7c080"
+}

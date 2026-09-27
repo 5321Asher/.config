@@ -1,0 +1,493 @@
+#!/usr/bin/env python3
+"""Colour themes drive everything; the wallpaper follows the theme.
+
+Themes:     ~/.config/theme/themes/<id>.toml   (palette, terminal ANSI, syntax colours)
+Wallpapers: ~/Pictures/Wallpaper-Themes/_pool/      every wallpaper you own (drop new ones here)
+            ~/Pictures/Wallpaper-Themes/<id>/       the ones you assigned to that theme (hardlinks
+                                                    of pool files, so they cost no space)
+Images:     ~/.config/theme/images/<id>/walker.*     Walker's side picture for that theme
+            ~/.config/theme/images/<id>/fastfetch.*  fastfetch's logo, sized to fit settings.toml's box
+            ~/.config/theme/images/_default/         used by themes without their own
+
+You choose what goes where: `theme pool` (or the TUI) lists the whole pool with a preview and number
+keys toggle each wallpaper in/out of each theme. Nothing is assigned automatically; new wallpapers
+wait in the pool until you assign them.
+
+Switching theme rewrites every app's colours (writers.py) and rebuilds ~/Pictures/Wallpapers, the
+folder skwd-wall shows, out of hardlinks to the theme's wallpapers. Files that turn up there some
+other way (skwd downloads, effects renders) are moved into the pool.
+
+  theme                      open the manager (TUI)
+  theme pool                 open the TUI straight on the pool, to assign wallpapers
+  theme list                 themes, * = active
+  theme current              active theme id
+  theme set <id>             switch theme: colours, wallpapers, wallpaper
+  theme next | prev          cycle themes
+  theme reload               re-apply the active theme's colours (after editing its file)
+  theme sync                 rebuild ~/Pictures/Wallpapers for the active theme
+  theme wall                 random wallpaper from the active theme
+  theme edit [id]            edit a theme file in kitty + nvim, re-apply on exit
+  theme image                show every theme's Walker + fastfetch images
+  theme image <walker|fastfetch> <file|--clear> [id]
+                             set (copy in) or clear a theme's image (default: the active theme)
+  theme openrgb              re-apply the OpenRGB colour only
+"""
+
+import json
+import os
+import random
+import shutil
+import subprocess
+import sys
+import tomllib
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, HERE)
+import writers  # noqa: E402
+
+HOME = os.path.expanduser("~")
+THEMES = f"{HERE}/themes"
+LIBRARY = f"{HOME}/Pictures/Wallpaper-Themes"
+POOL = "_pool"
+VIEW = f"{HOME}/Pictures/Wallpapers"
+STATE = f"{HOME}/.local/state/theme/state.json"
+THUMBS = f"{HOME}/.cache/theme/thumbs"
+SKWD_LAST = f"{HOME}/.cache/skwd-wall-v2/last-wallpaper.json"
+DEFAULT = "tokyo-night"
+
+IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".avif", ".jxl", ".tif", ".tiff"}
+VIDEO_EXT = {".mp4", ".webm", ".mkv", ".mov", ".avi"}
+
+
+# ---------------------------------------------------------------- themes / state
+
+def theme_ids():
+    try:
+        return sorted(f[:-5] for f in os.listdir(THEMES) if f.endswith(".toml"))
+    except OSError:
+        return []
+
+
+def load_theme(tid):
+    with open(f"{THEMES}/{tid}.toml", "rb") as f:
+        t = tomllib.load(f)
+    t.setdefault("name", tid)
+    t["id"] = tid
+    return t
+
+
+def load_settings():
+    try:
+        with open(f"{HERE}/settings.toml", "rb") as f:
+            return tomllib.load(f)
+    except (OSError, tomllib.TOMLDecodeError):
+        return {}
+
+
+def cell_ratio(settings=None):
+    """Terminal cell height/width: settings.toml override, else last measured in kitty, else 2.4."""
+    settings = settings if settings is not None else load_settings()
+    return float(settings.get("fastfetch", {}).get("cell_ratio") or load_state().get("cell_ratio") or 2.4)
+
+
+def measure_cells():
+    """When run in a terminal that reports pixel sizes, remember its cell shape for fastfetch."""
+    try:
+        import fcntl
+        import struct
+        import termios
+        rows, cols, xp, yp = struct.unpack("HHHH", fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ,
+                                                              b"\0" * 8))
+    except (OSError, ImportError):
+        return
+    if not (rows and cols and xp and yp):
+        return
+    ratio = round((yp / rows) / (xp / cols), 3)
+    state = load_state()
+    if state.get("cell_ratio") != ratio:
+        state["cell_ratio"] = ratio
+        save_state(state)
+
+
+def apply_colours(theme):
+    settings = load_settings()
+    writers.apply(theme, settings=settings, cell_ratio=cell_ratio(settings))
+
+
+def load_state():
+    try:
+        with open(STATE) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_state(state):
+    writers.write(STATE, json.dumps(state, indent=2) + "\n")
+
+
+def current():
+    tid = load_state().get("current")
+    return tid if tid in theme_ids() else DEFAULT
+
+
+def notify(summary, body=""):
+    writers.run("notify-send", "-a", "Theme", "-i", "preferences-desktop-theme", summary, body)
+
+
+# ---------------------------------------------------------------- files
+
+def is_media(name):
+    return not name.startswith(".") and os.path.splitext(name)[1].lower() in IMAGE_EXT | VIDEO_EXT
+
+
+def walk_files(root):
+    """{relative path: absolute path} of media files under root (not following symlinked dirs)."""
+    out = {}
+    for dirpath, dirs, files in os.walk(root):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for name in files:
+            if is_media(name):
+                path = os.path.join(dirpath, name)
+                out[os.path.relpath(path, root)] = path
+    return out
+
+
+def folder(tid):
+    return os.path.join(LIBRARY, tid)
+
+
+def theme_walls(tid):
+    return walk_files(folder(tid))
+
+
+def inode(path):
+    st = os.stat(path)
+    return st.st_dev, st.st_ino
+
+
+def inodes_in(root):
+    out = {}
+    for path in walk_files(root).values():
+        try:
+            out[inode(path)] = path
+        except OSError:
+            pass
+    return out
+
+
+def free_path(path):
+    """path, or path with -2, -3... before the extension if something is already there."""
+    base, ext = os.path.splitext(path)
+    n = 2
+    while os.path.lexists(path):
+        path = f"{base}-{n}{ext}"
+        n += 1
+    return path
+
+
+def link(src, dst):
+    """Hardlink (free, and skwd-wall sees a plain file); symlink if they're on different disks."""
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    try:
+        os.link(src, dst)
+    except OSError:
+        os.symlink(src, dst)
+
+
+def same_file(a, b):
+    try:
+        return os.path.samefile(a, b)
+    except OSError:
+        return False
+
+
+def tidy(root):
+    for dirpath, dirs, files in os.walk(root, topdown=False):
+        if dirpath != root and not os.listdir(dirpath):
+            os.rmdir(dirpath)
+
+
+# ---------------------------------------------------------------- the pool
+
+def fill_pool():
+    """Every wallpaper anywhere in the library or ~/Pictures/Wallpapers ends up in _pool. Returns count added."""
+    pool = inodes_in(folder(POOL))
+    added = 0
+    for root in (LIBRARY, VIEW):
+        for path in walk_files(root).values():
+            if os.path.islink(path) or path.startswith(folder(POOL) + os.sep):
+                continue
+            key = inode(path)
+            if key in pool:
+                continue
+            dst = free_path(os.path.join(folder(POOL), os.path.basename(path)))
+            link(path, dst)
+            pool[key] = dst
+            added += 1
+    return added
+
+
+def pool_items():
+    """Everything assignable: [{"key", "name", "path", "preview"}]; key = the file's name in the pool."""
+    return [{"key": rel, "name": rel, "path": path, "preview": path}
+            for rel, path in sorted(walk_files(folder(POOL)).items(), key=lambda x: x[0].lower())]
+
+
+def memberships(ids=None):
+    """{item key: set of theme ids} for everything assigned somewhere."""
+    ids = ids or theme_ids()
+    pool = {i: rel for i, rel in ((inode(p), r) for r, p in walk_files(folder(POOL)).items())}
+    out = {}
+    for tid in ids:
+        for path in theme_walls(tid).values():
+            try:
+                rel = pool.get(inode(path))
+            except OSError:
+                continue
+            if rel:
+                out.setdefault(rel, set()).add(tid)
+    return out
+
+
+def assign(tid, item, on):
+    """Put a pool item into / take it out of a theme."""
+    pool_path = item["path"]
+    here = [p for p in theme_walls(tid).values() if same_file(p, pool_path)]
+    if on and not here:
+        link(pool_path, free_path(os.path.join(folder(tid), os.path.basename(pool_path))))
+    elif not on:
+        for p in here:
+            os.unlink(p)  # the pool keeps its copy
+        tidy(folder(tid))
+
+
+# ---------------------------------------------------------------- what skwd-wall shows
+
+def sync(tid):
+    """Make ~/Pictures/Wallpapers exactly the theme's set. Returns (added, removed, pooled)."""
+    os.makedirs(VIEW, exist_ok=True)
+    pooled = fill_pool()  # strays in ~/Pictures/Wallpapers are safe in the pool before anything goes
+    added = removed = 0
+
+    wanted = theme_walls(tid)
+    for rel, path in walk_files(VIEW).items():
+        if rel in wanted and same_file(path, wanted[rel]):
+            continue
+        if os.path.islink(path) and not os.path.realpath(path).startswith(LIBRARY + os.sep):
+            continue  # someone else's symlink; leave it alone
+        os.unlink(path)  # safe: fill_pool() just made sure the pool has it
+        removed += 1
+    for rel, src in wanted.items():
+        dst = os.path.join(VIEW, rel)
+        if not os.path.lexists(dst):
+            link(src, dst)
+            added += 1
+    tidy(VIEW)
+
+    return added, removed, pooled
+
+
+def current_wallpaper_rel():
+    try:
+        with open(SKWD_LAST) as f:
+            path = json.load(f).get("path", "")
+    except (OSError, ValueError):
+        return None
+    if path.startswith(VIEW + os.sep):
+        return os.path.relpath(path, VIEW)
+    return None
+
+
+def apply_wallpaper(path):
+    if not shutil.which("skwd-helm"):
+        return False
+    try:
+        return subprocess.run(["skwd-helm", "apply", path], stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL, timeout=20).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def pick_wallpaper(tid, theme, state, avoid=None):
+    view = walk_files(VIEW)
+    for rel in (state.get("wallpapers", {}).get(tid), theme.get("wallpaper")):
+        if rel and rel in view and rel != avoid:
+            return view[rel]
+    if not view:
+        return None
+    stills = [p for r, p in view.items() if os.path.splitext(r)[1].lower() in IMAGE_EXT and r != avoid]
+    pool = stills or [p for r, p in view.items() if r != avoid] or list(view.values())
+    return random.choice(pool)
+
+
+# ---------------------------------------------------------------- previews (for the TUI)
+
+def thumbnail(item):
+    """PNG thumbnail of a pool item for the kitty preview, cached; None if it can't be made."""
+    src = item.get("preview")
+    if not src or not os.path.exists(src):
+        return None
+    st = os.stat(src)
+    out = f"{THUMBS}/{st.st_dev}-{st.st_ino}-{int(st.st_mtime)}.png"
+    if os.path.exists(out):
+        return out
+    os.makedirs(THUMBS, exist_ok=True)
+    frame = src + "[0]"
+    if os.path.splitext(src)[1].lower() in VIDEO_EXT:
+        if not shutil.which("ffmpeg"):
+            return None
+        frame = out + ".frame.png"
+        subprocess.run(["ffmpeg", "-v", "quiet", "-y", "-ss", "1", "-i", src, "-frames:v", "1", frame])
+    try:
+        ok = subprocess.run(["magick", frame, "-thumbnail", "640x400>", out], stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, timeout=60).returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        ok = False
+    if frame.endswith(".frame.png") and os.path.exists(frame):
+        os.unlink(frame)
+    return out if ok and os.path.exists(out) else None
+
+
+# ---------------------------------------------------------------- commands
+
+def cmd_set(tid, quiet=False):
+    if tid not in theme_ids():
+        sys.exit(f"no theme '{tid}' (have: {', '.join(theme_ids())})")
+    theme = load_theme(tid)
+    state = load_state()
+    old = state.get("current")
+
+    # Remember the wallpaper the old theme was on, so coming back restores it
+    if old:
+        rel = current_wallpaper_rel()
+        if rel:
+            state.setdefault("wallpapers", {})[old] = rel
+
+    added, removed, pooled = sync(tid)
+    state["current"] = tid
+    save_state(state)
+
+    apply_colours(theme)
+
+    wall = pick_wallpaper(tid, theme, state)
+    if wall:
+        apply_wallpaper(wall)
+    if not quiet:
+        n = len(walk_files(VIEW))
+        notify(f"Theme: {theme['name']}",
+               f"{n} wallpaper{'s' * (n != 1)}" + ("" if n else " — assign some with Style → Wallpaper → Assign wallpapers"))
+    return pooled
+
+
+def cmd_list():
+    cur = current()
+    for tid in theme_ids():
+        t = load_theme(tid)
+        print(f"{'*' if tid == cur else ' '} {tid:<20} {t['name']:<20} {len(theme_walls(tid)):>3} wallpapers")
+    print(f"  {'(pool)':<20} {'everything':<20} {len(theme_walls(POOL)):>3} wallpapers")
+
+
+def cmd_cycle(step):
+    ids = theme_ids()
+    cur = current()
+    i = ids.index(cur) if cur in ids else 0
+    cmd_set(ids[(i + step) % len(ids)])
+
+
+def cmd_reload():
+    apply_colours(load_theme(current()))
+
+
+def cmd_image(args):
+    if not args:
+        for tid in theme_ids():
+            row = []
+            for kind in writers.IMAGE_KINDS:
+                path, default = writers.theme_image(tid, kind)
+                row.append(f"{kind}: " + ("(default)" if default else os.path.basename(path)))
+            print(f"{tid:<20} " + "   ".join(row))
+        return
+    kind = args[0]
+    if kind not in writers.IMAGE_KINDS or len(args) < 2:
+        sys.exit("usage: theme image <walker|fastfetch> <file|--clear> [theme]")
+    tid = args[2] if len(args) > 2 else current()
+    if tid not in theme_ids():
+        sys.exit(f"no theme '{tid}'")
+    set_image(tid, kind, None if args[1] == "--clear" else args[1])
+    print(f"{tid} {kind}: {writers.theme_image(tid, kind)[0]}")
+
+
+def set_image(tid, kind, src):
+    """Copy src in as the theme's <kind> image (None = back to the default); re-apply if active."""
+    folder_ = f"{writers.IMAGES}/{tid}"
+    if src:
+        src = os.path.abspath(os.path.expanduser(src))
+        if not os.path.isfile(src):
+            sys.exit(f"no such file: {src}")
+    os.makedirs(folder_, exist_ok=True)
+    for name in os.listdir(folder_):
+        if os.path.splitext(name)[0] == kind:
+            os.unlink(os.path.join(folder_, name))
+    if src:
+        shutil.copyfile(src, os.path.join(folder_, kind + os.path.splitext(src)[1].lower()))
+    if tid == current():
+        cmd_reload()
+
+
+def cmd_wall():
+    tid = current()
+    path = pick_wallpaper(tid, {}, {}, avoid=current_wallpaper_rel())
+    if not path:
+        notify("No wallpapers in this theme", "Assign some with Style → Wallpaper → Assign wallpapers")
+        return
+    apply_wallpaper(path)
+
+
+def cmd_edit(tid=None):
+    tid = tid or current()
+    path = f"{THEMES}/{tid}.toml"
+    me = os.path.realpath(__file__)
+    reapply = f"'{me}' reload" if tid == current() else "true"
+    subprocess.Popen(["kitty", "--class", "theme-edit", "-e", "sh", "-c", f"nvim '{path}' && {reapply}"],
+                     start_new_session=True)
+
+
+def main():
+    measure_cells()
+    args = sys.argv[1:]
+    cmd = args[0] if args else "tui"
+    if cmd in ("-h", "--help", "help"):
+        print(__doc__)
+    elif cmd == "list":
+        cmd_list()
+    elif cmd == "current":
+        print(current())
+    elif cmd == "set" and len(args) == 2:
+        cmd_set(args[1])
+    elif cmd == "next":
+        cmd_cycle(1)
+    elif cmd == "prev":
+        cmd_cycle(-1)
+    elif cmd == "reload":
+        cmd_reload()
+    elif cmd == "sync":
+        print("added %d, removed %d, pooled %d" % sync(current()))
+    elif cmd == "wall":
+        cmd_wall()
+    elif cmd == "edit":
+        cmd_edit(args[1] if len(args) > 1 else None)
+    elif cmd == "image":
+        cmd_image(args[1:])
+    elif cmd == "openrgb":
+        writers.apply_openrgb_only(load_theme(current()))
+    elif cmd in ("tui", "pool"):
+        import tui
+        tui.run(sys.modules[__name__], start_in_pool=cmd == "pool")
+    else:
+        print(__doc__)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

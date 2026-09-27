@@ -1,0 +1,36 @@
+# ~/.config/elephant/menus/themetools.toml  (Style → Theme tools)
+name = "themetools"
+name_pretty = "Theme tools"
+icon = "󰙵"
+parent = "style"
+fixed_order = true
+hide_from_providerlist = true
+action = "%VALUE%"
+
+[[entries]]
+text = "Theme manager"
+subtext = "themes, wallpapers, walker + fastfetch images (TUI)"
+icon = "󰙵"
+keywords = ["theme", "manager", "tui", "wallpapers", "images"]
+value = "kitty --class theme-manager -e ~/.config/theme/theme tui"
+
+[[entries]]
+text = "Next theme"
+subtext = "cycle to the next colour theme"
+icon = "󰑐"
+keywords = ["theme", "next", "cycle"]
+value = "~/.config/theme/theme next"
+
+[[entries]]
+text = "Edit theme colours"
+subtext = "the active theme's file · re-applies on save + quit"
+icon = "󰏫"
+keywords = ["theme", "edit", "colours", "colors", "palette"]
+value = "~/.config/theme/theme edit"
+
+[[entries]]
+text = "Theme images folder"
+subtext = "walker + fastfetch pictures (or w / f in the manager)"
+icon = "󰋩"
+keywords = ["image", "side", "walker", "fastfetch", "logo", "picture"]
+value = "mkdir -p ~/.config/theme/images/$(~/.config/theme/theme current) && xdg-open ~/.config/theme/images/$(~/.config/theme/theme current)"

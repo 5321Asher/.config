@@ -1,0 +1,12 @@
+# Settings for ~/.config/theme/theme
+
+[fastfetch]
+# The logo is scaled to fit inside this box (terminal cells) keeping the image's aspect ratio.
+max_width  = 65
+max_height = 30
+# Terminal cell height / width in pixels. Measured automatically whenever `theme` runs inside
+# kitty; set it here to override (your CaskaydiaMono 13pt at 115% height = 10x24 px = 2.4).
+# cell_ratio = 2.4
+# A picture wider than the box (e.g. a desktop wallpaper) is centre-cropped to the box's shape so it
+# fills it; the crop is a cached copy, your original file is never changed. false = show it whole.
+crop = true

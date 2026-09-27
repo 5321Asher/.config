@@ -1,0 +1,37 @@
+# ~/.config/elephant/menus/capture.toml
+name = "capture"
+name_pretty = "Capture"
+icon = "󰄀"
+parent = "trigger"
+fixed_order = true
+hide_from_providerlist = true
+action = "%VALUE%"
+
+[[entries]]
+text = "Screenshot region"
+subtext = "select area → annotate, copy or save"
+icon = "󰩭"
+keywords = ["screenshot", "capture", "region"]
+value = "sleep 0.2 && qs ipc call capture screenshot region"
+
+[[entries]]
+text = "Screenshot screen"
+subtext = "whole output → annotate, copy or save"
+icon = "󰹑"
+keywords = ["screenshot", "capture", "full"]
+value = "sleep 0.2 && qs ipc call capture screenshot screen"
+
+[[entries]]
+text = "Copy text from region"
+subtext = "select area → OCR → clipboard"
+icon = "󱌺"
+keywords = ["ocr", "text", "copy", "extract", "read", "capture"]
+value = "sleep 0.2 && qs ipc call capture ocr"
+
+[[entries]]
+text = "Record screen"
+subtext = "start / stop · same recorder as the side panel"
+icon = "󰑋"
+keywords = ["record", "recording", "video", "screencast", "capture"]
+# Quickshell owns the recording, so the bar timer and stop button work either way
+value = "sleep 0.2 && qs ipc call capture toggleRecording"

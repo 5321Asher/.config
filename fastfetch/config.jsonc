@@ -1,0 +1,76 @@
+// Generated from the Everforest theme by ~/.config/theme/theme; edit ~/.config/theme/templates/fastfetch.jsonc
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
+  "logo": {
+    "type": "kitty",
+    "source": "/home/av/.cache/theme/fastfetch/everforest-449057-1790402731-2600x2880.png",
+    "width": 65,
+    "height": 30,
+    "padding": { "top": 1, "left": 2, "right": 4 }
+  },
+  "display": {
+    "separator": "  ",
+    "key": { "width": 16 },
+    "color": {
+      "separator": "38;2;122;132;120",
+      "output": "38;2;211;198;170"
+    }
+  },
+  "modules": [
+    {
+      "type": "title",
+      "color": {
+        "user": "38;2;131;192;146",
+        "at": "38;2;122;132;120",
+        "host": "38;2;167;192;128"
+      }
+    },
+    "break",
+
+    { "type": "custom", "format": "{#38;2;167;192;128}System {#38;2;122;132;120}──────────────────────────" },
+    { "type": "os",       "key": "├ 󰣇 OS",       "keyColor": "38;2;167;192;128" },
+    { "type": "host",     "key": "├ 󰌢 Host",     "keyColor": "38;2;167;192;128" },
+    { "type": "kernel",   "key": "├  Kernel",   "keyColor": "38;2;167;192;128" },
+    { "type": "uptime",   "key": "├ 󰅐 Uptime",   "keyColor": "38;2;167;192;128" },
+    { "type": "packages", "key": "├ 󰏖 Packages", "keyColor": "38;2;167;192;128" },
+    { "type": "shell",    "key": "└  Shell",    "keyColor": "38;2;167;192;128" },
+
+    { "type": "custom", "format": "{#38;2;131;192;146}Desktop {#38;2;122;132;120}─────────────────────────" },
+    { "type": "de",           "key": "├ 󰧨 DE",        "keyColor": "38;2;131;192;146" },
+    { "type": "wm",           "key": "├  WM",        "keyColor": "38;2;131;192;146" },
+    { "type": "theme",        "key": "├ 󰉼 Theme",     "keyColor": "38;2;131;192;146" },
+    { "type": "icons",        "key": "├ 󰀻 Icons",     "keyColor": "38;2;131;192;146" },
+    { "type": "font",         "key": "├  Font",      "keyColor": "38;2;131;192;146" },
+    { "type": "cursor",       "key": "├ 󰇀 Cursor",    "keyColor": "38;2;131;192;146" },
+    { "type": "terminal",     "key": "├  Terminal",  "keyColor": "38;2;131;192;146" },
+    { "type": "terminalfont", "key": "└  Term Font", "keyColor": "38;2;131;192;146" },
+
+    { "type": "custom", "format": "{#38;2;167;192;128}Hardware {#38;2;122;132;120}────────────────────────" },
+    { "type": "cpu",     "key": "├  CPU",     "keyColor": "38;2;167;192;128" },
+    { "type": "gpu",     "key": "├ 󰍛 GPU",     "keyColor": "38;2;167;192;128" },
+    { "type": "memory",  "key": "├  Memory",  "keyColor": "38;2;167;192;128" },
+    { "type": "swap",    "key": "├ 󰓡 Swap",    "keyColor": "38;2;167;192;128" },
+    { "type": "disk",    "key": "├ 󰋊 Disk",    "keyColor": "38;2;167;192;128", "folders": "/" },
+    { "type": "battery", "key": "├ 󰁹 Battery", "keyColor": "38;2;167;192;128" },
+    { "type": "display", "key": "└ 󰍹 Display", "keyColor": "38;2;167;192;128" },
+
+    { "type": "custom", "format": "{#38;2;219;188;127}Network {#38;2;122;132;120}─────────────────────────" },
+    { "type": "localip", "key": "├ 󰩟 Local IP", "keyColor": "38;2;219;188;127" },
+    { "type": "locale",  "key": "└  Locale",   "keyColor": "38;2;219;188;127" },
+
+    { "type": "custom", "format": "{#38;2;131;192;146}Tailscale {#38;2;122;132;120}───────────────────────" },
+    { "type": "command", "key": "• 󰖂", "keyColor": "38;2;131;192;146",
+      "text": "tailscale status --json 2>/dev/null | jq -r '([.Self] + [.Peer[]?]) | map(select(.Online)) | .[0] // empty | \"\\(.HostName)  \\(.TailscaleIPs[0])\"'" },
+    { "type": "command", "key": "• 󰖂", "keyColor": "38;2;131;192;146",
+      "text": "tailscale status --json 2>/dev/null | jq -r '([.Self] + [.Peer[]?]) | map(select(.Online)) | .[1] // empty | \"\\(.HostName)  \\(.TailscaleIPs[0])\"'" },
+    { "type": "command", "key": "• 󰖂", "keyColor": "38;2;131;192;146",
+      "text": "tailscale status --json 2>/dev/null | jq -r '([.Self] + [.Peer[]?]) | map(select(.Online)) | .[2] // empty | \"\\(.HostName)  \\(.TailscaleIPs[0])\"'" },
+    { "type": "command", "key": "• 󰖂", "keyColor": "38;2;131;192;146",
+      "text": "tailscale status --json 2>/dev/null | jq -r '([.Self] + [.Peer[]?]) | map(select(.Online)) | .[3] // empty | \"\\(.HostName)  \\(.TailscaleIPs[0])\"'" },
+    { "type": "command", "key": "• 󰖂", "keyColor": "38;2;131;192;146",
+      "text": "tailscale status --json 2>/dev/null | jq -r '([.Self] + [.Peer[]?]) | map(select(.Online)) | .[4] // empty | \"\\(.HostName)  \\(.TailscaleIPs[0])\"'" },
+
+    "break",
+    { "type": "colors", "symbol": "circle", "paddingLeft": 2 }
+  ]
+}

@@ -1,0 +1,23 @@
+# ~/.config/elephant/menus/webapps.toml
+name = "webapps"
+name_pretty = "Web apps"
+icon = "󰖟"
+parent = "trigger"
+fixed_order = true
+hide_from_providerlist = true
+action = "%VALUE%"
+
+[[entries]]
+text = "New web app"
+subtext = "URL → its own app window + launcher"
+icon = "󰖟"
+keywords = ["web", "webapp", "app", "url", "site", "new"]
+# short delay so walker can close before it reopens as a prompt
+value = "sleep 0.15 && ~/.config/walker/scripts/webapp.sh"
+
+[[entries]]
+text = "Remove web app"
+subtext = "delete a web app launcher"
+icon = "󰗨"
+keywords = ["web", "webapp", "remove", "delete"]
+value = "sleep 0.15 && ~/.config/walker/scripts/webapp-remove.sh"

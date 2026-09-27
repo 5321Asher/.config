@@ -1,0 +1,37 @@
+# ~/.config/elephant/menus/style.toml
+# Look & feel, grouped like Trigger: Theme (the picker) first, then submenus.
+name = "style"
+name_pretty = "Style"
+icon = "󰏘"
+parent = "start"
+fixed_order = true
+hide_from_providerlist = true
+action = "%VALUE%"
+
+[[entries]]
+text = "Theme"
+subtext = "switch colour theme · every app + its wallpapers"
+icon = "󰏘"
+keywords = ["theme", "colour", "color", "palette", "scheme", "switch"]
+submenu = "themes"
+
+[[entries]]
+text = "Wallpaper"
+subtext = "pick · random · assign to themes"
+icon = "󰸉"
+keywords = ["wallpaper", "background", "skwd", "random", "assign", "pool"]
+submenu = "wallpaper"
+
+[[entries]]
+text = "Theme tools"
+subtext = "manager · next · edit colours · images"
+icon = "󰙵"
+keywords = ["theme", "manager", "tui", "next", "cycle", "edit", "images", "fastfetch", "walker"]
+submenu = "themetools"
+
+[[entries]]
+text = "Config files"
+subtext = "hyprland · kitty · walker · quickshell · fastfetch"
+icon = "󰒓"
+keywords = ["config", "hyprland", "kitty", "walker", "quickshell", "fastfetch", "edit"]
+submenu = "configs"

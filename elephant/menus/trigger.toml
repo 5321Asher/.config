@@ -1,0 +1,30 @@
+# ~/.config/elephant/menus/trigger.toml
+# One-shot actions (omarchy-style "Trigger"), grouped into submenus.
+name = "trigger"
+name_pretty = "Trigger"
+icon = "󱐋"
+parent = "start"
+fixed_order = true
+hide_from_providerlist = true
+action = "%VALUE%"
+
+[[entries]]
+text = "Capture"
+subtext = "screenshot · record"
+icon = "󰄀"
+keywords = ["capture", "screenshot", "record", "recording", "video"]
+submenu = "capture"
+
+[[entries]]
+text = "Keybinds"
+subtext = "add · remove · cheat sheet"
+icon = "󰌌"
+keywords = ["keybind", "keybinds", "bind", "shortcut", "hotkey", "keys"]
+submenu = "keybindtools"
+
+[[entries]]
+text = "Web apps"
+subtext = "new · remove"
+icon = "󰖟"
+keywords = ["web", "webapp", "webapps", "site", "url"]
+submenu = "webapps"

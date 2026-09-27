@@ -1,0 +1,39 @@
+# ~/.config/elephant/menus/power.toml
+# Rendered as a row of buttons — see themes/tokyonight/item_menus-power_grid.xml
+name = "power"
+name_pretty = "Power"
+icon = "󰐥"
+parent = "start"
+fixed_order = true
+hide_from_providerlist = true
+action = "%VALUE%"
+
+[[entries]]
+text = "Lock"
+icon = "󰌾"
+keywords = ["lock"]
+value = "hyprlock"   # hyprlock is not installed yet: pacman -S hyprlock
+
+[[entries]]
+text = "Suspend"
+icon = "󰒲"
+keywords = ["suspend", "sleep"]
+value = "systemctl suspend"
+
+[[entries]]
+text = "Logout"
+icon = "󰍃"
+keywords = ["logout", "exit"]
+value = "hyprctl dispatch 'hl.dsp.exit()'"
+
+[[entries]]
+text = "Reboot"
+icon = "󰜉"
+keywords = ["reboot", "restart"]
+value = "systemctl reboot"
+
+[[entries]]
+text = "Shutdown"
+icon = "󰐥"
+keywords = ["shutdown", "poweroff"]
+value = "systemctl poweroff"

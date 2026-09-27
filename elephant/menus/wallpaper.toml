@@ -1,0 +1,36 @@
+# ~/.config/elephant/menus/wallpaper.toml  (Style → Wallpaper)
+name = "wallpaper"
+name_pretty = "Wallpaper"
+icon = "󰸉"
+parent = "style"
+fixed_order = true
+hide_from_providerlist = true
+action = "%VALUE%"
+
+[[entries]]
+text = "Pick wallpaper"
+subtext = "this theme's wallpapers in skwd-wall (SUPER + K)"
+icon = "󰸉"
+keywords = ["wallpaper", "background", "skwd", "pick"]
+value = "sleep 0.15 && gtk-launch skwd-wall-v2"
+
+[[entries]]
+text = "Random wallpaper"
+subtext = "another one from this theme"
+icon = "󰒝"
+keywords = ["wallpaper", "random", "shuffle", "next"]
+value = "~/.config/theme/theme wall"
+
+[[entries]]
+text = "Assign wallpapers"
+subtext = "choose which wallpapers go with each theme"
+icon = "󰥶"
+keywords = ["assign", "wallpapers", "pool", "theme", "sort"]
+value = "kitty --class theme-manager -e ~/.config/theme/theme pool"
+
+[[entries]]
+text = "Wallpaper folder"
+subtext = "~/Pictures/Wallpaper-Themes (drop new ones in _pool)"
+icon = "󰉏"
+keywords = ["wallpaper", "folder", "files", "pool"]
+value = "xdg-open ~/Pictures/Wallpaper-Themes"

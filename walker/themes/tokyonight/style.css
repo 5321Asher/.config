@@ -1,0 +1,266 @@
+/* Tokyo Night — sharp, flat Walker theme
+   Location: ~/.config/walker/themes/tokyonight/style.css */
+
+/* Colours come from the wallpaper (generated colors.css); defaults live there too */
+@import url("file:///home/av/.config/walker/themes/tokyonight/colors.css");
+
+* {
+  all: unset;
+  font-family: "CaskaydiaMono Nerd Font Mono", monospace;
+  font-size: 14px;
+}
+
+/* ---------- window ---------- */
+
+.box-wrapper {
+  background: @bg;
+  border: 2px solid @blue;
+  border-radius: 0;
+  padding: 14px;
+  box-shadow: none;
+}
+
+popover {
+  background: @bg_dark;
+  border: 2px solid @blue;
+  border-radius: 0;
+  padding: 8px;
+}
+
+scrollbar {
+  opacity: 0;
+}
+
+.normal-icons {
+  -gtk-icon-size: 18px;
+}
+
+.large-icons {
+  -gtk-icon-size: 32px;
+}
+
+/* ---------- search ---------- */
+
+.search-container {
+  border-radius: 0;
+  margin-bottom: 10px;
+}
+
+.input {
+  background: @bg_dark;
+  color: @fg;
+  caret-color: @blue;
+  padding: 10px 12px;
+  border: 1px solid @border;
+  border-radius: 0;
+}
+
+.input:focus,
+.input:active {
+  border-color: @blue;
+}
+
+.input placeholder {
+  color: @fg_dim;
+  opacity: 1;
+}
+
+.input selection {
+  background: @bg_hl;
+  color: @fg;
+}
+
+/* ---------- list ---------- */
+
+.list {
+  color: @fg;
+}
+
+.item-box {
+  padding: 8px 10px;
+  border-radius: 0;
+  border-left: 2px solid transparent;
+}
+
+child:selected .item-box,
+row:selected .item-box {
+  background: @bg_hl;
+  border-left: 2px solid @blue;
+}
+
+child:selected .item-text,
+row:selected .item-text {
+  color: @blue;
+}
+
+.item-subtext {
+  font-size: 12px;
+  color: @fg_dim;
+}
+
+.item-quick-activation {
+  background: @bg_hl;
+  color: @magenta;
+  border-radius: 0;
+  padding: 4px 8px;
+}
+
+.item-image-text {
+  font-size: 28px;
+}
+
+.providerlist .item-subtext {
+  font-size: unset;
+  color: @fg_dim;
+}
+
+.preview-box,
+.elephant-hint,
+.placeholder {
+  color: @fg_dim;
+}
+
+/* ---------- preview ---------- */
+
+.preview {
+  border: 1px solid @border;
+  border-radius: 0;
+  color: @fg;
+  background: @bg_dark;
+}
+
+.preview .large-icons {
+  -gtk-icon-size: 64px;
+}
+
+/* ---------- provider accents ---------- */
+
+.calc .item-text {
+  font-size: 22px;
+  color: @green;
+}
+
+.symbols .item-image {
+  font-size: 24px;
+}
+
+.todo.done .item-text-box {
+  opacity: 0.35;
+}
+
+.todo.urgent {
+  color: @red;
+}
+
+.todo.active {
+  font-weight: bold;
+  color: @orange;
+}
+
+.bluetooth.disconnected {
+  opacity: 0.5;
+}
+
+:not(.calc).current {
+  font-style: italic;
+  color: @cyan;
+}
+
+.preview-content.archlinuxpkgs,
+.preview-content.dnfpackages,
+.preview-content.aptpackages {
+  font-family: "CaskaydiaMono Nerd Font Mono", monospace;
+}
+
+/* ---------- keybind hints ---------- */
+
+.keybinds {
+  padding: 0;
+  margin: 0;
+  border: none;
+  font-size: 12px;
+  color: @fg_dim;
+}
+
+.keybind-button {
+  opacity: 0.7;
+}
+
+.keybind-button:hover {
+  opacity: 1;
+  color: @blue;
+}
+
+.keybind-bind {
+  text-transform: lowercase;
+  color: @fg_dim;
+}
+
+.keybind-label {
+  padding: 1px 5px;
+  border-radius: 0;
+  border: 1px solid @border;
+  color: @fg;
+}
+
+/* ---------- decorative side image ---------- */
+/* Put your portrait at ~/.config/walker/themes/tokyonight/side.jpg
+   (or change the path below — it must be an absolute file:// path). */
+
+.side-image {
+  background-image: url("file:///home/av/.config/walker/themes/tokyonight/side.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-left: 2px solid @blue;
+  margin: -14px -14px -14px 14px; /* bleed to the window edge */
+}
+
+/* ---------- errors ---------- */
+
+.error {
+  padding: 10px;
+  background: @red;
+  color: @bg;
+}
+
+/* ---------- root menu (SUPER+Space), omarchy-style list ---------- */
+
+.start-row { padding: 10px 12px; }
+.start-icon { font-size: 18px; color: @fg_dim; }
+.start-text { font-size: 16px; }
+child:selected .start-icon { color: @blue; }
+
+/* ---------- power panel: grid row of buttons ---------- */
+/* (walker 2.17 ignores item_*_grid.xml, so the built-in item layout is styled here) */
+
+.list.grid .item-box {
+  padding: 12px 6px;
+  margin: 3px;
+  border: 1px solid @border;
+  border-left: 1px solid @border;
+  background: @bg_dark;
+}
+
+.list.grid child:selected .item-box {
+  background: @bg_hl;
+  border: 1px solid @red;
+}
+
+.list.grid child:selected .item-text,
+.list.grid child:selected .item-image-text { color: @red; }
+
+.list.grid .item-image-text { font-size: 18px; }
+.list.grid .item-text { font-size: 12px; }
+.list.grid .item-subtext { font-size: 0; }
+
+/* ---------- keybind cheat sheet rows ---------- */
+
+.kb-row { padding: 5px 10px; }
+
+.kb-keys {
+  color: @magenta;
+  font-size: 13px;
+}
+
+.kb-desc { color: @fg; }
