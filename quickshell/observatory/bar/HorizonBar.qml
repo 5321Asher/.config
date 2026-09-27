@@ -241,12 +241,11 @@ PanelWindow {
             width: bar.bw
             height: Theme.barHeight + Theme.bulgeDepth
         }
-        Item {
+        // 4 · Instrument cluster
+        Instruments {
             id: rightSlot
             anchors.right: parent.right
-            anchors.rightMargin: 20
-            anchors.verticalCenter: parent.verticalCenter
-            width: (bar.width - bar.bw) / 2 - 40
+            anchors.rightMargin: 24
             height: parent.height
         }
     }

@@ -92,6 +92,15 @@ Singleton {
     readonly property int moonPeriod: 14000         // ms per moon orbit
     readonly property int windowTitleWidth: 360
 
+    // ---------------------------------------------------------------- instrument cluster
+    readonly property int gaugeRadius: 13
+    readonly property int gaugeCenterY: 19          // from the top of the panel
+    readonly property int gaugeSpacing: 22
+    readonly property real gaugeAlarm: 0.9          // past this share of full scale: signal red
+    readonly property int tempMin: 20               // °C at the bottom of the temp gauge
+    readonly property int tempMax: 100              // °C at full scale (so red from 92 °C)
+    readonly property int sysInterval: 2000         // ms between CPU / memory / temp samples
+
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms
     readonly property int fast: 250
