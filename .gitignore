@@ -34,3 +34,6 @@ __pycache__/
 /fastfetch/config.jsonc
 /theme/setups/*/images/
 *.tmp-link
+
+# Holds the Wallhaven API key: never commit
+/skwd-wall-v2/config.json
