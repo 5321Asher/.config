@@ -499,7 +499,12 @@ def restart_shell():
         if subprocess.run(["pgrep", "-x", "qs"], stdout=subprocess.DEVNULL).returncode:
             break
         subprocess.run(["sleep", "0.1"])
-    subprocess.Popen(["qs"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    # Started by Hyprland, so it lands in the login session's cgroup: polkit only accepts an
+    # authentication agent (the setup's password prompt) from a process in the session
+    ok = subprocess.run(["hyprctl", "dispatch", 'hl.dsp.exec_cmd("qs")'], capture_output=True, text=True,
+                        timeout=5).stdout.strip() == "ok" if shutil.which("hyprctl") else False
+    if not ok:
+        subprocess.Popen(["qs"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
 
 # ---------------------------------------------------------------- commands

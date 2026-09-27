@@ -36,4 +36,7 @@ ShellRoot {
     // qs ipc call capture …) is services/Capture.qml, its recording beacon bar/Beacons.qml.
     Overview {}
     DictationOsd {}
+
+    // Polkit agent: admin password prompts for pkexec, disk tools, installers…
+    PolkitPrompt {}
 }

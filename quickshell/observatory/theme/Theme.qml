@@ -95,6 +95,7 @@ Singleton {
     readonly property real moonGap: 3.5             // moon orbit, beyond the planet's edge
     readonly property int moonPeriod: 14000         // ms per moon orbit
     readonly property int windowTitleWidth: 360
+    readonly property int surveyButton: 24          // the eyepiece left of the orbit (opens the overview)
 
     // ---------------------------------------------------------------- instrument cluster
     readonly property int gaugeRadius: 13
@@ -147,6 +148,7 @@ Singleton {
     readonly property int dictationBottom: 56       // receiver plate above the bottom edge
     readonly property int dictationHeight: 46
     readonly property int beaconInset: 28           // recording beacon from the left edge
+    readonly property int polkitWidth: 440          // the clearance (admin password) plate
 
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms

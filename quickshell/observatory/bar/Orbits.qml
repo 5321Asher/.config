@@ -83,9 +83,57 @@ Item {
         return { x: ocx + Theme.orbitRx * Math.cos(a), y: ocy + Theme.orbitRy * Math.sin(a), z: z, r: r };
     }
 
+    // ---------------------------------------------------------------- survey button
+    // An eyepiece: opens the survey (workspace overview) of every workspace and window
+    Item {
+        id: survey
+        width: Theme.surveyButton
+        height: Theme.surveyButton
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: Theme.orbitDrop / 2
+
+        Rectangle {
+            anchors.fill: parent
+            radius: width / 2
+            color: surveyMouse.containsMouse || OverviewState.open ? Theme.alpha(Theme.brassMuted, 0.9) : Theme.alpha(Theme.bgDark, 0.85)
+            border.width: 1
+            border.color: surveyMouse.containsMouse || OverviewState.open ? Theme.brassBright : Theme.brass
+            Behavior on color { ColorAnimation { duration: Theme.fast } }
+        }
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width - 8
+            height: width
+            radius: width / 2
+            color: "transparent"
+            border.width: 0.8
+            border.color: Theme.alpha(Theme.brass, 0.45)
+        }
+        Text {
+            anchors.centerIn: parent
+            text: "\u{f0570}"          // nf-md-view_grid_outline
+            color: surveyMouse.containsMouse ? Theme.starlight : Theme.brass
+            font.family: Theme.fontData
+            font.pixelSize: Theme.surveyButton * 0.48
+        }
+        MouseArea {
+            id: surveyMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: OverviewState.toggle()
+        }
+        layer.enabled: surveyMouse.containsMouse || OverviewState.open
+        layer.effect: MultiEffect {
+            shadowEnabled: true; shadowColor: Theme.brass; shadowBlur: 0.6; shadowOpacity: 0.9
+            shadowHorizontalOffset: 0; shadowVerticalOffset: 0; blurMax: 14
+        }
+    }
+
     // ---------------------------------------------------------------- drawing
     Item {
         id: orbitLayer
+        x: survey.width + 8
         width: root.ocx * 2
         height: root.height
 
@@ -269,7 +317,7 @@ Item {
         anchors.leftMargin: 18
         anchors.verticalCenter: parent.verticalCenter
         spacing: -2
-        width: Math.max(0, Math.min(Theme.windowTitleWidth, root.width - orbitLayer.width - 18))
+        width: Math.max(0, Math.min(Theme.windowTitleWidth, root.width - orbitLayer.x - orbitLayer.width - 18))
         visible: width > 60 && Hyprland.activeToplevel !== null && Hyprland.focusedMonitor === root.monitor
 
         Text {
