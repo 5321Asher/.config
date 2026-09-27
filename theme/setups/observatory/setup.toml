@@ -1,0 +1,24 @@
+# Observatory: the control panel of a deep-space observatory. Brass instruments, phosphor readouts,
+# arcs and orbits instead of boxes.
+name = "Observatory"
+description = "brass · orbits · phosphor"
+default_theme = "deep-field"
+icon = "󰥔"
+
+# Run by `theme lock` (hypridle's lock_cmd). hyprlock until the Quickshell lock screen is built.
+lock = "pidof hyprlock || hyprlock"
+
+# JetBrains Mono for data (and everything else, system-wide); Cormorant Garamond for labels.
+[fonts]
+mono    = "JetBrainsMono Nerd Font"
+sans    = "JetBrainsMono Nerd Font"
+serif   = "Cormorant Garamond"
+display = "Cormorant Garamond"
+size    = 10
+
+[cursor]
+theme = "Adwaita"
+size  = 24
+
+[hyprland]
+border = "accent"   # one brass line, no gradient

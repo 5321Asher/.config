@@ -1,0 +1,56 @@
+# Deep Field: night sky blue-black, polished brass, phosphor cyan readouts, signal red alarms.
+name = "Deep Field"
+appearance = "dark"
+
+[palette]
+bg          = "#0b0e17"
+bgDark      = "#07090f"
+surface     = "#141a28"
+hover       = "#1d2536"
+border      = "#2a3246"
+dim         = "#5d6679"
+fg          = "#d8d2c2"
+accent      = "#c9a45c"   # brass
+accentText  = "#0b0e17"
+accentMuted = "#5e4d2c"
+purple      = "#6fd6d0"   # second accent: phosphor cyan
+warn        = "#e0a84f"
+danger      = "#d9534f"   # signal red
+green       = "#8fc79a"
+# Observatory's own (Quickshell reads these; other apps use the standard keys above)
+brassBright = "#ecd092"
+brassDeep   = "#7a6237"
+phosphor    = "#6fd6d0"
+phosphorDim = "#2c5d5b"
+signal      = "#d9534f"
+starlight   = "#f3efe4"
+
+[ansi]
+black   = "#141a28"
+red     = "#d9534f"
+green   = "#8fc79a"
+yellow  = "#c9a45c"
+blue    = "#7c9cc4"
+magenta = "#b48ab8"
+cyan    = "#6fd6d0"
+white   = "#c9c3b3"
+bright_black   = "#5d6679"
+bright_red     = "#ef7a73"
+bright_green   = "#abdcb3"
+bright_yellow  = "#ecd092"
+bright_blue    = "#a3bede"
+bright_magenta = "#d0acd3"
+bright_cyan    = "#9ceae4"
+bright_white   = "#f3efe4"
+
+[syntax]
+keyword   = "#c9a45c"
+function  = "#6fd6d0"
+string    = "#8fc79a"
+type      = "#ecd092"
+constant  = "#e0a84f"
+property  = "#a3bede"
+tag       = "#d9534f"
+attribute = "#b48ab8"
+operator  = "#9a9180"
+comment   = "#5d6679"
