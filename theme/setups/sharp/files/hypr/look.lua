@@ -79,9 +79,11 @@ hl.animation({ leaf = "workspacesIn", enabled = true, speed = 1.21, bezier = "al
 hl.animation({ leaf = "workspacesOut", enabled = true, speed = 1.94, bezier = "almostLinear", style = "fade" })
 hl.animation({ leaf = "zoomFactor", enabled = true, speed = 7, bezier = "quick" })
 
--- Brave goes see-through while a New Tab is showing (the rule follows title changes)
+-- Brave goes nearly clear (20%) while a New Tab is showing, with no blur, so the wallpaper shows
+-- through cleanly. The rule follows title changes.
 hl.window_rule({
   name    = "brave-newtab-transparent",
   match   = { class = "^brave-browser$", title = "^New (Private )?Tab - Brave$" },
-  opacity = "0.85 override 0.75 override",
+  no_blur = true,
+  opacity = "0.2 override 0.2 override",
 })
