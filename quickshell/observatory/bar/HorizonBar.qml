@@ -48,6 +48,7 @@ PanelWindow {
     mask: Region {
         item: bar.reveal > 0.02 ? panelHit : trigger
         Region { item: bar.reveal > 0.02 ? domeHit : null }
+        Region { item: beacons.visible ? beacons : null }
     }
     Item { id: trigger; width: bar.width; height: Theme.triggerHeight }
     Item { id: panelHit; width: bar.width; height: bar.lineY + Theme.lineWidth + 4 }
@@ -247,6 +248,13 @@ PanelWindow {
             blurMax: Theme.glowRadius
             autoPaddingEnabled: true
         }
+    }
+
+    // ---------------------------------------------------------------- beacons (recording)
+    Beacons {
+        id: beacons
+        x: Theme.beaconInset
+        y: bar.lineY + Theme.lineWidth + 6
     }
 
     // ---------------------------------------------------------------- slots for components 2-4

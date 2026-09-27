@@ -3,6 +3,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Hyprland
 import "../theme"
+import "../utilities"
 
 // 3 · Orbital workspaces. Workspaces are planets on a tilted elliptical orbit around a small brass
 // star; the orbit turns so this monitor's active workspace always sits at the front, glowing brass.
@@ -229,7 +230,8 @@ Item {
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
-            cursorShape: root.hovered >= 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+            cursorShape: root.hovered >= 0 || starHover ? Qt.PointingHandCursor : Qt.ArrowCursor
+            property bool starHover: false
 
             function hit(mx, my) {
                 // front-most planet under the cursor (with a little slack)
@@ -241,11 +243,17 @@ Item {
                 }
                 return best;
             }
-            onPositionChanged: mouse => root.hovered = hit(mouse.x, mouse.y)
+            onPositionChanged: mouse => {
+                root.hovered = hit(mouse.x, mouse.y);
+                starHover = root.hovered < 0 && Math.hypot(mouse.x - root.ocx, mouse.y - root.ocy) <= Theme.starRadius * 4;
+            }
             onExited: root.hovered = -1
             onClicked: mouse => {
                 const i = hit(mouse.x, mouse.y);
                 if (i >= 0) root.go(root.ids[i]);
+                // the star in the middle opens the survey (workspace overview)
+                else if (Math.hypot(mouse.x - root.ocx, mouse.y - root.ocy) <= Theme.starRadius * 4)
+                    OverviewState.toggle();
             }
             onWheel: wheel => {
                 const i = root.ids.indexOf(root.activeId);

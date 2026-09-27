@@ -142,6 +142,12 @@ Singleton {
     readonly property int lockTimeSize: 64
     readonly property int lockSkyPeriod: 1200000    // ms per turn of the star field (20 min)
 
+    // ---------------------------------------------------------------- utilities
+    readonly property int overviewArc: 44           // how far the middle plates dip
+    readonly property int dictationBottom: 56       // receiver plate above the bottom edge
+    readonly property int dictationHeight: 46
+    readonly property int beaconInset: 28           // recording beacon from the left edge
+
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms
     readonly property int fast: 250
