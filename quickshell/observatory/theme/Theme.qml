@@ -71,6 +71,13 @@ Singleton {
     readonly property real tickOpacity: 0.32
     readonly property int edgeFade: 160             // px over which the line fades out at screen edges
 
+    // ---------------------------------------------------------------- sundial (in the dome)
+    readonly property int sundialCenterY: 25        // from the top of the panel
+    readonly property int sundialRadius: 16
+    readonly property int sundialTick: 2
+    readonly property int sundialTickMajor: 5
+    readonly property real sundialSweepWidth: 2.5
+
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms
     readonly property int fast: 250

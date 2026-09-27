@@ -231,7 +231,8 @@ PanelWindow {
             width: (bar.width - bar.bw) / 2 - 40
             height: parent.height
         }
-        Item {
+        // 2 · Sundial, sitting on the horizon in the dome
+        Sundial {
             id: centerSlot
             x: bar.cx - bar.bw / 2
             width: bar.bw
