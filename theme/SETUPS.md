@@ -1,110 +1,341 @@
-# Setups
+# Setups: the playbook
 
-A **setup** is a whole desktop: its Quickshell, Walker theme, Hyprland look, kitty, hyprlock, cava,
-fastfetch layout, fonts, cursor and icons, and its own colour themes. Keybinds, the menus' contents
-(elephant) and the session services below are shared. Nothing else is: two setups never share a
-colour theme or a config file.
+This is the manual for this rice's **setups**: what one is, what every one must do, and the exact
+procedure for making a new one. It is written for a future AI session (or a human) that is asked
+"make another setup" and has none of the history. Read it all before touching anything.
+
+Repo: `~/.config` (git, allowlist `.gitignore`), pushed to `github.com/5321Asher/.config` (private,
+branch `main`). Arch Linux, Hyprland (**Lua config**), Quickshell 0.3.x, Qt 6.
+
+---
+
+## 1. What a setup is
+
+A **setup** is a whole desktop you switch to with one command: its Quickshell shell (bars, panels,
+notifications…), its Walker theme, its Hyprland look (gaps, borders, blur, animations), kitty,
+hyprlock, cava, fastfetch layout, fonts, cursor, icons, switch transition, and **its own colour
+themes** (a setup has 1…N themes; themes are never shared between setups — two setups never share a
+colour theme or a config file). A theme recolours everything inside its setup and picks its
+wallpapers.
+
+Shared by every setup (don't fork these per setup): keybinds (`hypr/binds.lua`), the menu *contents*
+(elephant menus, `elephant/menus/`), hypridle, the GNOME keyring, the theme tool itself.
 
 ```
-theme setups                 list them          theme setup <id>     switch
-theme list                   this setup's themes, theme set <id>     switch theme
+~/.config/theme/theme setups                list setups (* = active)
+~/.config/theme/theme setup <id>            switch setup (its last theme + wallpaper come back)
+~/.config/theme/theme list | set <id>       this setup's themes | switch theme
+~/.config/theme/theme                       TUI manager (S = pick setup, a = assign wallpapers)
+~/.config/theme/theme reload                re-apply the active theme after editing files
+~/.config/theme/theme shell                 restart the active setup's Quickshell
 ```
+Also in menus: Style → Setup / Theme (Walker, or a setup's own console).
 
-## Where a setup lives
+Existing setups, as references:
 
-```
-theme/setups/<id>/setup.toml            name, fonts, cursor, icons, default theme, lock, [menus]
-theme/setups/<id>/themes/*.toml         its colour themes
-theme/setups/<id>/style.py              optional: gtk3 / gtk4 / qss / satty / icons / cursors(p, ctx)
-theme/setups/<id>/images/<theme>/       walker.*, fastfetch.* per theme (_default/ as fallback)
-theme/setups/<id>/templates/            fastfetch.jsonc
-theme/setups/<id>/files/…               linked into ~/.config on a switch (kitty/kitty.conf,
-                                        hypr/look.lua, hypr/hyprlock.conf, cava/config)
-quickshell/<id>/                        its shell (quickshell/default points at the active one)
-walker/themes/<id>/                     its Walker theme (walker/themes/active points at it)
-~/Pictures/Wallpaper-Themes/<id>/<theme>/   wallpapers per theme (_all/ = any theme in the setup)
-```
+| setup | level | look | shell | menus | lock | style.py |
+|---|---|---|---|---|---|---|
+| **sharp** | 2 (styled) | flat, square, quick; tabbed top bar; Cascadia | `quickshell/sharp/` (bar + side ControlPanel with tabs) | Walker | hyprlock | icons + cursors |
+| **observatory** | 3 (fully custom) | brass instruments, orbits, phosphor; JetBrains + Cormorant | `quickshell/observatory/` (horizon line, dome sundial, orbital workspaces, gauges, control deck) | own console + star-chart launcher | own Quickshell lock | gtk3/gtk4/qss/satty + icons + cursors |
 
-`theme/iconkit.py` builds icon and cursor themes from a style.py (Sharp: square folders, flat
-mitred cursors; Observatory: brass folders, brass cursors). Cursor themes are written under a new
-name per palette (`<Name>-Cursors-<hash>`, the newest two kept): Hyprland and GTK cache cursors by
-theme name, so a theme redrawn under the same name wouldn't change colour until a restart.
+---
 
-## Switch transitions
+## 2. How much custom: the three levels
 
-`theme set` and `theme setup` hide the switch behind a snapshot of the screens (`theme/transition/`,
-a small Quickshell config run as its own process), then reveal the result in the target setup's
-style, from `setup.toml`:
+Pick the level from what the user asks for. "A new look / different colours and layout" → level 1
+or 2. "A completely different desktop / its own launcher / its own lock screen" → level 3. When
+unsure, build level 2 and offer level-3 extras at the end.
 
-```toml
-[transition]
-style    = "iris"   # fade | wipe | iris
-duration = 900      # ms
-```
+### Level 1 — Quickshell + Walker (a reskin)
+- **Shell:** its own `quickshell/<id>/`, started as a **copy of Sharp's** (it already meets every
+  requirement in §3) and restyled: its own `Theme.qml`, layout, bar position, shapes, spacing.
+- **Menus / launcher:** Walker (no `[menus]` table in `setup.toml`), with its own Walker theme in
+  `walker/themes/<id>/` (copy Sharp's, restyle `style.css` and the `.xml` layouts).
+- **Lock:** hyprlock with its own `files/hypr/hyprlock.conf`.
+- **GTK / Qt:** the built-in flat style from `writers.py` (no `style.py`); icons from
+  `[icons] theme = "…"` (e.g. Papirus-Dark); cursor from `[cursor]`.
+- **Transition:** `fade` (or wipe/iris, see §5).
+- **Wallpapers:** assigned stills from the pool.
 
-Sharp wipes from the left with an accent line, Observatory opens an iris edged with a brass ring;
-a setup without the table crossfades. `settings.toml` → `[transition] enabled = false` turns it
-off. The shell restart on a setup switch stops only `qs -c default` (never `pkill qs`, which
-would take the transition down with it).
+### Level 2 — styled (like Sharp)
+Level 1, plus:
+- `theme/setups/<id>/style.py` with any of `gtk3`, `gtk4`, `qss`, `satty` (stylesheets) and
+  **`icons` + `cursors`** built with `theme/iconkit.py`, all drawn from the theme palette, so they
+  follow every colour theme.
+- Its own `files/` (kitty.conf, hypr/look.lua, hyprlock.conf, cava/config), fastfetch template,
+  transition style, Walker side images per theme.
 
-## Making a new setup
+### Level 3 — completely custom (like Observatory)
+Level 2, plus any or all of:
+- A shell designed from scratch (its own architecture, not a copy), with a spec'd visual language.
+- **Its own menus UI** in Quickshell via `setup.toml [menus]` (root menu + app launcher). It must
+  read the same elephant menus as Walker (`elephant query --json 'menus:<name>;;500;false'`,
+  run entries with `elephant activate 'provider;identifier;action;;'`), so every setup offers
+  the same functions. New functions go into `elephant/menus/`, never into one setup's UI.
+- **Its own lock screen** (Quickshell `WlSessionLock` + PAM, see §3.4 for the safety rules).
+- Its own notification, polkit, OSD designs; generated wallpapers (stills and/or video, §6).
 
-1. Copy the closest setup's folder under `theme/setups/`, rename it, edit `setup.toml`.
-2. Give it at least one theme in `themes/`, and `default_theme` pointing at it.
-3. Make `quickshell/<id>/` (or copy one) and `walker/themes/<id>/`.
-4. Go through the checklist below, then `theme setup <id>`.
+---
 
-## Checklist: what every setup's shell must provide
+## 3. The non-negotiables (every setup, every level)
 
-The keybinds, hypridle and the elephant menus are shared, so they call these by name. A shell that
-lacks one leaves a key that silently does nothing.
+The keybinds, hypridle and menus are shared and call things **by name**. A setup that lacks one
+leaves a key that silently does nothing. Verify every item (§7).
 
-**IPC targets** (`qs ipc call …`)
+### 3.1 IPC targets the shell must answer (`qs ipc call …`)
 
 | target | functions | used by |
 |---|---|---|
-| `capture` | `screenshot(mode)` region/screen, `ocr()`, `toggleRecording()` | SUPER+SHIFT+S / T, Trigger menu |
+| `capture` | `screenshot(mode: string)` region/screen, `ocr()`, `toggleRecording()` | SUPER+SHIFT+S / T, Trigger menu |
 | `overview` | `toggle()`, `open()`, `close()` | workspace overview |
-| `voxtype` | `toggle()`, `cancel()` | dictation (SUPER+Z) |
-| `deck` | `open(page)`, `toggle()`, `close()` | pages: helm radio log almanac telemetry hangar optics lamps chronometer comms claude |
+| `voxtype` | `toggle()`, `cancel()` | dictation (SUPER+Z / SUPER+SHIFT+Z) |
+| `deck` | `open(page: string)`, `toggle()`, `close()` | pages: `helm radio log almanac telemetry hangar optics lamps chronometer comms claude` (map them onto your panel's tabs, as Sharp does in `BarState.qml`) |
+| `lock` | `lock()` (+ `preview()`, `close()` for testing) | only if the setup has its own lock |
+| `console`, `starchart` | `toggle()` | only if `[menus]` points at them |
 
-**Session services** (exactly one process may own each, which is why the old shell is stopped
-before the new one starts)
+### 3.2 Session services (exactly one process may own each)
+- **Notification server** (`Quickshell.Services.Notifications`) with history, clear-all, and
+  **do-not-disturb** (still pop up critical ones).
+- **System tray** (StatusNotifier host) with working right-click menus (`QsMenuOpener`).
+- **Polkit agent** (admin password prompts). The shell must live in the login session's cgroup, so
+  it is always started by `hyprctl dispatch 'hl.dsp.exec_cmd("qs")'` (the theme tool does this).
+- Because each is exclusive, the theme tool stops the old shell (`qs kill -c default`) before
+  starting the new. **Never `pkill qs`**: the switch transition is a Quickshell too.
 
-- **Notifications** server, with history and do-not-disturb (critical ones still pop up).
-- **Tray** (StatusNotifier host) with menus.
-- **Polkit agent** (admin password prompts). The shell must be started inside the login session:
-  `theme setup` / `theme shell` start it via `hyprctl dispatch 'hl.dsp.exec_cmd("qs")'`.
-- **Lock screen**: `setup.toml`'s `lock` command, run by `theme lock` (hypridle's lock_cmd,
-  SUPER+L, suspend). Must never lock you out: a wrong password only asks again.
+### 3.3 Feature parity (both current setups have all of these — so must a new one)
+With where they live, so you can port them (`S` = `quickshell/sharp/modules/`,
+`O` = `quickshell/observatory/`):
 
-**Features both current setups have** (keep new setups at parity): Wi-Fi / Bluetooth / Tailscale
-(with exit node), do not disturb, stay awake (`systemd-inhibit --what=idle`), lights follow the
-theme (OpenRGB), volume per app + outputs / inputs, monitor brightness (ddcutil), display layout,
-capture + recording, dictation with a live mic meter, weather + moon, CPU / GPU / memory / storage /
-network stats + "open btop", batteries / drives (mount, eject) / fans, focus timer + pomodoro,
-Claude Code usage, workspace overview, notification history.
+| feature | Sharp | Observatory |
+|---|---|---|
+| workspaces + focused window | `S/Workspaces.qml` | `O/bar/Orbits.qml` |
+| clock / calendar | `S/Clock.qml`, `S/Calendar.qml` | `O/bar/Sundial.qml`, deck `Almanac.qml` |
+| Wi-Fi (scan, connect with password), Bluetooth (pair, forget), Tailscale (exit node) | `S/Net.qml`, `WifiPage`, `BluetoothPage`, `TailscalePage` | `O/services/Net.qml`, deck `Comms.qml` |
+| quick toggles: Wi-Fi, Bluetooth, Tailscale, **DND**, **stay awake** (`systemd-inhibit --what=idle`), **lights follow theme** (OpenRGB) | `S/QuickTab.qml` | deck `Helm.qml` |
+| volume per app, outputs / inputs, mic test | `S/MediaTab.qml` | deck `Media.qml` |
+| media player (MPRIS) + visualiser (cava) | `S/MediaPanel.qml`, `S/Cava.qml` | deck `Media.qml`, `O/services/Radio.qml` (waveform on the horizon) |
+| monitor brightness (ddcutil) | `S/Brightness.qml` | `O/services/Brightness.qml` |
+| display layout (resolution, refresh, scale, rotation, arrangement, revert timer) | `S/DisplayTab.qml` | deck `Optics.qml` |
+| capture: region / screen screenshots, OCR, screen recording + REC indicator | `S/Capture.qml` | `O/services/Capture.qml`, `O/bar/Beacons.qml` |
+| dictation (voxtype) overlay **with a live mic meter** | `S/VoxtypeOsd.qml`, `S/MicLevel.qml` | `O/utilities/DictationOsd.qml`, `O/services/MicLevel.qml` |
+| weather + 7-day + **moon phase** | `S/WeatherTab.qml` | deck `Almanac.qml` |
+| CPU / GPU / RAM / VRAM / storage / network stats + **"open btop"** | `S/StatsTab.qml`, `scripts/stats.py` | deck `Telemetry.qml`, bar gauges |
+| device batteries, drives (mount / eject), fans | `S/DevicesTab.qml` | deck `Hangar.qml` |
+| RGB lighting (OpenRGB colour, profiles, follow theme) | `S/RgbTab.qml` | deck `Lamps.qml` |
+| focus timer + pomodoro (+ indicator in the bar) | `S/FocusTab.qml` | deck `Chronometer.qml` |
+| Claude Code usage / limits | `S/ClaudeInfo.qml` | deck `Claude.qml` |
+| notification history + DND + clear | `S/NotificationList.qml`, `S/Notifs.qml` | deck `Log.qml`, `O/services/Transmissions.qml` |
+| workspace overview | `S/Overview.qml` | `O/utilities/Overview.qml` |
+| tray with menus | `S/SysTray.qml`, `S/TrayMenu.qml` | `O/bar/Tray.qml`, `O/utilities/TrayMenu.qml` |
+| power: lock, sleep, log out, restart, shut down | `S/QuickTab.qml` | deck `Helm.qml` |
+| polkit prompt | `S/PolkitPrompt.qml` | `O/utilities/PolkitPrompt.qml` |
 
-## The keyring (GNOME Keyring), for every setup
+The *logic* singletons (Net, Capture, Devices, Displays, Brightness, FocusTimer, Rgb, SysStats,
+Voxtype, Weather, MicLevel, ClaudeStatus, Config) are the same in both setups: copy them into the
+new shell (a setup never imports another setup's files) and write only the UI.
 
-Secrets (browser passwords, git and GitHub credentials, app logins) live in GNOME Keyring's `login`
-keyring. It is session-wide, so it works the same in every setup, but each setup's **lock screen**
-must pass the password on so unlocking the screen also unlocks the keyring:
+### 3.4 Lock screen rules
+- `setup.toml` → `lock = "…"` is what `theme lock` runs (hypridle's `lock_cmd`, SUPER+L, suspend).
+- **hyprlock** (levels 1–2): nothing else to do; `/etc/pam.d/hyprlock` → `login` already unlocks
+  the keyring.
+- **Own Quickshell lock** (level 3):
+  - `lock = "qs ipc call lock lock || pidof hyprlock || hyprlock"` (hyprlock is the fallback).
+  - Its own PAM file inside the shell folder (`quickshell/<id>/lock/pam/<name>`), used through
+    `PamContext { configDirectory: Quickshell.shellDir + "/lock/pam"; config: "<name>" }`:
+    ```
+    #%PAM-1.0
+    auth required pam_unix.so
+    -auth optional pam_gnome_keyring.so
+    ```
+    **Never** include `system-auth`: it has pam_faillock (3 wrong tries = 10-minute lockout).
+  - A wrong password only clears the field and says so; only PAM success unlocks.
+  - Test only with the preview (`qs ipc call lock preview` / `close`). **Never trigger a real
+    lock while testing** — only the user's password opens it.
+  - Observatory's lock animates in from a snapshot of the desktop and back out on unlock
+    (`O/lock/LockState.qml`); copy that pattern. Snapshots must have a timeout (screens may be
+    off: see §8).
 
-- **hyprlock** (Sharp): uses `/etc/pam.d/hyprlock` → `login`, which has
-  `auth optional pam_gnome_keyring.so` and `session optional pam_gnome_keyring.so auto_start`.
-  Any setup whose `lock` is hyprlock gets this for free.
-- **A Quickshell lock** (Observatory): its own PAM file (`quickshell/<id>/lock/pam/<name>`) needs,
-  after `auth required pam_unix.so`:
-  ```
-  -auth optional pam_gnome_keyring.so
-  ```
-  (`optional` so it can never make an unlock fail, `-` so it's skipped if gnome-keyring is missing.)
+### 3.5 GNOME keyring (all setups)
+Session-wide, nothing per setup except the lock (above). Brave/Chromium use it via
+`~/.config/{brave,chromium}-flags.conf` (`--password-store=gnome-libsecret`); `gh` and git use it.
+The session autologs in on tty1, so the first app needing a secret after boot prompts once, or
+unlocking the lock screen unlocks it. Setting it up again on a new machine needs sudo (the user
+runs it): `pacman -S gnome-keyring seahorse`, two `pam_gnome_keyring` lines in `/etc/pam.d/login`
+(auth optional; session optional auto_start), `systemctl --user enable --now gnome-keyring-daemon.socket`.
 
-The session autologs in on tty1, so nothing unlocks the keyring at boot: the first app that needs
-a secret after a boot shows GNOME's unlock prompt once (or unlocking the lock screen does it). Give
-the `login` keyring the same password as your account, or the PAM unlock can't open it.
+### 3.6 Fonts, cursor, icons (system-wide, per setup)
+`setup.toml [fonts]` (mono, sans, serif, display, size) is written everywhere: fontconfig generic
+families, GTK settings.ini + gsettings, qt6ct, kitty, Walker (`* { font-family }` in colors.css —
+so don't hardcode fonts in `style.css`), Quickshell (`colors.json` → `fontMono`, `fontSans`,
+`fontSerif`, `fontDisplay`, `fontSize` — read them in `Theme.qml`), hyprlock (`$font`,
+`$fontDisplay`), Zed, Obsidian. A theme may override with its own `[fonts]`. Install missing fonts
+first (§7 step 0); check with `fc-list : family | grep -i <name>`.
 
-Apps: Brave / Chromium use it through `~/.config/{brave,chromium}-flags.conf`
-(`--password-store=gnome-libsecret`); `gh` and git use it for GitHub; Seahorse (Passwords and Keys)
-shows what's stored. The daemon starts from `gnome-keyring-daemon.socket` (systemd user unit).
+---
+
+## 4. File map of a setup
+
+```
+theme/setups/<id>/setup.toml             see §4.1
+theme/setups/<id>/themes/<theme>.toml    colour themes (§4.2), ≥ 1
+theme/setups/<id>/style.py               optional (levels 2–3): gtk3 gtk4 qss satty icons cursors (p, ctx)
+theme/setups/<id>/images/<theme>/        walker.* (Walker side image), fastfetch.* (logo); images/_default/ as fallback
+theme/setups/<id>/templates/fastfetch.jsonc   fastfetch layout ({{accent}}-style placeholders, see Sharp's)
+theme/setups/<id>/files/kitty/kitty.conf       ┐ symlinked into ~/.config on a switch
+theme/setups/<id>/files/hypr/look.lua          │ (gaps, borders, rounding, blur, shadows, animations,
+theme/setups/<id>/files/hypr/hyprlock.conf     │  layer rules for its panels, per-setup window rules
+theme/setups/<id>/files/cava/config            ┘  like Brave's see-through New Tab)
+quickshell/<id>/shell.qml + …             its shell; must read colors.json from Quickshell.shellDir
+walker/themes/<id>/style.css + *.xml      its Walker theme (colors.css and side.jpg are generated)
+~/Pictures/Wallpaper-Themes/<id>/<theme>/  hardlinks of pool wallpapers per theme; <id>/_all/ = any theme
+```
+Pointers the theme tool maintains: `quickshell/default -> <id>`, `walker/themes/active -> <id>`.
+There must be **no** `~/.config/quickshell/shell.qml` (it disables named configs).
+
+### 4.1 setup.toml (every key)
+```toml
+name = "Name"
+description = "three · word · summary"
+default_theme = "<theme id>"
+icon = "<nerd font glyph>"
+lock = "pidof hyprlock || hyprlock"       # or "qs ipc call lock lock || pidof hyprlock || hyprlock"
+
+[fonts]            # mono sans serif display size
+[cursor]           # theme size   (fallback if style.py has no cursors())
+[icons]            # theme        (fallback if style.py has no icons())
+[hyprland]
+border = "gradient"                        # accent -> second accent, or "accent" (solid)
+[menus]            # optional (level 3): root = "…", apps = "…"  (shell commands; default: Walker)
+[transition]
+style = "fade"                             # fade | wipe | iris
+duration = 700                             # ms
+```
+
+### 4.2 A colour theme
+Copy an existing one. `[palette]` needs `bg bgDark surface hover border dim fg accent accentText
+accentMuted purple (second accent) warn danger green`; anything else (e.g. Observatory's
+`brassBright phosphor signal starlight`) passes through to the shell's `colors.json`. Optional
+`[ansi]` (16 colours) and `[syntax]` (editor colours), `appearance = "light"` for light themes,
+`wallpaper = "<file in its folder>"` for the default wallpaper, `[fonts]` override.
+Every theme must look right in **every** part of its setup: check light themes especially.
+
+### 4.3 style.py hooks (levels 2–3)
+Called by `writers.py` on every theme switch with `p` (the full palette) and `ctx` = `{mix, rgba,
+fonts, dir, cache, appearance}`. Each returns text (CSS/QSS) or a theme name:
+- `gtk3(p, ctx)`, `gtk4(p, ctx)`, `qss(p, ctx)`, `satty(p, ctx)` — replace the built-in flat styles.
+- `icons(p, ctx)` → `iconkit.folder_theme(name, comment, draw, key, inherits)`: redraws Papirus's
+  folder icons (`draw(anatomy)` gets Papirus's front/paper rects, tab top and glyph, plus the
+  original SVG). Sharp draws square folders; Observatory recolours them brass.
+- `cursors(p, ctx)` → `iconkit.cursor_theme(name, comment, shapes, key)`: Xcursor themes from SVG
+  drawings on a 64 grid (shapes: arrow pointer text crosshair wait progress move ns ew nwse nesw
+  forbidden help copy link). Names are versioned per palette automatically (Hyprland/GTK cache by
+  name). Key = `iconkit.palette_key(<colours used>, "<setup>-cursors-vN")`; bump vN when the
+  drawing changes.
+
+### 4.4 Generated files (never edit, never commit)
+`quickshell/*/colors.json`, `walker/themes/*/colors.css` + `side.jpg`, `kitty/skwd-colors.conf`,
+`hypr/colors.lua`, `hypr/hyprlock-colors.conf`, `fastfetch/config.jsonc`, `fontconfig/fonts.conf`,
+`gtk-{3,4}.0/gtk.css`, `qt6ct/colors/`, `qt6ct/qss/`, `satty/overrides.css`, the setup symlinks.
+All are in `.gitignore`. New themeable app? Add a writer to `theme/writers.py` (paths via
+`writers.configure(setup)`), not a hand-made config.
+
+---
+
+## 5. Switch transitions
+`theme set` / `theme setup` freeze the screens on a snapshot (`theme/transition/shell.qml`, its
+own `qs -p` process), switch underneath, then reveal in the target setup's `[transition]` style:
+`fade` (crossfade), `wipe` (hard edge from the left + accent line — Sharp), `iris` (circle from
+the centre with an accent ring — Observatory). A new style = a new branch in that QML file
+(keep it generic: it only gets `style`, `accent`, `duration`). Skipped automatically when the
+screens are off. `settings.toml [transition] enabled = false` turns it off.
+
+---
+
+## 6. Wallpapers
+- Pool: `~/Pictures/Wallpaper-Themes/_pool/` (everything). Assign per theme / per setup in the TUI
+  (`theme pool`: number keys = themes, `s` = the whole setup). A theme with nothing assigned shows
+  everything in its setup. skwd-wall shows `~/Pictures/Wallpapers` (the theme tool rebuilds it).
+- The user chooses assignments by hand: never auto-sort by colour.
+- Generated wallpapers are welcome for custom setups: Observatory has `starchart.py` (stills from a
+  theme) and `skyvideo.py` (2-minute seamless looping 2560x1440 video per theme: Pillow in
+  `~/.local/share/theme/venv`, NVENC HEVC; skwd-wall plays .mp4 via `skwd-wall-vk`). Copy that
+  pattern: output into `_pool/`, hardlink into `<setup>/<theme>/`, set the theme's `wallpaper =`.
+- Never run `skwd-wall-scan` with `SKWD_WALL_V2_CONFIG` overrides (it writes the real index).
+
+---
+
+## 7. Procedure: "make another setup"
+
+**0. Decide, don't interrogate.** From the request, fix: id (lowercase, one word), name, concept
+and visual language, level (§2), fonts, number of colour themes (1 if not said; the user may want
+5–10 later), transition style. Ask only what can't be inferred (usually just the concept, if none
+was given). If fonts are missing, give the exact `pacman`/`yay` command and wait. Check the
+Quickshell version and read its `.qmltypes` (`/usr/lib/qt6/qml/Quickshell/**`) before using an
+API; don't guess type names.
+
+**1. Scaffold** (copy the closest setup; for level 1–2 that's Sharp, for level 3 either):
+```sh
+cd ~/.config
+cp -r theme/setups/sharp theme/setups/<id>            # then prune: themes/, images/<theme>/ dirs
+cp -r quickshell/sharp quickshell/<id>                 # level 3: write a new shell instead
+cp -r walker/themes/sharp walker/themes/<id>; rm -f walker/themes/<id>/{colors.css,side.jpg}
+mkdir -p ~/Pictures/Wallpaper-Themes/<id>
+```
+Edit `setup.toml` (every key, §4.1), write the theme(s) (§4.2), restyle `files/` (kitty,
+look.lua incl. layer rules for the shell's namespaces and the Brave New Tab rule, hyprlock,
+cava), the fastfetch template, `style.css`. Give every Quickshell layer a namespace prefix
+`<id>-` so look.lua can blur/animate them.
+
+**2. Build the shell.** Keep every colour, font, size and timing in one `Theme.qml` singleton that
+reads `colors.json` (with fallbacks). One QML file per component. Implement §3.1–3.3 fully before
+polishing. Level 3: build component by component, screenshot each.
+Test next to the running shell without switching: `qs -c <id> -d` (it can't own notifications /
+tray while the other shell runs — that's expected), then stop it by PID (`qs kill -c <id>`).
+
+**3. Style** (levels 2–3): `style.py` with icons + cursors via iconkit; test the builders
+directly before switching (see how in git history: import writers, `configure(setup)`, call
+`style.icons(p, ctx)`), render previews with `magick`, look at them.
+
+**4. Wallpapers:** assign some (or generate) so the view isn't empty.
+
+**5. Switch and verify:** `~/.config/theme/theme setup <id>`, then check:
+- `qs ipc show` lists capture, overview, voxtype, deck (+ lock/console/starchart if used);
+  `qs log` has no errors; `hyprctl configerrors` is empty.
+- `fc-match sans-serif`, `gsettings get org.gnome.desktop.interface font-name|cursor-theme|icon-theme`.
+- Screenshots (`grim`, after checking the screens are on) of: the bar, every panel page, a tray
+  menu (`qs ipc call tray menu 0` in Observatory; add a similar IPC for testing), the lock preview,
+  the launcher/menus, one notification (`notify-send`), each colour theme (`theme set`).
+- Every keybind in §3.1 does something. The polkit prompt appears (`pkexec true`, cancel it).
+- Switch back to the user's setup and theme afterwards (`theme setup <prev>`, `theme set <prev>`),
+  and say that you did.
+
+**6. Document + commit:** a `quickshell/<id>/README.md` (structure, IPC, how to tweak — see
+Observatory's), update the table in §1 of this file and the repo `README.md`, then
+`git add -A && git commit` (author av <ashervirgona@gmail.com>, co-author line) and `git push`.
+Check `git status` for generated files before committing (§4.4).
+
+---
+
+## 8. Gotchas (all learned the hard way)
+- **Hyprland is Lua.** `hyprctl dispatch <old syntax>` fails; use `hyprctl eval '<lua>'`.
+  `hyprctl eval` rejects unknown rule keys, so it's a good validator. When two window rules set
+  the same property, the **first** one wins — keep such rules in one place (per setup look.lua).
+- **Never `pkill -f <pattern>`** where the pattern is in your own command line (kills your shell).
+  Kill by PID, or `qs kill -c <config>`.
+- **grim hangs forever when monitors are off** (hypridle: dim 2.5 min, lock 5 min, DPMS off 5.5
+  min). Check `hyprctl monitors -j` → `dpmsStatus` first, and always use a timeout.
+- **If screenshots suddenly show the lock screen**, the user went idle; it isn't a bug. Don't try
+  to unlock it.
+- **Quickshell live reload** misses files loaded by path; reference components as types, and
+  `touch shell.qml` to force a reload. A missing `Theme.<prop>` silently evaluates to undefined
+  (a tray menu once had width 0 because `trayMenuWidth` didn't exist) — check `qs log`.
+- **zsh:** `echo ===` is special syntax; unmatched globs abort the command (`setopt nullglob`).
+- **The root disk is USB 2.0**: heavy I/O freezes things; pip installs are slow. If the shell
+  "freezes", check `/proc/pressure/io` and D-state processes first.
+- **sudo needs the user's password**: hand them exact commands to run with `!`.
+- **Secrets:** `skwd-wall-v2/config.json` holds a Wallhaven API key — never track it; scan
+  `git ls-files` for keys/tokens before pushing anything new.
+- Walker only re-reads CSS on restart (the theme tool restarts its service). Elephant menus are
+  cached per provider; restart `elephant` after adding a menu file, and register new menus in
+  `walker/config.toml`.
+- Don't send `wtype` keystrokes unless your own window has focus.
