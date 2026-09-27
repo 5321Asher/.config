@@ -22,3 +22,6 @@ size  = 24
 
 [hyprland]
 border = "gradient"   # accent -> second accent; "accent" = solid
+
+[icons]
+theme = "Adwaita"

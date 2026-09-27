@@ -1,4 +1,4 @@
-//@ pragma IconTheme Adwaita
+//@ pragma IconTheme Observatory
 
 import QtQuick
 import Quickshell

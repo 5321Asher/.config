@@ -34,6 +34,11 @@
 @define-color destructive_color       #d9534f;
 
 :root {
+  --window-radius: 10px;
+  --accent-color: #ecd092;
+}
+
+:root {
   --accent-color: #c9a45c;
   --accent-bg-color: #c9a45c;
   --accent-fg-color: #0b0e17;
