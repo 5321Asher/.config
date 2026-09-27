@@ -148,10 +148,11 @@ Singleton {
         Quickshell.execDetached(["notify-send", "-a", "Focus", "-i", "alarm-symbolic", title, body]);
     }
 
+    // Time comes from endsAt, so a 1 s tick is exact enough
     Timer {
         running: root.running
         repeat: true
-        interval: 250
+        interval: 1000
         onTriggered: root.tick()
     }
 }

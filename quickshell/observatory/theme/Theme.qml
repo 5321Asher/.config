@@ -165,6 +165,7 @@ Singleton {
     readonly property int traySlot: 24
     readonly property int coverSize: 104            // album art planet on the radio page
     readonly property int lampRing: 92              // hue ring radius on the lamps page
+    readonly property int chronoDial: 130           // chronometer dial radius
 
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms
