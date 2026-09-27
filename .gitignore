@@ -40,3 +40,18 @@ __pycache__/
 
 # Holds the Wallhaven API key: never commit
 /skwd-wall-v2/config.json
+# Pointers `theme setup` relinks to the active setup (the real files live in theme/setups/<setup>/files/)
+/quickshell/default
+/walker/themes/active
+/walker/themes/*/side.jpg
+/kitty/kitty.conf
+/hypr/look.lua
+/hypr/hyprlock.conf
+/cava/config
+# Written whole on every theme switch
+/fontconfig/fonts.conf
+/gtk-3.0/gtk.css
+/gtk-4.0/gtk.css
+/qt6ct/colors/
+/qt6ct/qss/
+/satty/overrides.css
