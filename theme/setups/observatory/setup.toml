@@ -5,8 +5,9 @@ description = "brass · orbits · phosphor"
 default_theme = "deep-field"
 icon = "󰥔"
 
-# Run by `theme lock` (hypridle's lock_cmd). hyprlock until the Quickshell lock screen is built.
-lock = "pidof hyprlock || hyprlock"
+# Run by `theme lock` (hypridle's lock_cmd, SUPER+L, Power → Lock). The Quickshell lock screen;
+# hyprlock if Observatory's Quickshell isn't answering.
+lock = "qs ipc call lock lock || pidof hyprlock || hyprlock"
 
 # JetBrains Mono for data (and everything else, system-wide); Cormorant Garamond for labels.
 [fonts]

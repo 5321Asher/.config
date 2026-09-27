@@ -211,7 +211,8 @@ Item {
                     // image hint first, then the app icon; theme icon names only if the theme has them
                     function resolve(i) {
                         if (!i) return "";
-                        if (i.startsWith("/") || i.startsWith("file:")) return i;
+                        if (i.startsWith("/")) return "file://" + i;
+                        if (i.startsWith("file:")) return i;
                         if (i.startsWith("image://icon/")) i = i.slice(13);
                         else if (i.startsWith("image://")) return i;
                         return Quickshell.hasThemeIcon(i) ? Quickshell.iconPath(i) : "";

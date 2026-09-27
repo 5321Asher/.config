@@ -1,0 +1,4 @@
+#%PAM-1.0
+# Observatory's lock screen (lock/LockState.qml). Password only: no pam_faillock, so wrong attempts
+# can never lock the account the way system-auth's faillock does (3 tries -> 10 minutes).
+auth required pam_unix.so

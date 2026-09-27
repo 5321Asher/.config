@@ -136,6 +136,12 @@ Singleton {
     readonly property int consoleRingMax: 14        // more than this: a ledger list instead
     readonly property int consoleLedgerWidth: 560
 
+    // ---------------------------------------------------------------- lock screen
+    readonly property int lockRing: 150             // password ring radius
+    readonly property int lockBeads: 24             // beads per lap of the ring
+    readonly property int lockTimeSize: 64
+    readonly property int lockSkyPeriod: 1200000    // ms per turn of the star field (20 min)
+
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms
     readonly property int fast: 250

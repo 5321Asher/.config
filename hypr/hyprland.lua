@@ -142,6 +142,9 @@ hl.config({
   misc = {
     force_default_wallpaper = 0,    -- Set to 0 or 1 to disable the anime mascot wallpapers
     disable_hyprland_logo   = true, -- If true disables the random hyprland logo / anime girl background. :(
+    -- If a lock screen crashes, another one (hyprlock, or the setup's own) may take over the lock
+    -- instead of leaving the red "lockscreen died" screen. Recovery from a TTY: `hyprlock` then unlock.
+    allow_session_lock_restore = true,
   },
 })
 

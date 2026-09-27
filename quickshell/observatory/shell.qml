@@ -5,6 +5,7 @@ import Quickshell
 import "bar"
 import "notifications"
 import "launcher"
+import "lock"
 
 // Observatory: the control panel of a deep-space observatory.
 // Structure and theming notes: README.md
@@ -24,4 +25,7 @@ ShellRoot {
 
     // The console, Observatory's root menu (SUPER + Space): qs ipc call console toggle
     Console {}
+
+    // 8 · Lock screen: qs ipc call lock lock (or preview)
+    Lock {}
 }

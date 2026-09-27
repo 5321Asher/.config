@@ -421,7 +421,7 @@ PanelWindow {
                     visible: active
                     sourceComponent: IconImage {
                         implicitSize: 36
-                        source: parent.ic.startsWith("/") ? parent.ic : Quickshell.iconPath(parent.ic)
+                        source: parent.ic.startsWith("/") ? "file://" + parent.ic : Quickshell.iconPath(parent.ic)
                     }
                 }
                 Text {

@@ -262,7 +262,7 @@ PanelWindow {
                         readonly property string ic: knob.modelData.icon ?? ""
                         visible: ic.length > 2 && (ic.startsWith("/") || Quickshell.hasThemeIcon(ic))
                         implicitSize: Theme.consoleGlyph + 6
-                        source: visible ? (ic.startsWith("/") ? ic : Quickshell.iconPath(ic)) : ""
+                        source: visible ? (ic.startsWith("/") ? "file://" + ic : Quickshell.iconPath(ic)) : ""
                     }
 
                     layer.enabled: knob.active
