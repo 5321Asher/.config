@@ -31,6 +31,7 @@ Singleton {
     readonly property color phosphorDim: palette.phosphorDim ?? Qt.darker(phosphor, 2.4)
     readonly property color signal: palette.signal ?? palette.danger ?? "#d9534f"
     readonly property color warn: palette.warn ?? "#e0a84f"
+    readonly property color green: palette.green ?? "#8fc79a"
     readonly property color starlight: palette.starlight ?? "#f3efe4"
 
     // Panels are ~85% opaque; Hyprland blurs what's behind them (look.lua: observatory-* layers)
@@ -163,6 +164,7 @@ Singleton {
     readonly property int trayIcon: 16
     readonly property int traySlot: 24
     readonly property int coverSize: 104            // album art planet on the radio page
+    readonly property int lampRing: 92              // hue ring radius on the lamps page
 
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms

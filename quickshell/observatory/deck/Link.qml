@@ -9,6 +9,7 @@ Item {
     property string glyph: ""
     property bool danger: false
     property bool primary: false
+    property bool mono: false          // numbers read better in the data font
     signal clicked()
 
     implicitWidth: row.implicitWidth + 22
@@ -41,11 +42,11 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             text: root.text
             color: mouse.containsMouse ? Theme.starlight : root.danger ? Theme.signal : Theme.fg
-            font.family: Theme.fontLabel
-            font.pixelSize: Theme.labelSize
-            font.capitalization: Font.SmallCaps
-            font.letterSpacing: Theme.labelSpacing
-            font.weight: Font.DemiBold
+            font.family: root.mono ? Theme.fontData : Theme.fontLabel
+            font.pixelSize: root.mono ? Theme.dataSizeSmall + 1 : Theme.labelSize
+            font.capitalization: root.mono ? Font.MixedCase : Font.SmallCaps
+            font.letterSpacing: root.mono ? 0 : Theme.labelSpacing
+            font.weight: root.mono ? Font.Normal : Font.DemiBold
         }
     }
     MouseArea {
