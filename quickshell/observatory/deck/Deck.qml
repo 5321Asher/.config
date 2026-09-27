@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../theme"
+import "pages"
 
 // The control deck: a brass-framed panel that slides in from the right of the focused monitor, with
 // a rail of instrument knobs for its pages (DeckState.pages). Esc or a click outside closes it.
@@ -147,7 +148,7 @@ PanelWindow {
                     id: loader
                     width: flick.width
                     active: root.visible
-                    source: "pages/" + DeckState.current.file + ".qml"
+                    sourceComponent: pageComponents[DeckState.current.file] ?? null
                     opacity: 0
                     onLoaded: { flick.contentY = 0; arrive.restart(); }
                     NumberAnimation on opacity { id: arrive; from: 0; to: 1; duration: Theme.normal; easing.type: Theme.easing; running: false }
@@ -165,6 +166,24 @@ PanelWindow {
             }
         }
     }
+
+    // Pages as types (not file paths), so live reload tracks them; each is only created when shown
+    readonly property var pageComponents: ({
+        Helm: helmPage, Media: mediaPage, Log: logPage, Almanac: almanacPage, Telemetry: telemetryPage,
+        Hangar: hangarPage, Optics: opticsPage, Lamps: lampsPage, Chronometer: chronometerPage,
+        Comms: commsPage, Claude: claudePage,
+    })
+    Component { id: helmPage; Helm {} }
+    Component { id: mediaPage; Media {} }
+    Component { id: logPage; Log {} }
+    Component { id: almanacPage; Almanac {} }
+    Component { id: telemetryPage; Telemetry {} }
+    Component { id: hangarPage; Hangar {} }
+    Component { id: opticsPage; Optics {} }
+    Component { id: lampsPage; Lamps {} }
+    Component { id: chronometerPage; Chronometer {} }
+    Component { id: commsPage; Comms {} }
+    Component { id: claudePage; Claude {} }
 
     // Small hover label beside a rail knob
     component ToolTipLabel: Text {
