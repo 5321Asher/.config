@@ -1,0 +1,56 @@
+# Lunar: Daytime in the chart room: parchment, bronze fittings, sea-green ink. Star charts print dark on light.
+name = "Lunar"
+appearance = "light"
+
+[palette]
+bg          = "#eee8da"
+bgDark      = "#e2dac8"
+surface     = "#f6f1e6"
+hover       = "#e6ddc9"
+border      = "#cbbfa5"
+dim         = "#8a7f6a"
+fg          = "#27221a"
+accent      = "#8a6427"   # instrument metal
+accentText  = "#f6f1e6"
+accentMuted = "#d8c49a"
+purple      = "#1f7a74"   # second accent: readouts
+warn        = "#b8741a"
+danger      = "#b8322a"   # alarms
+green       = "#4d7a2e"
+# Observatory's own (Quickshell reads these; other apps use the standard keys above)
+brassBright = "#a87a2e"
+brassDeep   = "#6a4c1c"
+phosphor    = "#1f7a74"
+phosphorDim = "#a9cfc9"
+signal      = "#b8322a"
+starlight   = "#27221a"
+
+[ansi]
+black   = "#27221a"
+red     = "#b8322a"
+green   = "#4d7a2e"
+yellow  = "#9a6a14"
+blue    = "#2f5f9a"
+magenta = "#8a3f82"
+cyan    = "#1f7a74"
+white   = "#e2dac8"
+bright_black   = "#8a7f6a"
+bright_red     = "#d24a40"
+bright_green   = "#629a3c"
+bright_yellow  = "#b8741a"
+bright_blue    = "#4a7ab8"
+bright_magenta = "#a8559e"
+bright_cyan    = "#2a9a92"
+bright_white   = "#f6f1e6"
+
+[syntax]
+keyword   = "#8a3f82"
+function  = "#1f7a74"
+string    = "#4d7a2e"
+type      = "#8a6427"
+constant  = "#b8741a"
+property  = "#2f5f9a"
+tag       = "#b8322a"
+attribute = "#9a6a14"
+operator  = "#6a6050"
+comment   = "#8a7f6a"

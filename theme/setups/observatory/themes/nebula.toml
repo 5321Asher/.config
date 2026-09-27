@@ -1,0 +1,56 @@
+# Nebula: Looking into an emission nebula: violet-black depths, rose-gold instruments, magenta readouts.
+name = "Nebula"
+appearance = "dark"
+
+[palette]
+bg          = "#0f0a17"
+bgDark      = "#08050e"
+surface     = "#1a1226"
+hover       = "#241a33"
+border      = "#352848"
+dim         = "#6f5f8a"
+fg          = "#e4d9ee"
+accent      = "#d9a08a"   # instrument metal
+accentText  = "#0f0a17"
+accentMuted = "#5a3f3a"
+purple      = "#d97ee8"   # second accent: readouts
+warn        = "#f0b870"
+danger      = "#ff5c8a"   # alarms
+green       = "#9ed9a8"
+# Observatory's own (Quickshell reads these; other apps use the standard keys above)
+brassBright = "#f3c9b8"
+brassDeep   = "#7a5048"
+phosphor    = "#d97ee8"
+phosphorDim = "#562c63"
+signal      = "#ff5c8a"
+starlight   = "#f6eefb"
+
+[ansi]
+black   = "#1a1226"
+red     = "#ff5c8a"
+green   = "#9ed9a8"
+yellow  = "#f0b870"
+blue    = "#8f9cf2"
+magenta = "#d97ee8"
+cyan    = "#7fd0e0"
+white   = "#d2c5de"
+bright_black   = "#6f5f8a"
+bright_red     = "#ff85a6"
+bright_green   = "#bdeac4"
+bright_yellow  = "#ffd199"
+bright_blue    = "#b0baff"
+bright_magenta = "#ecaaf5"
+bright_cyan    = "#a6e4ef"
+bright_white   = "#f6eefb"
+
+[syntax]
+keyword   = "#d97ee8"
+function  = "#8f9cf2"
+string    = "#9ed9a8"
+type      = "#f3c9b8"
+constant  = "#f0b870"
+property  = "#7fd0e0"
+tag       = "#ff5c8a"
+attribute = "#d9a08a"
+operator  = "#9a8aad"
+comment   = "#6f5f8a"

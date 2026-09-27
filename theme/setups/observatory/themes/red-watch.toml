@@ -1,0 +1,56 @@
+# Red Watch: Night-vision observing: black dome, copper instruments, dim red readouts that keep your eyes dark-adapted.
+name = "Red Watch"
+appearance = "dark"
+
+[palette]
+bg          = "#0d0707"
+bgDark      = "#070303"
+surface     = "#1a0d0c"
+hover       = "#261311"
+border      = "#3a1d19"
+dim         = "#7a4a42"
+fg          = "#e6c9bf"
+accent      = "#c77945"   # instrument metal
+accentText  = "#0d0707"
+accentMuted = "#5a3320"
+purple      = "#e0564a"   # second accent: readouts
+warn        = "#e8a33d"
+danger      = "#ff3b30"   # alarms
+green       = "#b7a15a"
+# Observatory's own (Quickshell reads these; other apps use the standard keys above)
+brassBright = "#eaa77a"
+brassDeep   = "#6e3f22"
+phosphor    = "#e0564a"
+phosphorDim = "#5e211c"
+signal      = "#ff3b30"
+starlight   = "#f2d7cc"
+
+[ansi]
+black   = "#1a0d0c"
+red     = "#e0564a"
+green   = "#b7a15a"
+yellow  = "#e8a33d"
+blue    = "#b5746a"
+magenta = "#c9607e"
+cyan    = "#d98a6a"
+white   = "#d9bdb2"
+bright_black   = "#7a4a42"
+bright_red     = "#ff7a6e"
+bright_green   = "#d4bf78"
+bright_yellow  = "#ffc266"
+bright_blue    = "#d4958a"
+bright_magenta = "#e483a0"
+bright_cyan    = "#f0a888"
+bright_white   = "#f2d7cc"
+
+[syntax]
+keyword   = "#c77945"
+function  = "#e0564a"
+string    = "#b7a15a"
+type      = "#eaa77a"
+constant  = "#e8a33d"
+property  = "#d98a6a"
+tag       = "#ff3b30"
+attribute = "#c9607e"
+operator  = "#9a6a60"
+comment   = "#7a4a42"

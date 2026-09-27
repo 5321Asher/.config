@@ -1,0 +1,56 @@
+# Aurora: A polar station under the northern lights: slate-black sky, burnished steel instruments, aurora-green readouts.
+name = "Aurora"
+appearance = "dark"
+
+[palette]
+bg          = "#080f12"
+bgDark      = "#04090b"
+surface     = "#0f1b20"
+hover       = "#16262d"
+border      = "#223840"
+dim         = "#56717a"
+fg          = "#d3e2e2"
+accent      = "#a9bccb"   # instrument metal
+accentText  = "#080f12"
+accentMuted = "#3c4b57"
+purple      = "#62e5a0"   # second accent: readouts
+warn        = "#e3c46a"
+danger      = "#f06b7a"   # alarms
+green       = "#62e5a0"
+# Observatory's own (Quickshell reads these; other apps use the standard keys above)
+brassBright = "#dbe7f0"
+brassDeep   = "#5a6c7a"
+phosphor    = "#62e5a0"
+phosphorDim = "#1f5a45"
+signal      = "#f06b7a"
+starlight   = "#eef7f5"
+
+[ansi]
+black   = "#0f1b20"
+red     = "#f06b7a"
+green   = "#62e5a0"
+yellow  = "#e3c46a"
+blue    = "#7aa8e0"
+magenta = "#b58cf0"
+cyan    = "#5fd3d0"
+white   = "#c3d4d4"
+bright_black   = "#56717a"
+bright_red     = "#ff8f9b"
+bright_green   = "#8cf5bf"
+bright_yellow  = "#f5d98a"
+bright_blue    = "#9cc3f5"
+bright_magenta = "#cdabff"
+bright_cyan    = "#86e8e5"
+bright_white   = "#eef7f5"
+
+[syntax]
+keyword   = "#b58cf0"
+function  = "#62e5a0"
+string    = "#e3c46a"
+type      = "#7aa8e0"
+constant  = "#5fd3d0"
+property  = "#a9bccb"
+tag       = "#f06b7a"
+attribute = "#9cc3f5"
+operator  = "#7f97a0"
+comment   = "#56717a"

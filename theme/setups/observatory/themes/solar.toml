@@ -1,0 +1,56 @@
+# Solar: A solar observatory at dusk: smoked-glass brown-black, polished gold, orange hydrogen-alpha readouts.
+name = "Solar"
+appearance = "dark"
+
+[palette]
+bg          = "#120d08"
+bgDark      = "#0a0704"
+surface     = "#1e1610"
+hover       = "#2a2017"
+border      = "#3f2f20"
+dim         = "#806650"
+fg          = "#eee0c9"
+accent      = "#e2b44c"   # instrument metal
+accentText  = "#120d08"
+accentMuted = "#5e4a22"
+purple      = "#ff8a3d"   # second accent: readouts
+warn        = "#ffc857"
+danger      = "#e8483c"   # alarms
+green       = "#a8c070"
+# Observatory's own (Quickshell reads these; other apps use the standard keys above)
+brassBright = "#f7d98b"
+brassDeep   = "#7a5e24"
+phosphor    = "#ff8a3d"
+phosphorDim = "#6a3514"
+signal      = "#e8483c"
+starlight   = "#fbf1dc"
+
+[ansi]
+black   = "#1e1610"
+red     = "#e8483c"
+green   = "#a8c070"
+yellow  = "#e2b44c"
+blue    = "#8aa5c8"
+magenta = "#d98a8a"
+cyan    = "#e0a060"
+white   = "#dccdb4"
+bright_black   = "#806650"
+bright_red     = "#ff6e61"
+bright_green   = "#c4d992"
+bright_yellow  = "#f7d98b"
+bright_blue    = "#aac0de"
+bright_magenta = "#eeaaa8"
+bright_cyan    = "#f5bc85"
+bright_white   = "#fbf1dc"
+
+[syntax]
+keyword   = "#ff8a3d"
+function  = "#e2b44c"
+string    = "#a8c070"
+type      = "#f7d98b"
+constant  = "#e0a060"
+property  = "#8aa5c8"
+tag       = "#e8483c"
+attribute = "#d98a8a"
+operator  = "#a08870"
+comment   = "#806650"
