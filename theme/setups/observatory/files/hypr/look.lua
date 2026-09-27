@@ -90,11 +90,12 @@ hl.layer_rule({
   no_anim = true,
 })
 
--- Brave's New Tab goes see-through in every setup (hyprland.lua); Observatory's blur is heavy enough
--- to smear the wallpaper into haze behind it, so that window gets none: the star chart shows through
--- as clearly as in Sharp
+-- Brave's New Tab goes see-through in every setup (hyprland.lua, 85%). Here it's nearly clear, 20%,
+-- with no blur (Observatory's heavy blur would smear the star chart into haze behind it).
+-- Comes after hyprland.lua's rule, so its opacity wins.
 hl.window_rule({
   name    = "observatory-brave-newtab-clear",
   match   = { class = "^brave-browser$", title = "^New (Private )?Tab - Brave$" },
   no_blur = true,
+  opacity = "0.2 override 0.2 override",
 })
