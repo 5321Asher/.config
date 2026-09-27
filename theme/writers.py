@@ -1161,6 +1161,11 @@ def apply(theme, openrgb=True, settings=None, cell_ratio=2.4):
     appearance = theme.get("appearance", "dark")
 
     fonts, cursor = fonts_for(theme), cursor_for(theme)
+    style = setup_style()
+    ctx = style_ctx(fonts)
+    # A setup's style can draw its own cursor theme (from the palette)
+    if style and hasattr(style, "cursors"):
+        cursor = cursor | {"theme": style.cursors(p, ctx) or cursor["theme"]}
 
     # Quickshell: palette + fonts, in the active setup's shell folder
     write(f"{QS_DIR}/colors.json", json.dumps(
@@ -1235,8 +1240,6 @@ inactive_tab_background {p["bgDark"]}
           + f"$font        = {fonts['mono']}\n$fontDisplay = {fonts['display']}\n")
 
     write_fonts(fonts, cursor)
-    style = setup_style()
-    ctx = style_ctx(fonts)
     # Icon theme: the setup's style may build one (from the palette); else setup.toml [icons] theme
     icon_theme = (style.icons(p, ctx) if style and hasattr(style, "icons") else None) \
         or theme.get("icons", {}).get("theme") or SETUP.get("icons", {}).get("theme") or "Adwaita"

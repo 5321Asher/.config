@@ -556,3 +556,167 @@ def icons(p, ctx):
     with open(marker, "w") as f:
         f.write(key + "\n")
     return ICON_THEME
+
+
+# ---------------------------------------------------------------- cursors
+
+CURSOR_THEME = "Observatory-Cursors"
+CURSOR_SIZES = (24, 32, 48)
+
+
+def _cursor_svgs(p, mix):
+    """{shape: (svg-maker(frame, frames), hotspot on a 64 grid, frames)} in the theme's colours."""
+    brass, bright, deep = p["accent"], c(p, "brassBright"), c(p, "brassDeep", "accentMuted")
+    phos, sig, ink = c(p, "phosphor", "purple"), c(p, "signal", "danger"), "#07090f"
+    grad = (f'<defs><linearGradient id="b" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="{bright}"/>'
+            f'<stop offset="1" stop-color="{brass}"/></linearGradient></defs>')
+    arrow_path = "M6 4 L6 46 L17 36 L25 55 L33 51 L25 33 L40 33 Z"
+
+    def svg(body):
+        return f'<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">{grad}{body}</svg>'
+
+    def arrow(extra=""):
+        return lambda f, n: svg(f'<path d="{arrow_path}" fill="url(#b)" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>'
+                                f'<path d="M10 12 L10 36" stroke="{mix(bright, "#ffffff", 0.35)}" stroke-width="1.5" opacity="0.6"/>' + extra)
+
+    def spinner(cx, cy, r, width, f, n):
+        import math
+        a0 = f / n * 2 * math.pi - math.pi / 2
+        a1 = a0 + 2 * math.pi * 0.3
+        x0, y0 = cx + r * math.cos(a0), cy + r * math.sin(a0)
+        x1, y1 = cx + r * math.cos(a1), cy + r * math.sin(a1)
+        return (f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{ink}" stroke-width="{width + 3}"/>'
+                f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{deep}" stroke-width="{width}"/>'
+                f'<path d="M{x0:.2f} {y0:.2f} A{r} {r} 0 0 1 {x1:.2f} {y1:.2f}" fill="none" stroke="{bright}" stroke-width="{width}" stroke-linecap="round"/>')
+
+    def double(angle):
+        body = (f'<g transform="rotate({angle} 32 32)">'
+                f'<path d="M32 4 L44 18 L36 18 L36 46 L44 46 L32 60 L20 46 L28 46 L28 18 L20 18 Z" fill="url(#b)" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/></g>')
+        return lambda f, n: svg(body)
+
+    def reticle(color):
+        return lambda f, n: svg(
+            f'<circle cx="32" cy="32" r="15" fill="none" stroke="{ink}" stroke-width="7"/>'
+            f'<circle cx="32" cy="32" r="15" fill="none" stroke="{color}" stroke-width="3.5"/>'
+            + "".join(f'<path d="M{a} {b} L{c_} {d}" stroke="{ink}" stroke-width="6" stroke-linecap="round"/>'
+                      f'<path d="M{a} {b} L{c_} {d}" stroke="{color}" stroke-width="3" stroke-linecap="round"/>'
+                      for a, b, c_, d in ((32, 6, 32, 14), (32, 50, 32, 58), (6, 32, 14, 32), (50, 32, 58, 32)))
+            + f'<circle cx="32" cy="32" r="4" fill="{color}" stroke="{ink}" stroke-width="2"/>')
+
+    return {
+        "arrow": (arrow(), (6, 4), 1),
+        "pointer": (reticle(bright), (32, 32), 1),
+        "text": (lambda f, n: svg(
+            f'<path d="M22 8 L42 8 M32 8 L32 56 M22 56 L42 56" stroke="{ink}" stroke-width="8" stroke-linecap="round"/>'
+            f'<path d="M22 8 L42 8 M32 8 L32 56 M22 56 L42 56" stroke="{bright}" stroke-width="4" stroke-linecap="round"/>'), (32, 32), 1),
+        "crosshair": (lambda f, n: svg(
+            f'<circle cx="32" cy="32" r="12" fill="none" stroke="{ink}" stroke-width="5"/>'
+            f'<circle cx="32" cy="32" r="12" fill="none" stroke="{phos}" stroke-width="2"/>'
+            f'<path d="M32 2 L32 24 M32 40 L32 62 M2 32 L24 32 M40 32 L62 32" stroke="{ink}" stroke-width="5"/>'
+            f'<path d="M32 2 L32 24 M32 40 L32 62 M2 32 L24 32 M40 32 L62 32" stroke="{phos}" stroke-width="2"/>'), (32, 32), 1),
+        "wait": (lambda f, n: svg(spinner(32, 32, 20, 6, f, n)), (32, 32), 16),
+        "progress": (lambda f, n: arrow(spinner(46, 46, 11, 4.5, f, n))(f, n), (6, 4), 16),
+        "move": (lambda f, n: svg(
+            f'<path d="M32 3 L42 14 L36 14 L36 28 L50 28 L50 22 L61 32 L50 42 L50 36 L36 36 L36 50 L42 50 L32 61 L22 50 L28 50 L28 36 L14 36 L14 42 L3 32 L14 22 L14 28 L28 28 L28 14 L22 14 Z" '
+            f'fill="url(#b)" stroke="{ink}" stroke-width="3" stroke-linejoin="round"/>'), (32, 32), 1),
+        "ns": (double(0), (32, 32), 1),
+        "ew": (double(90), (32, 32), 1),
+        "nwse": (double(-45), (32, 32), 1),
+        "nesw": (double(45), (32, 32), 1),
+        "forbidden": (lambda f, n: svg(
+            f'<circle cx="32" cy="32" r="22" fill="none" stroke="{ink}" stroke-width="10"/>'
+            f'<circle cx="32" cy="32" r="22" fill="none" stroke="{sig}" stroke-width="6"/>'
+            f'<path d="M17 17 L47 47" stroke="{ink}" stroke-width="10"/><path d="M17 17 L47 47" stroke="{sig}" stroke-width="6"/>'), (32, 32), 1),
+        "help": (arrow(f'<circle cx="48" cy="48" r="11" fill="{deep}" stroke="{ink}" stroke-width="2.5"/>'
+                       f'<text x="48" y="54" font-family="sans-serif" font-weight="bold" font-size="16" text-anchor="middle" fill="{bright}">?</text>'), (6, 4), 1),
+        "copy": (arrow(f'<circle cx="48" cy="48" r="10" fill="{phos}" stroke="{ink}" stroke-width="2.5"/>'
+                       f'<path d="M48 42 L48 54 M42 48 L54 48" stroke="{ink}" stroke-width="3"/>'), (6, 4), 1),
+        "link": (arrow(f'<circle cx="48" cy="48" r="10" fill="{phos}" stroke="{ink}" stroke-width="2.5"/>'
+                       f'<path d="M44 52 L52 44 M46 44 L52 44 L52 50" stroke="{ink}" stroke-width="2.5" fill="none"/>'), (6, 4), 1),
+    }
+
+
+# every standard cursor name -> one of the shapes above
+CURSOR_NAMES = {
+    "arrow": ["default", "left_ptr", "arrow", "top_left_arrow", "context-menu", "right_ptr", "center_ptr"],
+    "pointer": ["pointer", "hand", "hand1", "hand2", "pointing_hand", "grab", "openhand", "e29285e634086352946a0e7090d73106"],
+    "text": ["text", "xterm", "ibeam", "vertical-text"],
+    "crosshair": ["crosshair", "cross", "tcross", "cross_reverse", "diamond_cross", "cell", "color-picker", "zoom-in", "zoom-out", "plus"],
+    "wait": ["wait", "watch"],
+    "progress": ["progress", "left_ptr_watch", "half-busy", "00000000000000020006000e7e9ffc3f", "08e8e1c95fe2fc01f976f1e063a24ccd", "3ecb610c1bf2410f44200f48c40d3599"],
+    "move": ["move", "fleur", "all-scroll", "grabbing", "closedhand", "dnd-move", "size_all", "4498f0e0c1937ffe01fd06f973665830", "9081237383d90e509aa00f00170e968f"],
+    "ns": ["ns-resize", "n-resize", "s-resize", "row-resize", "sb_v_double_arrow", "v_double_arrow", "top_side", "bottom_side", "size_ver", "split_v", "00008160000006810000408080010102"],
+    "ew": ["ew-resize", "e-resize", "w-resize", "col-resize", "sb_h_double_arrow", "h_double_arrow", "left_side", "right_side", "size_hor", "split_h", "028006030e0e7ebffc7f7070c0600140"],
+    "nwse": ["nwse-resize", "nw-resize", "se-resize", "top_left_corner", "bottom_right_corner", "bd_double_arrow", "size_fdiag", "c7088f0f3e6c8088236ef8e1e3e70000"],
+    "nesw": ["nesw-resize", "ne-resize", "sw-resize", "top_right_corner", "bottom_left_corner", "fd_double_arrow", "size_bdiag", "fcf1c3c7cd4491d801f1e1c78f100000"],
+    "forbidden": ["not-allowed", "no-drop", "crossed_circle", "forbidden", "circle", "X_cursor", "pirate", "03b6e0fcb3499374a867c041f52298f0"],
+    "help": ["help", "question_arrow", "whats_this", "left_ptr_help", "dnd-ask", "d9ce0ab605698f320427677b458ad60b", "5c6cd98b3f3ebcb1f9c7f1c204630408"],
+    "copy": ["copy", "dnd-copy", "1081e37283d90000800003c07f3ef6bf", "6407b0e94181790501fd1e167b474872"],
+    "link": ["alias", "dnd-link", "link", "3085a0e285430894940527032f8b26df", "640fb0e74195791501fd1ed57b41487f"],
+}
+
+
+def _xcursor(images):
+    """Xcursor file bytes. images: [(nominal size, w, h, xhot, yhot, delay ms, ARGB32 premultiplied LE bytes)]."""
+    import struct
+    header = struct.pack("<4sIII", b"Xcur", 16, 0x10000, len(images))
+    toc, chunks, pos = b"", b"", 16 + 12 * len(images)
+    for size, w, h, xh, yh, delay, pixels in images:
+        toc += struct.pack("<III", 0xFFFD0002, size, pos)
+        chunk = struct.pack("<IIIIIIIII", 36, 0xFFFD0002, size, 1, w, h, xh, yh, delay) + pixels
+        chunks += chunk
+        pos += len(chunk)
+    return header + toc + chunks
+
+
+def _render(svg_text, px):
+    """RGBA straight -> ARGB32 premultiplied little-endian, via ImageMagick."""
+    raw = subprocess.run(["magick", "-background", "none", "-density", str(96 * px / 64), "svg:-",
+                          "-resize", f"{px}x{px}!", "-depth", "8", "rgba:-"], input=svg_text.encode(),
+                         capture_output=True, timeout=30).stdout
+    out = bytearray(len(raw))
+    for i in range(0, len(raw), 4):
+        r, g, b, a = raw[i], raw[i + 1], raw[i + 2], raw[i + 3]
+        out[i] = b * a // 255
+        out[i + 1] = g * a // 255
+        out[i + 2] = r * a // 255
+        out[i + 3] = a
+    return bytes(out)
+
+
+def cursors(p, ctx):
+    """A brass cursor theme in the colour theme's colours, rebuilt in ~/.local/share/icons/Observatory-Cursors
+    only when the colours change. Returns its name."""
+    shapes = _cursor_svgs(p, ctx["mix"])
+    key = hashlib.sha1(("".join(p[k] for k in ("accent", "bgDark")) + c(p, "brassBright") + c(p, "phosphor", "purple")
+                        + c(p, "signal", "danger") + "v1").encode()).hexdigest()[:12]
+    root = os.path.expanduser(f"~/.local/share/icons/{CURSOR_THEME}")
+    marker = f"{root}/.palette"
+    try:
+        if open(marker).read().strip() == key:
+            return CURSOR_THEME
+    except OSError:
+        pass
+    cdir = f"{root}/cursors"
+    os.makedirs(cdir, exist_ok=True)
+    for shape, (make, (hx, hy), frames) in shapes.items():
+        images = []
+        for size in CURSOR_SIZES:
+            for f in range(frames):
+                px = _render(make(f, frames), size)
+                images.append((size, size, size, round(hx * size / 64), round(hy * size / 64),
+                               60 if frames > 1 else 0, px))
+        with open(f"{cdir}/{shape}", "wb") as fh:
+            fh.write(_xcursor(images))
+        for name in CURSOR_NAMES.get(shape, []):
+            if name == shape:
+                continue
+            link = f"{cdir}/{name}"
+            if os.path.lexists(link):
+                os.unlink(link)
+            os.symlink(shape, link)
+    with open(f"{root}/index.theme", "w") as fh:
+        fh.write("[Icon Theme]\nName=Observatory Cursors\nComment=Brass instrument cursors (written by the Observatory setup)\nInherits=Adwaita\n")
+    with open(marker, "w") as fh:
+        fh.write(key + "\n")
+    return CURSOR_THEME
