@@ -146,7 +146,8 @@ Singleton {
     // ---------------------------------------------------------------- utilities
     readonly property int overviewArc: 44           // how far the middle plates dip
     readonly property int dictationBottom: 56       // receiver plate above the bottom edge
-    readonly property int dictationHeight: 46
+    readonly property int dictationHeight: 60
+    readonly property int dictationTrace: 220       // width of the live microphone trace
     readonly property int beaconInset: 28           // recording beacon from the left edge
     readonly property int polkitWidth: 440          // the clearance (admin password) plate
 

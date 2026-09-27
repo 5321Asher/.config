@@ -22,4 +22,7 @@ ShellRoot {
 
     // Dictation overlay while voxtype records / transcribes
     VoxtypeOsd {}
+
+    // Polkit agent: admin password prompts (pkexec, disk tools, installers)
+    PolkitPrompt {}
 }
