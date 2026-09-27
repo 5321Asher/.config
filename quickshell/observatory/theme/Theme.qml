@@ -54,8 +54,8 @@ Singleton {
     readonly property int lineWidth: 2              // the brass horizon, collapsed
     readonly property int barHeight: 36             // expanded panel
     readonly property int triggerHeight: 3          // hover strip along the top edge while collapsed
-    readonly property int bulgeWidth: 172           // the dome under the sundial
-    readonly property int bulgeDepth: 26
+    readonly property int bulgeWidth: 196           // the dome under the sundial
+    readonly property int bulgeDepth: 31
     readonly property int windowDepth: 96           // layer surface height (panel + dome + glow room)
     readonly property int hideDelay: 450            // ms the bar stays after the cursor leaves
     readonly property int lineTop: 1                // collapsed line's distance from the screen edge
@@ -72,11 +72,25 @@ Singleton {
     readonly property int edgeFade: 160             // px over which the line fades out at screen edges
 
     // ---------------------------------------------------------------- sundial (in the dome)
-    readonly property int sundialCenterY: 25        // from the top of the panel
-    readonly property int sundialRadius: 16
+    readonly property int sundialCenterY: 28        // from the top of the panel
+    readonly property int sundialRadius: 20
     readonly property int sundialTick: 2
-    readonly property int sundialTickMajor: 5
-    readonly property real sundialSweepWidth: 2.5
+    readonly property int sundialTickMajor: 6
+    readonly property real sundialSweepWidth: 3
+
+    // ---------------------------------------------------------------- orbital workspaces
+    readonly property int orbitCount: 5             // planets always shown (more appear when in use)
+    readonly property int orbitRx: 118              // the orbit ellipse
+    readonly property int orbitRy: 7
+    readonly property int orbitDrop: 4              // orbit centre below the band's middle
+    readonly property real planetMin: 3.5           // at the back of the orbit
+    readonly property real planetMax: 6             // at the front
+    readonly property real planetActive: 7.5
+    readonly property real starRadius: 2.2
+    readonly property real moonRadius: 1.3
+    readonly property real moonGap: 3.5             // moon orbit, beyond the planet's edge
+    readonly property int moonPeriod: 14000         // ms per moon orbit
+    readonly property int windowTitleWidth: 360
 
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms

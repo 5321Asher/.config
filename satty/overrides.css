@@ -1,68 +1,68 @@
-/* Generated from the Everforest theme by ~/.config/theme/theme */
-@define-color accent_color        #a7c080;
-@define-color accent_bg_color     #a7c080;
-@define-color accent_fg_color     #232a2e;
-@define-color window_bg_color     #2d353b;
-@define-color window_fg_color     #d3c6aa;
-@define-color view_bg_color       #232a2e;
-@define-color view_fg_color       #d3c6aa;
-@define-color headerbar_bg_color  #2d353b;
-@define-color headerbar_fg_color  #d3c6aa;
-@define-color popover_bg_color    #343f44;
-@define-color popover_fg_color    #d3c6aa;
-@define-color dialog_bg_color     #2d353b;
-@define-color dialog_fg_color     #d3c6aa;
-@define-color borders             #475258;
+/* Generated from the Deep Field theme by ~/.config/theme/theme */
+@define-color accent_color        #c9a45c;
+@define-color accent_bg_color     #c9a45c;
+@define-color accent_fg_color     #0b0e17;
+@define-color window_bg_color     #0b0e17;
+@define-color window_fg_color     #d8d2c2;
+@define-color view_bg_color       #07090f;
+@define-color view_fg_color       #d8d2c2;
+@define-color headerbar_bg_color  #0b0e17;
+@define-color headerbar_fg_color  #d8d2c2;
+@define-color popover_bg_color    #141a28;
+@define-color popover_fg_color    #d8d2c2;
+@define-color dialog_bg_color     #0b0e17;
+@define-color dialog_fg_color     #d8d2c2;
+@define-color borders             #2a3246;
 
 :root {
-  --accent-color: #a7c080;
-  --accent-bg-color: #a7c080;
-  --accent-fg-color: #232a2e;
-  --window-bg-color: #2d353b;
-  --window-fg-color: #d3c6aa;
-  --view-bg-color: #232a2e;
-  --view-fg-color: #d3c6aa;
-  --headerbar-bg-color: #2d353b;
-  --headerbar-fg-color: #d3c6aa;
-  --popover-bg-color: #343f44;
-  --popover-fg-color: #d3c6aa;
-  --dialog-bg-color: #2d353b;
-  --dialog-fg-color: #d3c6aa;
-  --border-color: #475258;
+  --accent-color: #c9a45c;
+  --accent-bg-color: #c9a45c;
+  --accent-fg-color: #0b0e17;
+  --window-bg-color: #0b0e17;
+  --window-fg-color: #d8d2c2;
+  --view-bg-color: #07090f;
+  --view-fg-color: #d8d2c2;
+  --headerbar-bg-color: #0b0e17;
+  --headerbar-fg-color: #d8d2c2;
+  --popover-bg-color: #141a28;
+  --popover-fg-color: #d8d2c2;
+  --dialog-bg-color: #0b0e17;
+  --dialog-fg-color: #d8d2c2;
+  --border-color: #2a3246;
 }
 
 /* Flat and sharp like the Quickshell bar */
 window, .outer_box, .toolbar {
-  color: #d3c6aa;
-  background-color: #2d353b;
+  color: #d8d2c2;
+  background-color: #0b0e17;
   border-radius: 0;
 }
-.inner_box { background-color: #232a2e; }
-.toolbar { border: 1px solid #475258; box-shadow: none; }
+.inner_box { background-color: #07090f; }
+.toolbar { border: 1px solid #2a3246; box-shadow: none; }
 .overlay .toolbar-top, .overlay .toolbar-bottom { border-radius: 0; }
 .toolbar button, .toolbar togglebutton > button, .toolbar menubutton > button {
-  color: #d3c6aa;
+  color: #d8d2c2;
   background: none;
   border-radius: 0;
   box-shadow: none;
 }
-.toolbar button:hover { background-color: #3d484d; }
+.toolbar button:hover { background-color: #1d2536; }
 .toolbar button:checked, .toolbar button.editing {
-  color: #a7c080;
-  background-color: #343f44;
-  box-shadow: inset 0 -2px #a7c080;
+  color: #c9a45c;
+  background-color: #141a28;
+  box-shadow: inset 0 -2px #c9a45c;
 }
-.toolbar separator { background-color: #475258; }
+.toolbar separator { background-color: #2a3246; }
 popover > contents {
-  color: #d3c6aa;
-  background-color: #343f44;
-  border: 1px solid #475258;
+  color: #d8d2c2;
+  background-color: #141a28;
+  border: 1px solid #2a3246;
   border-radius: 0;
 }
-entry, spinbutton { background-color: #232a2e; color: #d3c6aa; border-radius: 0; }
+entry, spinbutton { background-color: #07090f; color: #d8d2c2; border-radius: 0; }
 .toast {
-  color: #d3c6aa;
-  background-color: alpha(#232a2e, 0.9);
-  border: 1px solid #a7c080;
+  color: #d8d2c2;
+  background-color: alpha(#07090f, 0.9);
+  border: 1px solid #c9a45c;
   border-radius: 0;
 }

@@ -223,8 +223,11 @@ PanelWindow {
         opacity: Math.max(0, (bar.reveal - 0.45) / 0.55)
         visible: opacity > 0
 
-        Item {
+        // 3 · Orbital workspaces, and the focused window
+        Orbits {
             id: leftSlot
+            screen: bar.screen
+            running: bar.reveal > 0
             anchors.left: parent.left
             anchors.leftMargin: 20
             anchors.verticalCenter: parent.verticalCenter
