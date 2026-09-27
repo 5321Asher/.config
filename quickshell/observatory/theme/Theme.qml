@@ -151,6 +151,19 @@ Singleton {
     readonly property int beaconInset: 28           // recording beacon from the left edge
     readonly property int polkitWidth: 440          // the clearance (admin password) plate
 
+    // ---------------------------------------------------------------- control deck
+    readonly property int deckWidth: 520
+    readonly property int deckTop: 56               // below the horizon
+    readonly property int deckBottom: 22
+    readonly property int deckRight: 16
+    readonly property int deckRail: 64             // width of the page rail
+    readonly property int deckRailKnob: 38
+    readonly property int deckKnob: 44
+    readonly property int deckTile: 54
+    readonly property int trayIcon: 16
+    readonly property int traySlot: 24
+    readonly property int coverSize: 104            // album art planet on the radio page
+
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms
     readonly property int fast: 250

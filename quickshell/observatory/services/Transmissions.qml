@@ -4,10 +4,22 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
 
-// The notification server. Every notification arrives as a "transmission": it is kept in `model`
-// (newest first) while its card is on screen, and dropped when the card is dismissed or expires.
+// The notification server. Every notification arrives as a "transmission": its card is kept in
+// `model` (newest first) while on screen. Notifications stay in `history` until dismissed (a card
+// timing out only hides the card). Do-not-disturb: only critical ones pop up.
 Singleton {
     id: root
+
+    property bool dnd: false
+    // Newest first
+    readonly property var history: server.trackedNotifications.values.slice().reverse()
+    property var times: ({})          // id -> arrival (ms)
+    property int unread: 0
+
+    function clearAll() {
+        for (const n of server.trackedNotifications.values.slice()) n.dismiss();
+        unread = 0;
+    }
 
     // id -> Notification; the ListModel only carries ids (so cards aren't rebuilt on every change)
     property var byId: ({})
@@ -34,8 +46,13 @@ Singleton {
 
         onNotification: n => {
             n.tracked = true;
+            const t = Object.assign({}, root.times);
+            t[n.id] = Date.now();
+            root.times = t;
+            root.unread++;
             // A replacement (same id) restarts that card
             if (root.byId[n.id]) root.drop(n.id);
+            if (root.dnd && n.urgency !== NotificationUrgency.Critical) return;
             root.byId[n.id] = n;
             root.model.insert(0, { nid: n.id, born: Date.now() });
         }

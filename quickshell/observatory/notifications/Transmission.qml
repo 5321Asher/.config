@@ -50,7 +50,8 @@ Item {
         property bool dismissed: false
         interval: Theme.slow
         onTriggered: {
-            if (root.n) { if (dismissed) root.n.dismiss(); else root.n.expire(); }
+            // Timing out only hides the card: the notification stays in the log until dismissed
+            if (root.n && dismissed) root.n.dismiss();
             Transmissions.drop(root.nid);
         }
     }

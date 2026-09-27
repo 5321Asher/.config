@@ -7,6 +7,7 @@ import "notifications"
 import "launcher"
 import "lock"
 import "utilities"
+import "deck"
 
 // Observatory: the control panel of a deep-space observatory.
 // Structure and theming notes: README.md
@@ -39,4 +40,7 @@ ShellRoot {
 
     // Polkit agent: admin password prompts for pkexec, disk tools, installers…
     PolkitPrompt {}
+
+    // The control deck: qs ipc call deck open <page>
+    Deck {}
 }
