@@ -43,4 +43,7 @@ ShellRoot {
 
     // The control deck: qs ipc call deck open <page>
     Deck {}
+
+    // Tray app menus (the tray itself is on the horizon)
+    TrayMenu {}
 }

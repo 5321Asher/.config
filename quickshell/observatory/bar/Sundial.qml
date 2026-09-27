@@ -2,13 +2,20 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell
 import "../theme"
+import "../deck"
 
 // 2 · Sundial clock, in the horizon bar's dome. A graduated ring: the brass arc sweeps from the
 // top through the current hour (it's full at :59), the gnomon points at the hour on a 12-hour dial,
 // a phosphor bead runs round with the seconds. Day and date sit either side in small caps, the
-// digital time underneath in mono.
+// digital time underneath in mono. Click for the almanac (calendar, moon, weather).
 Item {
     id: root
+
+    MouseArea {
+        anchors.fill: parent
+        cursorShape: Qt.PointingHandCursor
+        onClicked: DeckState.toggleTo("almanac")
+    }
 
     SystemClock {
         id: clock

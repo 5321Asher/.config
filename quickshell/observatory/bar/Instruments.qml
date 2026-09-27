@@ -2,16 +2,17 @@ import QtQuick
 import Quickshell
 import "../theme"
 import "../services"
+import "../deck"
 
 // 4 · Instrument cluster: CPU load, memory and CPU temperature as three analog gauges.
-// Click any of them for btop.
+// Click any of them for the control deck's telemetry page.
 Row {
     id: root
 
     spacing: Theme.gaugeSpacing
     layoutDirection: Qt.RightToLeft
 
-    function monitor() { Quickshell.execDetached(["kitty", "--class", "btop", "-e", "btop"]); }
+    function monitor() { DeckState.toggleTo("telemetry"); }
 
     Gauge {
         visible: SysInfo.hasTemp

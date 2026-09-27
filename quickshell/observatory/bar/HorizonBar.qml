@@ -5,6 +5,8 @@ import Quickshell
 import Quickshell.Wayland
 import "../theme"
 import "../services"
+import "../utilities"
+import "../deck"
 
 // 1 · Horizon bar. A 2px glowing brass line along the top of the screen, graduated like an
 // instrument scale. Hover the top edge (or `qs ipc call horizon toggle`) and it drops into a
@@ -284,12 +286,24 @@ PanelWindow {
             width: bar.bw
             height: Theme.barHeight + Theme.bulgeDepth
         }
-        // 4 · Instrument cluster
-        Instruments {
+        // Tray, the control deck's knob, and 4 · the instrument cluster
+        Row {
             id: rightSlot
             anchors.right: parent.right
             anchors.rightMargin: 24
             height: parent.height
+            spacing: 18
+
+            Tray {
+                screen: bar.screen
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            DeckKnob {
+                anchors.verticalCenter: parent.verticalCenter
+            }
+            Instruments {
+                height: parent.height
+            }
         }
     }
 }
