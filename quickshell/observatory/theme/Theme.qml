@@ -105,6 +105,21 @@ Singleton {
     readonly property int tempMax: 100              // °C at full scale (so red from 92 °C)
     readonly property int sysInterval: 2000         // ms between CPU / memory / temp samples
 
+    // ---------------------------------------------------------------- transmissions (notifications)
+    readonly property int transmissionWidth: 380
+    readonly property int transmissionTop: 56       // below the horizon
+    readonly property int transmissionRight: 6
+    readonly property int transmissionGap: 10
+    readonly property int transmissionPad: 12
+    readonly property int transmissionIcon: 34
+    readonly property int transmissionLines: 6      // body lines before it's cut short
+    readonly property int transmissionTimeout: 6000 // ms on screen (critical: until clicked)
+    readonly property int typeInterval: 16          // ms per typing step
+    readonly property int typeChars: 1              // characters per step
+    readonly property int chamfer: 12               // the cut corner
+    readonly property int scanlineSpacing: 3
+    readonly property real scanlineOpacity: 0.07
+
     // ---------------------------------------------------------------- motion
     // Smooth and mechanical: OutCubic, 250-400 ms
     readonly property int fast: 250

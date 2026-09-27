@@ -3,6 +3,7 @@
 import QtQuick
 import Quickshell
 import "bar"
+import "notifications"
 
 // Observatory: the control panel of a deep-space observatory.
 // Structure and theming notes: README.md
@@ -13,4 +14,7 @@ ShellRoot {
 
         HorizonBar {}
     }
+
+    // 6 · Transmissions (notifications), on the focused monitor
+    TransmissionStack {}
 }
