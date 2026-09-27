@@ -23,6 +23,9 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     mask: Region {}
 
+    // The microphone meter below only listens while recording
+    Binding { target: MicLevel; property: "active"; value: Voxtype.recording }
+
     Rectangle {
         id: card
 
@@ -93,6 +96,27 @@ PanelWindow {
                 font.pixelSize: 13
                 font.bold: true
                 color: Theme.fg
+            }
+
+            // Live microphone level: square bars, bass on the left
+            Row {
+                visible: Voxtype.recording
+                spacing: 2
+                Layout.preferredHeight: 22
+
+                Repeater {
+                    model: MicLevel.count
+
+                    Rectangle {
+                        required property int index
+                        readonly property real v: MicLevel.bars[index] ?? 0
+                        anchors.bottom: parent.bottom
+                        width: 3
+                        height: Math.max(2, 22 * Math.min(1, v * 1.4))
+                        color: v > 0.85 ? Theme.danger : Theme.accent
+                        Behavior on height { NumberAnimation { duration: 60 } }
+                    }
+                }
             }
 
             Text {

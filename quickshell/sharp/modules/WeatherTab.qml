@@ -11,6 +11,20 @@ Flickable {
         return Math.round(t) + "°";
     }
 
+    // Moon phase, 0 = new .. 0.5 = full .. 1 = new (mean synodic month from a known new moon)
+    function moonPhase(d) {
+        const days = (d.getTime() - Date.UTC(2000, 0, 6, 18, 14)) / 86400000;
+        const p = (days / 29.530588853) % 1;
+        return p < 0 ? p + 1 : p;
+    }
+    function moonName(p) {
+        const names = ["New moon", "Waxing crescent", "First quarter", "Waxing gibbous",
+                       "Full moon", "Waning gibbous", "Last quarter", "Waning crescent"];
+        return names[Math.round(p * 8) % 8];
+    }
+    property date now: new Date()
+    Timer { running: root.visible; repeat: true; interval: 600000; onTriggered: root.now = new Date() }
+
     // Loading / error state
     Column {
         anchors.centerIn: parent
@@ -318,6 +332,72 @@ Flickable {
                         font.pixelSize: 13
                         font.bold: true
                         color: Theme.fg
+                    }
+                }
+            }
+        }
+
+        // Tonight's moon
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            SectionLabel { text: "Moon" }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 14
+
+                Canvas {
+                    id: moon
+                    implicitWidth: 48
+                    implicitHeight: 48
+                    readonly property real p: root.moonPhase(root.now)
+                    onPChanged: requestPaint()
+                    onPaint: {
+                        const ctx = getContext("2d");
+                        ctx.reset();
+                        const r = 20, cx = 24, cy = 24;
+                        ctx.fillStyle = Theme.surface;
+                        ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.fill();
+                        // lit part: a half disc plus or minus an ellipse (the terminator)
+                        const k = Math.cos(2 * Math.PI * p);        // 1 new .. -1 full
+                        const waxing = p < 0.5;
+                        ctx.fillStyle = Theme.fg;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, r, -Math.PI / 2, Math.PI / 2, !waxing);
+                        ctx.save();
+                        ctx.translate(cx, cy);
+                        ctx.scale(Math.abs(k), 1);
+                        ctx.arc(0, 0, r, Math.PI / 2, -Math.PI / 2, (k > 0) === waxing);
+                        ctx.restore();
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+                    Connections {
+                        target: Theme
+                        function onPaletteChanged() { moon.requestPaint(); }
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        text: root.moonName(moon.p)
+                        font.family: Theme.font
+                        font.pixelSize: 15
+                        font.bold: true
+                        color: Theme.fg
+                    }
+
+                    Text {
+                        text: Math.round((1 - Math.cos(2 * Math.PI * moon.p)) / 2 * 100) + "% lit  ·  day "
+                              + Math.floor(moon.p * 29.53) + " of 29.5"
+                        font.family: Theme.font
+                        font.pixelSize: 11
+                        color: Theme.dim
                     }
                 }
             }

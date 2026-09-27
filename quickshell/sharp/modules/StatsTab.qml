@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 
 // CPU / GPU gauges, activity chart, threads, memory, storage, network
 Flickable {
@@ -17,6 +18,9 @@ Flickable {
     function gb(n) {
         return (n / 1024 ** 3).toFixed(1);
     }
+
+    // Asks the panel to close (before opening btop)
+    signal closeRequested
 
     contentHeight: content.implicitHeight
     clip: true
@@ -268,6 +272,37 @@ Flickable {
                 InfoRow { label: "GPU fan"; value: Math.round(root.gpu?.fan ?? 0) + "%" }
                 InfoRow { label: "GPU clock"; value: Math.round(root.gpu?.clock ?? 0) + " MHz" }
                 InfoRow { label: "GPU power"; value: Math.round(root.gpu?.powerLimit ?? 0) + " W max" }
+            }
+        }
+
+        // Everything else: btop
+        Rectangle {
+            Layout.alignment: Qt.AlignRight
+            implicitWidth: btopText.implicitWidth + 24
+            implicitHeight: 26
+            radius: 0
+            color: btopMouse.containsMouse ? Theme.surface : "transparent"
+            border.width: 1
+            border.color: btopMouse.containsMouse ? Theme.accent : Theme.border
+
+            Text {
+                id: btopText
+                anchors.centerIn: parent
+                text: String.fromCodePoint(0xF0128) + "  Open btop"
+                font.family: Theme.font
+                font.pixelSize: 11
+                color: btopMouse.containsMouse ? Theme.accent : Theme.dim
+            }
+
+            MouseArea {
+                id: btopMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    root.closeRequested();
+                    Quickshell.execDetached(["kitty", "--class", "btop", "-e", "btop"]);
+                }
             }
         }
     }

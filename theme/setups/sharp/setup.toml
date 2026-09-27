@@ -16,6 +16,8 @@ serif   = "CaskaydiaMono Nerd Font Mono"
 display = "CaskaydiaMono Nerd Font Mono"
 size    = 11
 
+# style.py draws the cursors (Sharp-Cursors) and icons (Sharp: Papirus with square folders) in the
+# theme's accent; these are only the fallbacks if it can't.
 [cursor]
 theme = "Adwaita"
 size  = 24
@@ -24,4 +26,4 @@ size  = 24
 border = "gradient"   # accent -> second accent; "accent" = solid
 
 [icons]
-theme = "Adwaita"
+theme = "Papirus-Dark"

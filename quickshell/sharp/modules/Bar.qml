@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 
 PanelWindow {
     id: bar
@@ -222,6 +223,22 @@ PanelWindow {
     function openPanel(tab, subPage) {
         controlPanel.show(tab, subPage);
         panel.open = true;
+    }
+
+    // qs ipc call deck open <page> | toggle | close (BarState): only the focused monitor's bar answers
+    readonly property bool focused: Hyprland.focusedMonitor?.name === bar.screen?.name
+    Connections {
+        target: BarState
+        function onPanelRequested(tab, subPage) {
+            if (!bar.focused) return;
+            if (tab === "Claude") {
+                claudePopout.open = true;
+                return;
+            }
+            bar.openPanel(tab, subPage < 0 ? undefined : subPage);
+        }
+        function onPanelToggleRequested() { if (bar.focused) panel.open = !panel.open; }
+        function onPanelCloseRequested() { panel.open = false; claudePopout.open = false; }
     }
 
     Popout {

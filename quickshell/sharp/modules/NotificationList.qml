@@ -43,6 +43,32 @@ ColumnLayout {
 
         Item { Layout.fillWidth: true }
 
+        // Do not disturb (also on the Quick tab)
+        Rectangle {
+            implicitWidth: 24
+            implicitHeight: 24
+            radius: 0
+            color: Notifs.dnd ? Theme.accentMuted : dndMouse.containsMouse ? Theme.surface : "transparent"
+            border.width: 1
+            border.color: Notifs.dnd || dndMouse.containsMouse ? Theme.accent : Theme.border
+
+            Text {
+                anchors.centerIn: parent
+                text: String.fromCodePoint(Notifs.dnd ? 0xF009B : 0xF009A)
+                font.family: Theme.font
+                font.pixelSize: 13
+                color: Notifs.dnd ? Theme.fg : Theme.dim
+            }
+
+            MouseArea {
+                id: dndMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Notifs.dnd = !Notifs.dnd
+            }
+        }
+
         Rectangle {
             visible: Notifs.count > 0
             implicitWidth: clearText.implicitWidth + 20

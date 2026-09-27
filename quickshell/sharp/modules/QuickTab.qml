@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Bluetooth
+import Quickshell.Io
 
 // Toggles, brightness, capture, dictation and power
 Flickable {
@@ -12,6 +13,12 @@ Flickable {
 
     // Asks the panel to close (before screenshots etc.)
     signal closeRequested
+
+    // Stay awake: hold a systemd idle inhibitor (hypridle respects it) while on
+    Process {
+        id: awake
+        command: ["systemd-inhibit", "--what=idle", "--who=Sharp", "--why=Stay awake (control panel)", "sleep", "infinity"]
+    }
 
     function glyph(cp) {
         return String.fromCodePoint(cp);
@@ -70,6 +77,37 @@ Flickable {
                 active: Net.tsRunning
                 enabled: Net.tsAvailable
                 onClicked: Net.toggleTailscale()
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+
+            Toggle {
+                icon: root.glyph(Notifs.dnd ? 0xF009B : 0xF009A)
+                title: "DND"
+                status: Notifs.dnd ? "Only critical pop up" : "Notifications on"
+                active: Notifs.dnd
+                onClicked: Notifs.dnd = !Notifs.dnd
+            }
+
+            Toggle {
+                icon: root.glyph(0xF0176)
+                title: "Stay awake"
+                status: awake.running ? "No dim, lock or sleep" : "Idle timers normal"
+                active: awake.running
+                onClicked: awake.running = !awake.running
+            }
+
+            Toggle {
+                icon: root.glyph(0xF0335)
+                title: "Lights follow"
+                status: !Rgb.scanned ? "Checking…" : !Rgb.available ? "OpenRGB not found"
+                    : Rgb.followWallpaper ? "Theme accent" : "Manual"
+                active: Rgb.followWallpaper
+                enabled: Rgb.available || !Rgb.scanned
+                onClicked: Rgb.setFollowWallpaper(!Rgb.followWallpaper)
             }
         }
 

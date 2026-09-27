@@ -197,7 +197,9 @@ Item {
             Layout.fillHeight: true
 
             WeatherTab {}
-            StatsTab {}
+            StatsTab {
+                onCloseRequested: root.closeRequested()
+            }
             MediaTab {}
             QuickTab {
                 onCloseRequested: root.closeRequested()

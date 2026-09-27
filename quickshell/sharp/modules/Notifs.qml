@@ -13,6 +13,8 @@ Singleton {
     readonly property int count: server.trackedNotifications.values.length
     // Set on arrival, cleared when the panel is opened
     property bool unread: false
+    // Do not disturb: notifications are still kept, only critical ones pop up
+    property bool dnd: false
 
     // Every notification also pops up as a toast (Toast.qml)
     signal popup(Notification notification)
@@ -61,7 +63,7 @@ Singleton {
             root.now = new Date();
             root.unread = true;
             // Notifications carried over from before a Quickshell reload were already shown
-            if (!n.lastGeneration)
+            if (!n.lastGeneration && (!root.dnd || n.urgency === NotificationUrgency.Critical))
                 root.popup(n);
         }
     }

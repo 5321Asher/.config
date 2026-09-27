@@ -1,4 +1,4 @@
-//@ pragma IconTheme Adwaita
+//@ pragma IconTheme Sharp
 
 import Quickshell
 import "modules"

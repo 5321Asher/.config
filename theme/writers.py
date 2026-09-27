@@ -77,11 +77,11 @@ def setup_style():
     return mod
 
 
-def style_ctx(fonts):
+def style_ctx(fonts, appearance="dark"):
     def rgba(h, a):
         r, g, b = rgb(h)
         return f"rgba({r}, {g}, {b}, {a})"
-    return {"mix": mix, "rgba": rgba, "fonts": fonts, "dir": SETUP_DIR,
+    return {"mix": mix, "rgba": rgba, "fonts": fonts, "dir": SETUP_DIR, "appearance": appearance,
             "cache": f"{HOME}/.cache/theme/style/{SETUP.get('id', 'x')}"}
 
 
@@ -1162,7 +1162,7 @@ def apply(theme, openrgb=True, settings=None, cell_ratio=2.4):
 
     fonts, cursor = fonts_for(theme), cursor_for(theme)
     style = setup_style()
-    ctx = style_ctx(fonts)
+    ctx = style_ctx(fonts, appearance)
     # A setup's style can draw its own cursor theme (from the palette)
     if style and hasattr(style, "cursors"):
         cursor = cursor | {"theme": style.cursors(p, ctx) or cursor["theme"]}

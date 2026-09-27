@@ -10,6 +10,8 @@ phosphorDim, signal, starlight) and `ctx` (mix, rgba, fonts, dir, cache) and ret
 """
 
 import hashlib
+
+import iconkit
 import os
 import random
 import subprocess
@@ -496,72 +498,29 @@ entry, spinbutton {{ background-color: {p["bgDark"]}; color: {p["fg"]}; border-r
 # ---------------------------------------------------------------- icons
 
 ICON_THEME = "Observatory"
-PAPIRUS = "/usr/share/icons/Papirus"
-PAPIRUS_DARK = "/usr/share/icons/Papirus-Dark"
 
 
 def icons(p, ctx):
     """An icon theme that is Papirus-Dark with brass folders (in the colour theme's brass).
     Rebuilt in ~/.local/share/icons/Observatory only when the colours change. Returns its name."""
     mix = ctx["mix"]
-    if not os.path.isdir(PAPIRUS):
-        return None
     front, back = p["accent"], c(p, "brassDeep", "accentMuted")
     glyph = mix(p["bgDark"], back, 0.25)
-    root = os.path.expanduser(f"~/.local/share/icons/{ICON_THEME}")
-    key = hashlib.sha1(f"{front}{back}{glyph}v1".encode()).hexdigest()[:12]
-    marker = f"{root}/.palette"
-    try:
-        if open(marker).read().strip() == key:
-            return ICON_THEME
-    except OSError:
-        pass
-
     recolor = {"#5294e2": front, "#4877b1": back, "#e4e4e4": glyph, "#ffffff": glyph}
-    dirs = []
-    for size in sorted(os.listdir(PAPIRUS)):
-        src = f"{PAPIRUS}/{size}/places"
-        if not os.path.isdir(src) or os.path.islink(f"{PAPIRUS}/{size}"):
-            continue
-        out = f"{root}/{size}/places"
-        os.makedirs(out, exist_ok=True)
-        made = 0
-        # Every name Papirus(-Dark) resolves to a blue folder (folder.svg, user-home.svg, …), plus the originals
-        names = set(os.listdir(src))
-        dark = f"{PAPIRUS_DARK}/{size}/places"
-        if os.path.isdir(dark):
-            names |= set(os.listdir(dark))
-        for name in names:
-            path = f"{dark}/{name}" if os.path.exists(f"{dark}/{name}") else f"{src}/{name}"
-            real = os.path.realpath(path)
-            if not os.path.basename(real).startswith("folder-blue") or not real.endswith(".svg"):
-                continue
-            with open(real) as f:
-                svg = f.read()
-            for a, b in recolor.items():
-                svg = svg.replace(a, b).replace(a.upper(), b)
-            with open(f"{out}/{name}", "w") as f:
-                f.write(svg)
-            made += 1
-        if made:
-            dim, _, scale = size.partition("@")
-            dirs.append((f"{size}/places", int(dim.split("x")[0]), int(scale[:-1]) if scale else 1))
 
-    with open(f"{root}/index.theme", "w") as f:
-        f.write("[Icon Theme]\nName=Observatory\nComment=Papirus-Dark with brass folders (written by the Observatory setup)\n"
-                "Inherits=Papirus-Dark,Adwaita,hicolor\n"
-                f"Directories={','.join(d for d, _, _ in dirs)}\n\n")
-        for d, size, scale in dirs:
-            f.write(f"[{d}]\nContext=Places\nSize={size}\n" + (f"Scale={scale}\n" if scale > 1 else "") + "Type=Fixed\n\n")
-    with open(marker, "w") as f:
-        f.write(key + "\n")
-    return ICON_THEME
+    def draw(a):
+        svg = a["svg"]
+        for old, new in recolor.items():
+            svg = svg.replace(old, new).replace(old.upper(), new)
+        return svg
+
+    return iconkit.folder_theme(ICON_THEME, "Papirus-Dark with brass folders (written by the Observatory setup)",
+                                draw, iconkit.palette_key(front, back, glyph, "v2"), "Papirus-Dark,Adwaita,hicolor")
 
 
 # ---------------------------------------------------------------- cursors
 
 CURSOR_THEME = "Observatory-Cursors"
-CURSOR_SIZES = (24, 32, 48)
 
 
 def _cursor_svgs(p, mix):
@@ -636,87 +595,10 @@ def _cursor_svgs(p, mix):
     }
 
 
-# every standard cursor name -> one of the shapes above
-CURSOR_NAMES = {
-    "arrow": ["default", "left_ptr", "arrow", "top_left_arrow", "context-menu", "right_ptr", "center_ptr"],
-    "pointer": ["pointer", "hand", "hand1", "hand2", "pointing_hand", "grab", "openhand", "e29285e634086352946a0e7090d73106"],
-    "text": ["text", "xterm", "ibeam", "vertical-text"],
-    "crosshair": ["crosshair", "cross", "tcross", "cross_reverse", "diamond_cross", "cell", "color-picker", "zoom-in", "zoom-out", "plus"],
-    "wait": ["wait", "watch"],
-    "progress": ["progress", "left_ptr_watch", "half-busy", "00000000000000020006000e7e9ffc3f", "08e8e1c95fe2fc01f976f1e063a24ccd", "3ecb610c1bf2410f44200f48c40d3599"],
-    "move": ["move", "fleur", "all-scroll", "grabbing", "closedhand", "dnd-move", "size_all", "4498f0e0c1937ffe01fd06f973665830", "9081237383d90e509aa00f00170e968f"],
-    "ns": ["ns-resize", "n-resize", "s-resize", "row-resize", "sb_v_double_arrow", "v_double_arrow", "top_side", "bottom_side", "size_ver", "split_v", "00008160000006810000408080010102"],
-    "ew": ["ew-resize", "e-resize", "w-resize", "col-resize", "sb_h_double_arrow", "h_double_arrow", "left_side", "right_side", "size_hor", "split_h", "028006030e0e7ebffc7f7070c0600140"],
-    "nwse": ["nwse-resize", "nw-resize", "se-resize", "top_left_corner", "bottom_right_corner", "bd_double_arrow", "size_fdiag", "c7088f0f3e6c8088236ef8e1e3e70000"],
-    "nesw": ["nesw-resize", "ne-resize", "sw-resize", "top_right_corner", "bottom_left_corner", "fd_double_arrow", "size_bdiag", "fcf1c3c7cd4491d801f1e1c78f100000"],
-    "forbidden": ["not-allowed", "no-drop", "crossed_circle", "forbidden", "circle", "X_cursor", "pirate", "03b6e0fcb3499374a867c041f52298f0"],
-    "help": ["help", "question_arrow", "whats_this", "left_ptr_help", "dnd-ask", "d9ce0ab605698f320427677b458ad60b", "5c6cd98b3f3ebcb1f9c7f1c204630408"],
-    "copy": ["copy", "dnd-copy", "1081e37283d90000800003c07f3ef6bf", "6407b0e94181790501fd1e167b474872"],
-    "link": ["alias", "dnd-link", "link", "3085a0e285430894940527032f8b26df", "640fb0e74195791501fd1ed57b41487f"],
-}
-
-
-def _xcursor(images):
-    """Xcursor file bytes. images: [(nominal size, w, h, xhot, yhot, delay ms, ARGB32 premultiplied LE bytes)]."""
-    import struct
-    header = struct.pack("<4sIII", b"Xcur", 16, 0x10000, len(images))
-    toc, chunks, pos = b"", b"", 16 + 12 * len(images)
-    for size, w, h, xh, yh, delay, pixels in images:
-        toc += struct.pack("<III", 0xFFFD0002, size, pos)
-        chunk = struct.pack("<IIIIIIIII", 36, 0xFFFD0002, size, 1, w, h, xh, yh, delay) + pixels
-        chunks += chunk
-        pos += len(chunk)
-    return header + toc + chunks
-
-
-def _render(svg_text, px):
-    """RGBA straight -> ARGB32 premultiplied little-endian, via ImageMagick."""
-    raw = subprocess.run(["magick", "-background", "none", "-density", str(96 * px / 64), "svg:-",
-                          "-resize", f"{px}x{px}!", "-depth", "8", "rgba:-"], input=svg_text.encode(),
-                         capture_output=True, timeout=30).stdout
-    out = bytearray(len(raw))
-    for i in range(0, len(raw), 4):
-        r, g, b, a = raw[i], raw[i + 1], raw[i + 2], raw[i + 3]
-        out[i] = b * a // 255
-        out[i + 1] = g * a // 255
-        out[i + 2] = r * a // 255
-        out[i + 3] = a
-    return bytes(out)
-
-
 def cursors(p, ctx):
     """A brass cursor theme in the colour theme's colours, rebuilt in ~/.local/share/icons/Observatory-Cursors
     only when the colours change. Returns its name."""
-    shapes = _cursor_svgs(p, ctx["mix"])
-    key = hashlib.sha1(("".join(p[k] for k in ("accent", "bgDark")) + c(p, "brassBright") + c(p, "phosphor", "purple")
-                        + c(p, "signal", "danger") + "v1").encode()).hexdigest()[:12]
-    root = os.path.expanduser(f"~/.local/share/icons/{CURSOR_THEME}")
-    marker = f"{root}/.palette"
-    try:
-        if open(marker).read().strip() == key:
-            return CURSOR_THEME
-    except OSError:
-        pass
-    cdir = f"{root}/cursors"
-    os.makedirs(cdir, exist_ok=True)
-    for shape, (make, (hx, hy), frames) in shapes.items():
-        images = []
-        for size in CURSOR_SIZES:
-            for f in range(frames):
-                px = _render(make(f, frames), size)
-                images.append((size, size, size, round(hx * size / 64), round(hy * size / 64),
-                               60 if frames > 1 else 0, px))
-        with open(f"{cdir}/{shape}", "wb") as fh:
-            fh.write(_xcursor(images))
-        for name in CURSOR_NAMES.get(shape, []):
-            if name == shape:
-                continue
-            link = f"{cdir}/{name}"
-            if os.path.lexists(link):
-                os.unlink(link)
-            os.symlink(shape, link)
-    with open(f"{root}/index.theme", "w") as fh:
-        fh.write("[Icon Theme]\nName=Observatory Cursors\nComment=Brass instrument cursors (written by the Observatory setup)\nInherits=Adwaita\n")
-    with open(marker, "w") as fh:
-        fh.write(key + "\n")
-    return CURSOR_THEME
+    key = iconkit.palette_key(p["accent"], p["bgDark"], c(p, "brassBright"), c(p, "phosphor", "purple"),
+                              c(p, "signal", "danger"), "v1")
+    return iconkit.cursor_theme(CURSOR_THEME, "Brass instrument cursors (written by the Observatory setup)",
+                                _cursor_svgs(p, ctx["mix"]), key)
