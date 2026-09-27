@@ -1,6 +1,6 @@
 # ~/.config/elephant/menus/start.toml
 # Root panel opened by SUPER + Space (walker -m menus:start).
-# Rendered as a row of 4 tiles — see themes/tokyonight/item_menus-start_grid.xml
+# Rendered as a row of 4 tiles — see walker/themes/<setup>/item_menus-start_grid.xml
 name = "start"
 name_pretty = "Menu"
 icon = "󰍜"

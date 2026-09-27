@@ -1,8 +1,8 @@
 /* Tokyo Night — sharp, flat Walker theme
-   Location: ~/.config/walker/themes/tokyonight/style.css */
+   Location: ~/.config/walker/themes/observatory/style.css */
 
 /* Colours come from the wallpaper (generated colors.css); defaults live there too */
-@import url("file:///home/av/.config/walker/themes/tokyonight/colors.css");
+@import url("file:///home/av/.config/walker/themes/observatory/colors.css");
 
 * {
   all: unset;
@@ -204,11 +204,11 @@ row:selected .item-text {
 }
 
 /* ---------- decorative side image ---------- */
-/* Put your portrait at ~/.config/walker/themes/tokyonight/side.jpg
+/* Put your portrait at ~/.config/walker/themes/observatory/side.jpg
    (or change the path below — it must be an absolute file:// path). */
 
 .side-image {
-  background-image: url("file:///home/av/.config/walker/themes/tokyonight/side.jpg");
+  background-image: url("file:///home/av/.config/walker/themes/observatory/side.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- ~/.config/walker/themes/tokyonight/layout.xml
+<!-- ~/.config/walker/themes/observatory/layout.xml
      Default Walker layout + a decorative image panel on the right (SideImage). -->
 <interface>
   <requires lib="gtk" version="4.0"></requires>

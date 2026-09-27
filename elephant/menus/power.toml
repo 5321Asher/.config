@@ -1,5 +1,5 @@
 # ~/.config/elephant/menus/power.toml
-# Rendered as a row of buttons — see themes/tokyonight/item_menus-power_grid.xml
+# Rendered as a row of buttons — see walker/themes/<setup>/item_menus-power_grid.xml
 name = "power"
 name_pretty = "Power"
 icon = "󰐥"
