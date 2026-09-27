@@ -256,13 +256,7 @@ hl.window_rule({
   center = true,
 })
 
--- Brave goes see-through while a New Tab is showing (the rule follows title changes)
-hl.window_rule({
-  name    = "brave-newtab-transparent",
-  match   = { class = "^brave-browser$", title = "^New (Private )?Tab - Brave$" },
-
-  opacity = "0.85 override 0.75 override",
-})
+-- Brave's see-through New Tab is per setup: the rule is in each setup's look.lua
 
 -- btop (SUPER + SHIFT + Escape) opens as a centered floating window
 hl.window_rule({
