@@ -89,3 +89,12 @@ hl.layer_rule({
   match   = { namespace = "^observatory-.*" },
   no_anim = true,
 })
+
+-- Brave's New Tab goes see-through in every setup (hyprland.lua); Observatory's blur is heavy enough
+-- to smear the wallpaper into haze behind it, so that window gets none: the star chart shows through
+-- as clearly as in Sharp
+hl.window_rule({
+  name    = "observatory-brave-newtab-clear",
+  match   = { class = "^brave-browser$", title = "^New (Private )?Tab - Brave$" },
+  no_blur = true,
+})
