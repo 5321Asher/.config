@@ -1,6 +1,7 @@
 # Red Watch: Night-vision observing: black dome, copper instruments, dim red readouts that keep your eyes dark-adapted.
 name = "Red Watch"
 appearance = "dark"
+wallpaper = "observatory-red-watch-sky.mp4"   # the animated star chart (skyvideo.py)
 
 [palette]
 bg          = "#0d0707"

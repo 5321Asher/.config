@@ -1,6 +1,7 @@
 # Solar: A solar observatory at dusk: smoked-glass brown-black, polished gold, orange hydrogen-alpha readouts.
 name = "Solar"
 appearance = "dark"
+wallpaper = "observatory-solar-sky.mp4"   # the animated star chart (skyvideo.py)
 
 [palette]
 bg          = "#120d08"

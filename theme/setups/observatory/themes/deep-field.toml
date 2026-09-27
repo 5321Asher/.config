@@ -1,6 +1,7 @@
 # Deep Field: night sky blue-black, polished brass, phosphor cyan readouts, signal red alarms.
 name = "Deep Field"
 appearance = "dark"
+wallpaper = "observatory-deep-field-sky.mp4"   # the animated star chart (skyvideo.py)
 
 [palette]
 bg          = "#0b0e17"

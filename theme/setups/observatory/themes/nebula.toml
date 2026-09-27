@@ -1,6 +1,7 @@
 # Nebula: Looking into an emission nebula: violet-black depths, rose-gold instruments, magenta readouts.
 name = "Nebula"
 appearance = "dark"
+wallpaper = "observatory-nebula-sky.mp4"   # the animated star chart (skyvideo.py)
 
 [palette]
 bg          = "#0f0a17"

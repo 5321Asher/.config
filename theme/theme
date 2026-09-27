@@ -556,11 +556,19 @@ class Transition:
         os.makedirs(TRANSITION_DIR, exist_ok=True)
         for name in os.listdir(TRANSITION_DIR):
             os.unlink(f"{TRANSITION_DIR}/{name}")
-        outputs = [m["name"] for m in json.loads(subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True,
-                                                                 text=True, timeout=3).stdout or "[]")]
-        grabs = [subprocess.Popen(["grim", "-t", "ppm", "-o", o, f"{TRANSITION_DIR}/{o}.ppm"]) for o in outputs]
-        for g in grabs:
-            g.wait(timeout=3)
+        monitors = json.loads(subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True,
+                                             text=True, timeout=3).stdout or "[]")
+        if not monitors or not all(m.get("dpmsStatus", True) for m in monitors):
+            return                                 # screens off: nothing to see, and grim would wait forever
+        grabs = [subprocess.Popen(["grim", "-t", "ppm", "-o", m["name"], f"{TRANSITION_DIR}/{m['name']}.ppm"])
+                 for m in monitors]
+        try:
+            for g in grabs:
+                g.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            for g in grabs:
+                g.kill()
+            raise
         with open(f"{TRANSITION_DIR}/params.json", "w") as f:
             json.dump({"style": conf.get("style", "fade"), "accent": accent,
                        "duration": int(conf.get("duration", 700))}, f)

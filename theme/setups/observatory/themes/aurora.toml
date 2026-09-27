@@ -1,6 +1,7 @@
 # Aurora: A polar station under the northern lights: slate-black sky, burnished steel instruments, aurora-green readouts.
 name = "Aurora"
 appearance = "dark"
+wallpaper = "observatory-aurora-sky.mp4"   # the animated star chart (skyvideo.py)
 
 [palette]
 bg          = "#080f12"

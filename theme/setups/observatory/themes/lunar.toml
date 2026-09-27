@@ -1,6 +1,7 @@
 # Lunar: Daytime in the chart room: parchment, bronze fittings, sea-green ink. Star charts print dark on light.
 name = "Lunar"
 appearance = "light"
+wallpaper = "observatory-lunar-sky.mp4"   # the animated star chart (skyvideo.py)
 
 [palette]
 bg          = "#eee8da"
