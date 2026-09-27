@@ -1,6 +1,9 @@
 # Rice configs only: everything is ignored unless listed below
 /*
 !/.gitignore
+!/README.md
+!/brave-flags.conf
+!/chromium-flags.conf
 !/theme/
 !/quickshell/
 !/walker/

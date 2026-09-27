@@ -2,3 +2,7 @@
 # Observatory's lock screen (lock/LockState.qml). Password only: no pam_faillock, so wrong attempts
 # can never lock the account the way system-auth's faillock does (3 tries -> 10 minutes).
 auth required pam_unix.so
+# Unlocking the screen also unlocks the GNOME keyring (the login keyring, if its password is your login
+# password). Optional, and "-" = skipped silently if gnome-keyring isn't installed: it can never make
+# an unlock fail.
+-auth optional pam_gnome_keyring.so
