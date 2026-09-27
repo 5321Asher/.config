@@ -6,7 +6,7 @@
 
 * {
   all: unset;
-  font-family: "CaskaydiaMono Nerd Font Mono", monospace;
+  /* font-family: from colors.css (the setup font) */
   font-size: 14px;
 }
 
@@ -169,7 +169,7 @@ row:selected .item-text {
 .preview-content.archlinuxpkgs,
 .preview-content.dnfpackages,
 .preview-content.aptpackages {
-  font-family: "CaskaydiaMono Nerd Font Mono", monospace;
+  /* font-family: from colors.css (the setup font) */
 }
 
 /* ---------- keybind hints ---------- */

@@ -1,0 +1,24 @@
+# Sharp: flat, square, quick. Cascadia everywhere, tabbed bar along the top.
+name = "Sharp"
+description = "flat · square · quick"
+default_theme = "tokyo-night"
+icon = "󰒓"
+
+# Run by `theme lock` (hypridle's lock_cmd, so SUPER+L / idle / suspend all come here)
+lock = "pidof hyprlock || hyprlock"
+
+# System-wide: fontconfig's generic families, GTK, Qt, kitty, Walker, Quickshell, hyprlock, Zed, Obsidian.
+# A theme can override any of these with its own [fonts] table.
+[fonts]
+mono    = "CaskaydiaMono Nerd Font Mono"
+sans    = "CaskaydiaMono Nerd Font Mono"
+serif   = "CaskaydiaMono Nerd Font Mono"
+display = "CaskaydiaMono Nerd Font Mono"
+size    = 11
+
+[cursor]
+theme = "Adwaita"
+size  = 24
+
+[hyprland]
+border = "gradient"   # accent -> second accent; "accent" = solid

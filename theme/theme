@@ -1,35 +1,43 @@
 #!/usr/bin/env python3
-"""Colour themes drive everything; the wallpaper follows the theme.
+"""Setups hold everything; colour themes live inside a setup; the wallpaper follows the theme.
 
-Themes:     ~/.config/theme/themes/<id>.toml   (palette, terminal ANSI, syntax colours)
-Wallpapers: ~/Pictures/Wallpaper-Themes/_pool/      every wallpaper you own (drop new ones here)
-            ~/Pictures/Wallpaper-Themes/<id>/       the ones you assigned to that theme (hardlinks
-                                                    of pool files, so they cost no space)
-Images:     ~/.config/theme/images/<id>/walker.*     Walker's side picture for that theme
-            ~/.config/theme/images/<id>/fastfetch.*  fastfetch's logo, sized to fit settings.toml's box
-            ~/.config/theme/images/_default/         used by themes without their own
+A setup is a whole desktop: its Quickshell, Walker theme, Hyprland look, kitty, hyprlock, cava,
+fastfetch layout, fonts and cursor, plus its own colour themes. Nothing is shared between setups.
 
-You choose what goes where: `theme pool` (or the TUI) lists the whole pool with a preview and number
-keys toggle each wallpaper in/out of each theme. Nothing is assigned automatically; new wallpapers
-wait in the pool until you assign them.
+Setups:     ~/.config/theme/setups/<setup>/setup.toml         name, fonts, cursor, default theme, lock
+            ~/.config/theme/setups/<setup>/themes/<id>.toml   that setup's colour themes
+            ~/.config/theme/setups/<setup>/images/<id>/       Walker + fastfetch images per theme
+            ~/.config/theme/setups/<setup>/templates/         fastfetch.jsonc
+            ~/.config/theme/setups/<setup>/files/...          app configs, linked into ~/.config on a switch
+                                                              (files/kitty/kitty.conf -> ~/.config/kitty/kitty.conf)
+            ~/.config/quickshell/<setup>/                     its shell; ~/.config/quickshell/default -> it
+            ~/.config/walker/themes/<setup>/                  its Walker theme; walker/themes/active -> it
+Wallpapers: ~/Pictures/Wallpaper-Themes/_pool/                every wallpaper you own (drop new ones here)
+            ~/Pictures/Wallpaper-Themes/<setup>/_all/         included in the setup, for any of its themes
+            ~/Pictures/Wallpaper-Themes/<setup>/<id>/         assigned to one of the setup's themes
+            (hardlinks of pool files, so they cost no space)
 
-Switching theme rewrites every app's colours (writers.py) and rebuilds ~/Pictures/Wallpapers, the
-folder skwd-wall shows, out of hardlinks to the theme's wallpapers. Files that turn up there some
-other way (skwd downloads, effects renders) are moved into the pool.
+skwd-wall shows the active theme's wallpapers; a theme with none assigned shows everything in its setup.
+Each setup remembers its last theme, each theme its last wallpaper.
 
   theme                      open the manager (TUI)
   theme pool                 open the TUI straight on the pool, to assign wallpapers
-  theme list                 themes, * = active
+  theme setups               setups, * = active
+  theme setup                active setup id
+  theme setup <id>           switch setup: shell, launcher, look, fonts, its last theme + wallpaper
+  theme list                 the active setup's themes, * = active
   theme current              active theme id
   theme set <id>             switch theme: colours, wallpapers, wallpaper
   theme next | prev          cycle themes
-  theme reload               re-apply the active theme's colours (after editing its file)
+  theme reload               re-apply the active theme (after editing its file)
   theme sync                 rebuild ~/Pictures/Wallpapers for the active theme
   theme wall                 random wallpaper from the active theme
   theme edit [id]            edit a theme file in kitty + nvim, re-apply on exit
   theme image                show every theme's Walker + fastfetch images
   theme image <walker|fastfetch> <file|--clear> [id]
                              set (copy in) or clear a theme's image (default: the active theme)
+  theme shell                (re)start the active setup's Quickshell
+  theme lock                 lock the screen the active setup's way (hypridle's lock_cmd)
   theme openrgb              re-apply the OpenRGB colour only
 """
 
@@ -46,17 +54,54 @@ sys.path.insert(0, HERE)
 import writers  # noqa: E402
 
 HOME = os.path.expanduser("~")
-THEMES = f"{HERE}/themes"
+CONFIG = f"{HOME}/.config"
+SETUPS = f"{HERE}/setups"
 LIBRARY = f"{HOME}/Pictures/Wallpaper-Themes"
 POOL = "_pool"
+ALL = "_all"          # per-setup folder: in the setup, not tied to one theme
 VIEW = f"{HOME}/Pictures/Wallpapers"
 STATE = f"{HOME}/.local/state/theme/state.json"
 THUMBS = f"{HOME}/.cache/theme/thumbs"
 SKWD_LAST = f"{HOME}/.cache/skwd-wall-v2/last-wallpaper.json"
-DEFAULT = "tokyo-night"
+DEFAULT_SETUP = "sharp"
 
 IMAGE_EXT = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".gif", ".avif", ".jxl", ".tif", ".tiff"}
 VIDEO_EXT = {".mp4", ".webm", ".mkv", ".mov", ".avi"}
+
+SETUP = None          # the setup being worked on (use()); normally the active one
+THEMES = None         # SETUPS/<SETUP>/themes
+
+
+# ---------------------------------------------------------------- setups
+
+def setup_ids():
+    try:
+        return sorted(d for d in os.listdir(SETUPS) if os.path.isfile(f"{SETUPS}/{d}/setup.toml"))
+    except OSError:
+        return []
+
+
+def load_setup(sid):
+    with open(f"{SETUPS}/{sid}/setup.toml", "rb") as f:
+        s = tomllib.load(f)
+    s.setdefault("name", sid)
+    s["id"] = sid
+    s["dir"] = f"{SETUPS}/{sid}"
+    return s
+
+
+def active_setup():
+    sid = load_state().get("setup")
+    ids = setup_ids()
+    return sid if sid in ids else DEFAULT_SETUP if DEFAULT_SETUP in ids else (ids or [DEFAULT_SETUP])[0]
+
+
+def use(sid):
+    """Point theme lookups, wallpaper folders and the writers at a setup."""
+    global SETUP, THEMES
+    SETUP = sid
+    THEMES = f"{SETUPS}/{sid}/themes"
+    writers.configure(load_setup(sid))
 
 
 # ---------------------------------------------------------------- themes / state
@@ -117,18 +162,33 @@ def apply_colours(theme):
 def load_state():
     try:
         with open(STATE) as f:
-            return json.load(f)
+            state = json.load(f)
     except (OSError, ValueError):
         return {}
+    if "current" in state and "setups" not in state:
+        # From before setups: everything was Sharp
+        state = {"setup": DEFAULT_SETUP, "cell_ratio": state.get("cell_ratio"),
+                 "setups": {DEFAULT_SETUP: {"current": state["current"],
+                                            "wallpapers": state.get("wallpapers", {})}}}
+    return state
 
 
 def save_state(state):
     writers.write(STATE, json.dumps(state, indent=2) + "\n")
 
 
+def setup_state(state, sid=None):
+    """The part of the state that belongs to one setup: {"current": theme, "wallpapers": {theme: rel}}."""
+    return state.setdefault("setups", {}).setdefault(sid or SETUP, {})
+
+
 def current():
-    tid = load_state().get("current")
-    return tid if tid in theme_ids() else DEFAULT
+    ids = theme_ids()
+    tid = setup_state(load_state()).get("current")
+    if tid in ids:
+        return tid
+    default = load_setup(SETUP).get("default_theme")
+    return default if default in ids else (ids or [None])[0]
 
 
 def notify(summary, body=""):
@@ -154,7 +214,8 @@ def walk_files(root):
 
 
 def folder(tid):
-    return os.path.join(LIBRARY, tid)
+    """The pool, or <setup>/<theme> (and <setup>/_all) for the setup in use."""
+    return os.path.join(LIBRARY, POOL) if tid == POOL else os.path.join(LIBRARY, SETUP, tid)
 
 
 def theme_walls(tid):
@@ -235,8 +296,8 @@ def pool_items():
 
 
 def memberships(ids=None):
-    """{item key: set of theme ids} for everything assigned somewhere."""
-    ids = ids or theme_ids()
+    """{item key: set of theme ids (and ALL)} for everything assigned somewhere in the setup in use."""
+    ids = (ids or theme_ids()) + [ALL]
     pool = {i: rel for i, rel in ((inode(p), r) for r, p in walk_files(folder(POOL)).items())}
     out = {}
     for tid in ids:
@@ -251,7 +312,7 @@ def memberships(ids=None):
 
 
 def assign(tid, item, on):
-    """Put a pool item into / take it out of a theme."""
+    """Put a pool item into / take it out of a theme (or ALL) of the setup in use."""
     pool_path = item["path"]
     here = [p for p in theme_walls(tid).values() if same_file(p, pool_path)]
     if on and not here:
@@ -262,6 +323,29 @@ def assign(tid, item, on):
         tidy(folder(tid))
 
 
+def view_walls(tid):
+    """What skwd-wall shows for a theme: its own wallpapers, else everything in its setup."""
+    own = theme_walls(tid)
+    if own:
+        return own
+    out, seen = {}, set()
+    for t in [ALL] + theme_ids():
+        for rel, path in sorted(theme_walls(t).items()):
+            try:
+                key = inode(path)
+            except OSError:
+                continue
+            if key in seen:
+                continue
+            seen.add(key)
+            name = os.path.basename(rel)
+            while name in out:
+                base, ext = os.path.splitext(name)
+                name = f"{base}-2{ext}"
+            out[name] = path
+    return out
+
+
 # ---------------------------------------------------------------- what skwd-wall shows
 
 def sync(tid):
@@ -270,7 +354,7 @@ def sync(tid):
     pooled = fill_pool()  # strays in ~/Pictures/Wallpapers are safe in the pool before anything goes
     added = removed = 0
 
-    wanted = theme_walls(tid)
+    wanted = view_walls(tid)
     for rel, path in walk_files(VIEW).items():
         if rel in wanted and same_file(path, wanted[rel]):
             continue
@@ -311,7 +395,7 @@ def apply_wallpaper(path):
 
 def pick_wallpaper(tid, theme, state, avoid=None):
     view = walk_files(VIEW)
-    for rel in (state.get("wallpapers", {}).get(tid), theme.get("wallpaper")):
+    for rel in (setup_state(state).get("wallpapers", {}).get(tid), theme.get("wallpaper")):
         if rel and rel in view and rel != avoid:
             return view[rel]
     if not view:
@@ -319,6 +403,15 @@ def pick_wallpaper(tid, theme, state, avoid=None):
     stills = [p for r, p in view.items() if os.path.splitext(r)[1].lower() in IMAGE_EXT and r != avoid]
     pool = stills or [p for r, p in view.items() if r != avoid] or list(view.values())
     return random.choice(pool)
+
+
+def remember_wallpaper(state):
+    """Note the wallpaper the active theme is on, so coming back to it restores it."""
+    sid = state.get("setup")
+    old = setup_state(state, sid).get("current") if sid else None
+    rel = current_wallpaper_rel()
+    if old and rel:
+        setup_state(state, sid).setdefault("wallpapers", {})[old] = rel
 
 
 # ---------------------------------------------------------------- previews (for the TUI)
@@ -349,23 +442,75 @@ def thumbnail(item):
     return out if ok and os.path.exists(out) else None
 
 
+# ---------------------------------------------------------------- setup plumbing
+
+def setup_files(sid):
+    """{target under ~/.config: source file} for everything in setups/<sid>/files/."""
+    root = f"{SETUPS}/{sid}/files"
+    out = {}
+    for dirpath, _, files in os.walk(root):
+        for name in files:
+            src = os.path.join(dirpath, name)
+            out[os.path.join(CONFIG, os.path.relpath(src, root))] = src
+    return out
+
+
+def point(link_path, target):
+    """Make link_path a symlink to target (relative), replacing an old symlink atomically."""
+    os.makedirs(os.path.dirname(link_path), exist_ok=True)
+    rel = os.path.relpath(target, os.path.dirname(link_path))
+    tmp = link_path + ".tmp-link"
+    if os.path.lexists(tmp):
+        os.unlink(tmp)
+    os.symlink(rel, tmp)
+    os.replace(tmp, link_path)
+
+
+def link_setup(sid, old=None):
+    """Link the setup's files into ~/.config and point the Quickshell / Walker pointers at it.
+
+    A real file where a link should go is kept as <file>.pre-setup; links the old setup owned that
+    the new one doesn't have are removed.
+    """
+    new = setup_files(sid)
+    if old and old != sid:
+        for target in setup_files(old):
+            if target not in new and os.path.islink(target) and \
+                    os.path.realpath(target).startswith(SETUPS + os.sep):
+                os.unlink(target)
+    for target, src in new.items():
+        if os.path.lexists(target) and not os.path.islink(target):
+            os.replace(target, free_path(target + ".pre-setup"))
+        point(target, src)
+    if os.path.isfile(f"{CONFIG}/quickshell/{sid}/shell.qml"):
+        point(f"{CONFIG}/quickshell/default", f"{CONFIG}/quickshell/{sid}")
+    if os.path.isdir(f"{CONFIG}/walker/themes/{sid}"):
+        point(f"{CONFIG}/walker/themes/active", f"{CONFIG}/walker/themes/{sid}")
+
+
+def restart_shell():
+    """Quickshell for the active setup (~/.config/quickshell/default). The old one goes first:
+    only one process can own notifications and the tray."""
+    writers.run("pkill", "-x", "qs")
+    for _ in range(20):
+        if subprocess.run(["pgrep", "-x", "qs"], stdout=subprocess.DEVNULL).returncode:
+            break
+        subprocess.run(["sleep", "0.1"])
+    subprocess.Popen(["qs"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+
+
 # ---------------------------------------------------------------- commands
 
 def cmd_set(tid, quiet=False):
     if tid not in theme_ids():
-        sys.exit(f"no theme '{tid}' (have: {', '.join(theme_ids())})")
+        sys.exit(f"no theme '{tid}' in {SETUP} (have: {', '.join(theme_ids())})")
     theme = load_theme(tid)
     state = load_state()
-    old = state.get("current")
-
-    # Remember the wallpaper the old theme was on, so coming back restores it
-    if old:
-        rel = current_wallpaper_rel()
-        if rel:
-            state.setdefault("wallpapers", {})[old] = rel
+    remember_wallpaper(state)
 
     added, removed, pooled = sync(tid)
-    state["current"] = tid
+    state["setup"] = SETUP
+    setup_state(state)["current"] = tid
     save_state(state)
 
     apply_colours(theme)
@@ -380,11 +525,43 @@ def cmd_set(tid, quiet=False):
     return pooled
 
 
+def cmd_setup(sid, quiet=False):
+    if sid not in setup_ids():
+        sys.exit(f"no setup '{sid}' (have: {', '.join(setup_ids())})")
+    state = load_state()
+    old = state.get("setup")
+    remember_wallpaper(state)
+    save_state(state)
+
+    use(sid)
+    link_setup(sid, old)
+    tid = current()
+    if not tid:
+        sys.exit(f"setup '{sid}' has no themes in {THEMES}")
+    pooled = cmd_set(tid, quiet=True)   # colours, fonts, cursor, wallpapers, Walker restart
+    writers.run("hyprctl", "reload")    # the new look.lua (colors.lua is already written)
+    restart_shell()
+    if not quiet:
+        setup = load_setup(sid)
+        notify(f"Setup: {setup['name']}", f"theme {load_theme(tid)['name']}")
+    return pooled
+
+
+def cmd_setups():
+    cur = active_setup()
+    for sid in setup_ids():
+        s = load_setup(sid)
+        use(sid)
+        print(f"{'*' if sid == cur else ' '} {sid:<16} {s['name']:<16} {len(theme_ids()):>2} themes"
+              f"   last theme: {current()}")
+
+
 def cmd_list():
     cur = current()
     for tid in theme_ids():
         t = load_theme(tid)
         print(f"{'*' if tid == cur else ' '} {tid:<20} {t['name']:<20} {len(theme_walls(tid)):>3} wallpapers")
+    print(f"  {'(setup)':<20} {'any theme':<20} {len(theme_walls(ALL)):>3} wallpapers")
     print(f"  {'(pool)':<20} {'everything':<20} {len(theme_walls(POOL)):>3} wallpapers")
 
 
@@ -431,7 +608,7 @@ def set_image(tid, kind, src):
             os.unlink(os.path.join(folder_, name))
     if src:
         shutil.copyfile(src, os.path.join(folder_, kind + os.path.splitext(src)[1].lower()))
-    if tid == current():
+    if tid == current() and SETUP == active_setup():
         cmd_reload()
 
 
@@ -453,12 +630,41 @@ def cmd_edit(tid=None):
                      start_new_session=True)
 
 
+def cmd_rows(what):
+    """Tab-separated rows for the Walker menus (elephant/menus/themes.lua, setups.lua)."""
+    if what == "themes":
+        cur = current()
+        for tid in theme_ids():
+            t = load_theme(tid)
+            print("\t".join([tid, t["name"], t.get("palette", {}).get("accent", ""),
+                             str(len(theme_walls(tid))), "1" if tid == cur else "0"]))
+    elif what == "setups":
+        cur = active_setup()
+        for sid in setup_ids():
+            s = load_setup(sid)
+            use(sid)
+            print("\t".join([sid, s["name"], s.get("description", ""), str(len(theme_ids())),
+                             load_theme(current())["name"] if current() else "", "1" if sid == cur else "0"]))
+
+
+def cmd_lock():
+    cmd = load_setup(SETUP).get("lock", "pidof hyprlock || hyprlock")
+    os.execvp("sh", ["sh", "-c", cmd])
+
+
 def main():
     measure_cells()
+    use(active_setup())
     args = sys.argv[1:]
     cmd = args[0] if args else "tui"
     if cmd in ("-h", "--help", "help"):
         print(__doc__)
+    elif cmd == "setups":
+        cmd_setups()
+    elif cmd == "setup" and len(args) == 1:
+        print(SETUP)
+    elif cmd == "setup" and len(args) == 2:
+        cmd_setup(args[1])
     elif cmd == "list":
         cmd_list()
     elif cmd == "current":
@@ -479,6 +685,12 @@ def main():
         cmd_edit(args[1] if len(args) > 1 else None)
     elif cmd == "image":
         cmd_image(args[1:])
+    elif cmd == "shell":
+        restart_shell()
+    elif cmd == "lock":
+        cmd_lock()
+    elif cmd == "rows" and len(args) == 2:
+        cmd_rows(args[1])
     elif cmd == "openrgb":
         writers.apply_openrgb_only(load_theme(current()))
     elif cmd in ("tui", "pool"):

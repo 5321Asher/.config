@@ -26,7 +26,7 @@ Singleton {
     readonly property color danger: palette.danger ?? "#f7768e"
     readonly property color green: palette.green ?? "#9ece6a"
 
-    readonly property string font: "CaskaydiaMono Nerd Font Mono"
+    readonly property string font: palette.fontMono ?? "CaskaydiaMono Nerd Font Mono"
     readonly property int barHeight: 36
 
     // Palette written by ~/.config/theme/theme

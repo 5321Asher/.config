@@ -1,5 +1,5 @@
 # ~/.config/elephant/menus/style.toml
-# Look & feel, grouped like Trigger: Theme (the picker) first, then submenus.
+# Look & feel, grouped like Trigger: Setup and Theme (the pickers) first, then submenus.
 name = "style"
 name_pretty = "Style"
 icon = "󰏘"
@@ -7,6 +7,13 @@ parent = "start"
 fixed_order = true
 hide_from_providerlist = true
 action = "%VALUE%"
+
+[[entries]]
+text = "Setup"
+subtext = "switch the whole desktop · shell, launcher, look, fonts, themes"
+icon = "󰕮"
+keywords = ["setup", "desktop", "rice", "shell", "layout", "switch"]
+submenu = "setups"
 
 [[entries]]
 text = "Theme"

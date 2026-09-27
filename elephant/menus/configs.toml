@@ -9,14 +9,14 @@ action = "%VALUE%"
 
 [[entries]]
 text = "Hyprland look"
-subtext = "gaps, borders, animations"
+subtext = "gaps, borders, animations (this setup)"
 icon = "󰖲"
 keywords = ["hyprland", "gaps", "border", "animation"]
-value = "kitty -e nvim ~/.config/hypr/hyprland.lua"
+value = "kitty -e nvim ~/.config/hypr/look.lua"
 
 [[entries]]
 text = "Kitty"
-subtext = "font, opacity (colours come from the theme)"
+subtext = "padding, opacity (this setup; colours + font from the theme)"
 icon = "󰄛"
 keywords = ["kitty", "terminal", "font"]
 value = "kitty -e nvim ~/.config/kitty/kitty.conf"
@@ -26,21 +26,21 @@ text = "Walker style"
 subtext = "layout + css (colours come from the theme)"
 icon = "󰉼"
 keywords = ["walker", "css", "style", "launcher"]
-value = "kitty -e nvim ~/.config/walker/themes/tokyonight/style.css"
+value = "kitty -e nvim ~/.config/walker/themes/active/style.css"
 
 [[entries]]
 text = "Quickshell"
 subtext = "the bar and panels"
 icon = "󰕮"
 keywords = ["quickshell", "bar", "panel", "qml"]
-value = "kitty -e nvim ~/.config/quickshell"
+value = "kitty -e nvim ~/.config/quickshell/default/"
 
 [[entries]]
 text = "Fastfetch layout"
 subtext = "the template the theme renders from"
 icon = "󰍹"
 keywords = ["fastfetch", "fetch", "layout", "logo"]
-value = "kitty -e nvim ~/.config/theme/templates/fastfetch.jsonc"
+value = "sh -c 'kitty -e nvim ~/.config/theme/setups/$(~/.config/theme/theme setup)/templates/fastfetch.jsonc'"
 
 [[entries]]
 text = "Theme settings"
@@ -48,3 +48,10 @@ subtext = "fastfetch logo box, cropping"
 icon = "󰒓"
 keywords = ["theme", "settings", "fastfetch", "crop"]
 value = "kitty -e nvim ~/.config/theme/settings.toml"
+
+[[entries]]
+text = "Setup file"
+subtext = "this setup's fonts, cursor, lock screen, default theme"
+icon = "󰕮"
+keywords = ["setup", "fonts", "cursor", "lock"]
+value = "sh -c 'kitty -e nvim ~/.config/theme/setups/$(~/.config/theme/theme setup)/setup.toml'"

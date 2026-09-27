@@ -1,8 +1,10 @@
-"""Curses manager for themes and the wallpapers you assign to them. Started by `theme` / `theme pool`.
+"""Curses manager for setups, their themes and the wallpapers you assign to them.
+Started by `theme` / `theme pool`.
 
-Main screen: themes on the left (+ Pool), the highlighted theme's wallpapers on the right.
-Pool screen: every wallpaper you have, with a preview; number keys put the
-highlighted one in / take it out of a theme. Changes to the active theme reach skwd-wall immediately.
+Main screen: the managed setup's themes on the left (+ Setup, + Pool), the highlighted one's
+wallpapers on the right; S picks which setup to manage. Pool screen: every wallpaper you have, with a
+preview; number keys put the highlighted one in / take it out of a theme, s in / out of the setup as a
+whole. Changes that affect the active theme reach skwd-wall immediately.
 """
 
 import base64
@@ -17,17 +19,18 @@ import sys
 import termios
 
 POOL = "_pool"
-NAMES = {POOL: "Pool (all wallpapers)"}
+ALL = "_all"
+NAMES = {POOL: "Pool (all wallpapers)", ALL: "Setup (any theme)"}
 KEYS = "1234567890"   # theme 1..10 in the pool screen
 FILTERS = ("all", "unassigned", "assigned")
 
 HELP = {
-    "themes": "enter apply · a assign wallpapers · w walker image · f fastfetch image · e edit · n new · "
-              "→ wallpapers · q quit",
+    "themes": "enter apply · a assign wallpapers · S setup · w walker image · f fastfetch image · e edit · "
+              "n new · → wallpapers · q quit",
     "walls": "enter set wallpaper · p preview · d unassign · a assign more · ← back",
     "pick": "enter use this one · d back to the default · f filter · / search · p big preview · q cancel",
-    "pool": "1-9,0 toggle theme · f filter · t in theme… · / search · c clear · p big preview · "
-            "enter set · q back",
+    "pool": "1-9,0 toggle theme · s toggle setup · f filter · t in theme… · / search · c clear · "
+            "p big preview · enter set · q back",
 }
 
 
@@ -131,7 +134,9 @@ class App:
         self.ids = th.theme_ids()
         self.themes = {tid: th.load_theme(tid) for tid in self.ids}
         self.palette = {tid: th.writers.complete(t)[0] for tid, t in self.themes.items()}
-        self.entries = self.ids + [POOL]
+        self.entries = self.ids + [ALL, POOL]
+        self.setup = th.load_setup(th.SETUP)
+        self.live = th.SETUP == th.active_setup()    # managing the setup that's on screen
         self.active = th.current()
         self.items = th.pool_items()
         self.members = th.memberships(self.ids)
@@ -158,8 +163,8 @@ class App:
         self.th.assign(tid, item, on)
         m = self.members.setdefault(item["key"], set())
         (m.add if on else m.discard)(tid)
-        if tid == self.active:
-            self.th.sync(self.active)
+        if self.live:
+            self.th.sync(self.active)   # a theme with none of its own shows the whole setup
         verb = "added to" if on else "removed from"
         self.status = f"{item['name'][:50]} {verb} {self.name(tid)}"
 
@@ -248,12 +253,13 @@ class App:
         left = 44 if w >= 90 else w * 2 // 5   # 44 fits names, counts and colour swatches
         tid = self.sel()
 
-        self.put(0, 1, "THEMES", curses.A_BOLD, left - 2)
+        self.put(0, 1, f"{self.setup['name'].upper()} · THEMES" + ("" if self.live else "  (not active)"),
+                 curses.A_BOLD, left - 2)
         for i, e in enumerate(self.entries):
-            y = 2 + i + (1 if e == POOL else 0)
+            y = 2 + i + (1 if e in (ALL, POOL) else 0)
             if y >= h - 2:
                 break
-            mark = "●" if e == self.active else " "
+            mark = "●" if e == self.active and self.live else " "
             text = f"{mark} {self.name(e):<22}{self.count(e):>5}"
             attr = curses.A_REVERSE if i == self.ti and self.pane == "themes" else (
                 curses.A_BOLD if i == self.ti else 0)
@@ -274,10 +280,12 @@ class App:
             list_w = (w - x) // 2
         own = sum(1 for _, o in rows if o)
         head = f"{self.name(tid).upper()} · {own}" + (" wallpapers" if tid == POOL else " assigned")
-        if tid == self.active:
+        if tid in self.themes and not own:
+            head += " · shows the whole setup"
+        if tid == self.active and self.live:
             head += "  (active)"
         self.put(0, x, head, curses.A_BOLD, list_w)
-        cur = self.th.current_wallpaper_rel() if tid == self.active else None
+        cur = self.th.current_wallpaper_rel() if tid == self.active and self.live else None
         top = max(0, self.wi - (h - 6))
         for i, (it, o) in enumerate(rows[top:top + h - 5]):
             i += top
@@ -375,9 +383,11 @@ class App:
             self.put(1, x + 4, label[2:])
             x += len(label) + 5
 
+        self.put(1, x, " s " + self.setup["name"], curses.A_BOLD)
+
         rows = h - 5
         self.ptop = min(max(self.ptop, self.pi - rows + 1), self.pi)
-        marks_w = len(nth) + 1
+        marks_w = len(nth) + 2
         for j, it in enumerate(items[self.ptop:self.ptop + rows]):
             j += self.ptop
             y = 3 + j - self.ptop
@@ -387,6 +397,7 @@ class App:
                     self.swatch(y, 1 + k, tid, KEYS[k])
                 else:
                     self.put(y, 1 + k, "·", curses.A_DIM)
+            self.put(y, 1 + len(nth), "s" if ALL in m else "·", curses.A_BOLD if ALL in m else curses.A_DIM)
             self.put(y, 1 + marks_w, f" {it['name']}".ljust(list_w - marks_w - 2),
                      curses.A_REVERSE if j == self.pi else 0, list_w - marks_w - 2)
         if not items:
@@ -404,7 +415,7 @@ class App:
         info_y = 3 + ph + 1
         if pw > 10:
             self.put(info_y, px, it["name"], curses.A_BOLD, pw)
-            where = ", ".join(self.name(t) for t in self.ids if t in m) or "not assigned"
+            where = ", ".join(self.name(t) for t in self.ids + [ALL] if t in m) or "not in " + self.setup["name"]
             self.put(info_y + 1, px, "in: " + where, 0, pw)
         self.footer()
         self.refresh()
@@ -451,6 +462,8 @@ class App:
                 n = KEYS.index(chr(k))
                 if n < len(self.ids):
                     self.toggle(self.ids[n], items[self.pi])
+            elif k == ord("s") and items and not self.picking:
+                self.toggle(ALL, items[self.pi])
             elif k == ord("f"):
                 self.filter = FILTERS[(FILTERS.index(self.filter) + 1) % len(FILTERS)]
                 self.pi = 0
@@ -500,6 +513,35 @@ class App:
         curses.curs_set(0)
         return text
 
+    def choose_setup(self):
+        opts = self.th.setup_ids()
+        i = opts.index(self.th.SETUP) if self.th.SETUP in opts else 0
+        self.preview.clear()
+        while True:
+            h, w = self.scr.getmaxyx()
+            bw, bh = min(50, w - 4), min(len(opts) + 4, h - 2)
+            win = curses.newwin(bh, bw, (h - bh) // 2, (w - bw) // 2)
+            win.box()
+            win.addnstr(0, 2, " Manage setup ", bw - 4, curses.A_BOLD)
+            for j, sid in enumerate(opts[:bh - 4]):
+                s = self.th.load_setup(sid)
+                label = ("● " if sid == self.th.active_setup() else "  ") + s["name"] + "  " + s.get("description", "")
+                win.addnstr(2 + j, 2, label, bw - 4, curses.A_REVERSE if j == i else 0)
+            win.refresh()
+            k = self.scr.getch()
+            if k in (curses.KEY_UP, ord("k")):
+                i = max(0, i - 1)
+            elif k in (curses.KEY_DOWN, ord("j")):
+                i = min(len(opts) - 1, i + 1)
+            elif k in (10, 13, curses.KEY_ENTER):
+                self.th.use(opts[i])
+                self.load()
+                self.ti, self.wi, self.pane = (self.ids.index(self.active) if self.active in self.ids else 0), 0, "themes"
+                self.status = f"Managing {self.setup['name']}" + ("" if self.live else " · enter on a theme switches to it")
+                return
+            elif k in (27, ord("q")):
+                return
+
     def choose_theme(self, title, allow_none=False):
         opts = self.ids + ([None] if allow_none else [])
         i = 0
@@ -539,24 +581,29 @@ class App:
                              start_new_session=True)
 
     def set_wallpaper(self, item):
-        m = self.members.get(item["key"], set())
-        if self.active not in m:
+        view = [p for p in self.th.walk_files(self.th.VIEW).values() if self.th.same_file(p, item["path"])]
+        if not self.live or not view:
             self.status = f"Not in {self.name(self.active)} (the active theme) — assign it there first"
             return
-        view = [p for p in self.th.walk_files(self.th.VIEW).values() if self.th.same_file(p, item["path"])]
-        ok = self.th.apply_wallpaper(view[0] if view else item["path"])
+        ok = self.th.apply_wallpaper(view[0])
         self.status = f"Wallpaper: {item['name']}" if ok else "skwd-helm apply failed"
 
     # ------------------------------------------------------------ main-screen actions
 
     def apply_theme(self):
         tid = self.sel()
-        if tid == POOL:
+        if tid in (POOL, ALL):
             self.open_pool()
             return
         self.status = f"Applying {self.name(tid)}…"
         self.draw_main()
-        pooled = self.th.cmd_set(tid, quiet=True)
+        if self.live:
+            pooled = self.th.cmd_set(tid, quiet=True)
+        else:   # switching setup too: come up on the chosen theme
+            state = self.th.load_state()
+            self.th.setup_state(state)["current"] = tid
+            self.th.save_state(state)
+            pooled = self.th.cmd_setup(self.th.SETUP, quiet=True)
         self.load()
         self.status = f"{self.name(tid)} applied" + (f" · {pooled} new wallpapers moved to the pool" if pooled else "")
 
@@ -571,7 +618,7 @@ class App:
         except Exception as e:  # noqa: BLE001 - a typo in the file shouldn't kill the TUI
             self.status = f"{tid}.toml: {e}"
             return
-        if tid == self.active:
+        if tid == self.active and self.live:
             self.status = "Re-applying…"
             self.draw_main()
             self.th.cmd_reload()
@@ -639,6 +686,9 @@ class App:
             if k == ord("a"):
                 self.open_pool()
                 continue
+            if k == ord("S"):
+                self.choose_setup()
+                continue
             if k in (ord("W"), ord("w"), ord("F"), ord("f")):
                 if self.sel() in self.themes:
                     self.pick_image(self.sel(), "walker" if k in (ord("W"), ord("w")) else "fastfetch")
@@ -671,7 +721,7 @@ class App:
                     self.set_wallpaper(rows[self.wi][0])
                 elif k == ord("p") and rows:
                     self.full_preview(rows[self.wi][0])
-                elif k == ord("d") and rows and self.sel() != POOL:
+                elif k == ord("d") and rows and self.sel() != POOL and (self.sel() == ALL or self.count(self.sel())):
                     self.toggle(self.sel(), rows[self.wi][0])
 
 

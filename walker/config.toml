@@ -6,7 +6,7 @@ single_click_activation = true     # activate items with a single click opposed 
 selection_wrap = false             # wrap list if at bottom or top
 global_argument_delimiter = "#"    # query: firefox#https://benz.dev => part after delimiter will be ignored when querying. this should be the same as in the elephant config
 exact_search_prefix = "'"          # disable fuzzy searching
-theme = "tokyonight"
+theme = "active"
 disable_mouse = false              # disable mouse (on input and list only)
 debug = false                      # enables debug printing for some stuff, f.e. keybinds
 page_jump_items = 10               # number of items to skip with Page Up/Down
@@ -34,6 +34,7 @@ anchor_right = true
 "menus:power" = 5    # power panel → row of buttons
 "menus:trigger" = 1  # list panels must be listed too, otherwise the
 "menus:style" = 1    # grid from the previous panel sticks around
+"menus:setups" = 1
 "menus:themes" = 1
 "menus:wallpaper" = 1
 "menus:themetools" = 1
@@ -49,7 +50,8 @@ anchor_right = true
 "menus:power" = { input = "Power", list = "" }
 "menus:trigger" = { input = "Trigger", list = "" }
 "menus:style" = { input = "Style", list = "" }
-"menus:themes" = { input = "Theme", list = "No themes in ~/.config/theme/themes" }
+"menus:setups" = { input = "Setup", list = "No setups in ~/.config/theme/setups" }
+"menus:themes" = { input = "Theme", list = "No themes in this setup" }
 "menus:wallpaper" = { input = "Wallpaper", list = "" }
 "menus:themetools" = { input = "Theme tools", list = "" }
 "menus:configs" = { input = "Config files", list = "" }

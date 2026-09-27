@@ -33,4 +33,4 @@ text = "Theme images folder"
 subtext = "walker + fastfetch pictures (or w / f in the manager)"
 icon = "󰋩"
 keywords = ["image", "side", "walker", "fastfetch", "logo", "picture"]
-value = "mkdir -p ~/.config/theme/images/$(~/.config/theme/theme current) && xdg-open ~/.config/theme/images/$(~/.config/theme/theme current)"
+value = "sh -c 'd=~/.config/theme/setups/$(~/.config/theme/theme setup)/images/$(~/.config/theme/theme current); mkdir -p $d && xdg-open $d'"

@@ -1,0 +1,1 @@
+../theme/setups/sharp/files/hypr/look.lua

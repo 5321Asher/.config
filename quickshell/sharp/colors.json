@@ -12,5 +12,10 @@
   "purple": "#83c092",
   "warn": "#dbbc7f",
   "danger": "#e67e80",
-  "green": "#a7c080"
+  "green": "#a7c080",
+  "fontMono": "CaskaydiaMono Nerd Font Mono",
+  "fontSans": "CaskaydiaMono Nerd Font Mono",
+  "fontSerif": "CaskaydiaMono Nerd Font Mono",
+  "fontDisplay": "CaskaydiaMono Nerd Font Mono",
+  "fontSize": 11
 }

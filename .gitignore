@@ -25,3 +25,12 @@ __pycache__/
 /fastfetch/*.jpg
 /btop/themes/
 /nvim/
+# Written by ~/.config/theme/theme on every theme switch
+/quickshell/*/colors.json
+/walker/themes/*/colors.css
+/kitty/skwd-colors.conf
+/hypr/colors.lua
+/hypr/hyprlock-colors.conf
+/fastfetch/config.jsonc
+/theme/setups/*/images/
+*.tmp-link

@@ -1,4 +1,4 @@
-// Generated from the Everforest theme by ~/.config/theme/theme; edit ~/.config/theme/templates/fastfetch.jsonc
+// Generated from the Everforest theme by ~/.config/theme/theme; edit ~/.config/theme/setups/sharp/templates/fastfetch.jsonc
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
   "logo": {
