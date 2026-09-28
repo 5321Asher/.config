@@ -61,10 +61,17 @@ The deck is Netrunner's own: the special workspace `deck` (the hub, the DECK chi
 (`kitty --class netrunner-deck`), and closing the last window on it puts the deck away. Windows tile top-left and
 SYS.DIAG, QUEUE, VULN WATCH and SIGNAL fill the rest (look.lua sets that workspace's gaps).
 
+## Screen shapes
+
+The bar sheds readouts to fit its width (`tier` in bar/Bar.qml: the full HUD from 1800 px, a middle
+set from 1300 px, and on a portrait monitor or a small panel just the tag, workspaces, a short
+ticker, tray and clock). SUBNET MAP picks its column count for the screen's shape, so on a portrait
+monitor the workspaces stack in a tall grid.
+
 ## IPC
 
 ```
-qs ipc call hub toggle | exec toggle | deck open <page> | overview toggle
+qs ipc call hub toggle | exec toggle | dash toggle | deck open <page> | overview toggle
 qs ipc call queue add "Gym|health" | toggle <n> | remove <n> | list
 qs ipc call status sweep | report
 qs ipc call notifications clear | dnd

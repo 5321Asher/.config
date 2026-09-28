@@ -54,6 +54,8 @@ qs ipc call starchart toggle    app launcher        (SUPER + CTRL + Space, via ~
 qs ipc call console toggle      root menu           (SUPER + Space, via ~/.config/theme/menu root)
 qs ipc call lock lock           lock the session    (SUPER + L, idle, suspend: loginctl → theme lock)
 qs ipc call lock preview        look at the lock screen without locking (Esc closes)
+qs ipc call updates sweep       re-check vulnerabilities (arch-audit) and pending updates (checkupdates);
+                                shown in the deck's Telemetry page (watch); `report` prints them
 ```
 
 ## Hyprland

@@ -32,7 +32,8 @@ notifications/            Message (one notification as a little window), Message
 lock/                     LockState (PAM), Lock, LogonFace ("Welcome to Memphis"), pam/memphis-lock
 utilities/                Overview (workspaces), DictationOsd (Sound Recorder), PolkitPrompt
 services/                 the logic, shared with the other setups (Net, Capture, Displays, Weather…),
-                          plus Elephant (the shared menus), Notifs (notification server), StayAwake
+                          plus Elephant (the shared menus), Notifs (notification server), StayAwake,
+                          Updates (arch-audit + checkupdates)
 colors.json               written by the theme tool on every scheme switch (don't edit)
 ```
 
@@ -49,6 +50,8 @@ colors.json               written by the theme tool on every scheme switch (don'
 | `deck open optics / lamps / chronometer` | Display → Settings / Lighting / Focus Timer |
 | `deck open comms / claude` | Network → Wi-Fi / Claude |
 | notifications | little windows above the clock; history in the Inbox (tray envelope) |
+| vulnerability watch / pending updates | System → Security (arch-audit by severity, checkupdates, Update Now); a tray icon while there's something to install or a high-risk CVE |
+| workspace overview | Workspaces (`overview toggle`): picks its column count for the screen's shape, so a portrait monitor gets a tall grid |
 
 The Start menu reads the same shared menus as Walker (`~/.config/elephant/menus`): their Apps entry
 is Programs, Style is under Settings, Power is Shut Down / Log Off, and any other root entry
@@ -76,6 +79,7 @@ qs ipc call run toggle              Run…                  (SUPER + CTRL + Spac
 qs ipc call deck open <page>        a Control Panel applet (the shared page names, above)
 qs ipc call desk open <id>          any window: control run shutdown logoff help messages media volume applet:<name>
 qs ipc call overview toggle         Workspaces
+qs ipc call updates sweep | report   re-check vulnerabilities and updates; print what's known
 qs ipc call notifications clear     delete every notification (| dnd toggles Do Not Disturb)
 qs ipc call tray list | menu <n>    tray apps; open one's menu (for testing)
 qs ipc call lock lock               lock the session      (SUPER + L, idle, suspend: loginctl → theme lock)

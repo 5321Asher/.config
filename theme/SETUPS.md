@@ -56,7 +56,7 @@ unsure, build level 2 and offer level-3 extras at the end.
 - **Lock:** hyprlock with its own `files/hypr/hyprlock.conf`.
 - **GTK / Qt:** the built-in flat style from `writers.py` (no `style.py`); icons from
   `[icons] theme = "…"` (e.g. Papirus-Dark); cursor from `[cursor]`.
-- **Transition:** `fade` (or wipe/iris, see §5).
+- **Transition:** `fade` (or wipe / iris / dissolve / glitch, see §5).
 - **Wallpapers:** assigned stills from the pool.
 
 ### Level 2 — styled (like Sharp)
@@ -131,9 +131,10 @@ With where they live, so you can port them (`S` = `quickshell/sharp/modules/`,
 | tray with menus | `S/SysTray.qml`, `S/TrayMenu.qml` | `O/bar/Tray.qml`, `O/utilities/TrayMenu.qml` | `M/taskbar/NotifyArea.qml`, `TrayMenus.qml` |`N/bar/Tray.qml`, `TrayMenus.qml` |
 | power: lock, sleep, log out, restart, shut down | `S/QuickTab.qml` | deck `Helm.qml` | `M/desk/windows/ShutDownDialog.qml`, Control Panel pane |rig `Helm.qml` |
 | polkit prompt | `S/PolkitPrompt.qml` | `O/utilities/PolkitPrompt.qml` | `M/utilities/PolkitPrompt.qml` |`N/utilities/PolkitPrompt.qml` |
+| vulnerability watch (arch-audit, by severity, fix ready) + pending updates (checkupdates) + update now | `S/Updates.qml`, `S/StatsTab.qml` (Security card) | `O/services/Updates.qml`, deck `Telemetry.qml` (watch) | `M/services/Updates.qml`, applet `SystemProps.qml` (Security), tray icon | `N/services/Status.qml`, deck `VulnWatch.qml`, the ticker |
 
 The *logic* singletons (Net, Capture, Devices, Displays, Brightness, FocusTimer, Rgb, SysStats,
-Voxtype, Weather, MicLevel, ClaudeStatus, Config) are the same in both setups: copy them into the
+Voxtype, Weather, MicLevel, ClaudeStatus, Config, Updates, Elephant, StayAwake) are the same in every setup: copy them into the
 new shell (a setup never imports another setup's files) and write only the UI.
 
 ### 3.4 Lock screen rules
@@ -310,6 +311,8 @@ directly before switching (see how in git history: import writers, `configure(se
 - Screenshots (`grim`, after checking the screens are on) of: the bar, every panel page, a tray
   menu (`qs ipc call tray menu 0` in Observatory; add a similar IPC for testing), the lock preview,
   the launcher/menus, one notification (`notify-send`), each colour theme (`theme set`).
+- Every screen shape: the bar and overview on a portrait monitor (1080 wide) and a small laptop
+  panel (1366 × 768) must not overlap or overflow.
 - Every keybind in §3.1 does something. The polkit prompt appears (`pkexec true`, cancel it).
 - Switch back to the user's setup and theme afterwards (`theme setup <prev>`, `theme set <prev>`),
   and say that you did.
@@ -360,3 +363,9 @@ Check `git status` for generated files before committing (§4.4).
   width tiers; both overviews pick the column count that makes the tiles biggest).
 - **Vulnerabilities / updates:** every setup has an `Updates.qml` service (arch-audit, checkupdates;
   `qs ipc call updates report`); Netrunner's lives inside its Status.qml.
+- **GTK 4 styles vs Walker:** user CSS in `gtk-4.0/gtk.css` outranks Walker's own theme, so a setup's
+  GTK 4 widget rules are scoped to `window:not(.walker)` and its Walker `layout.xml` gives the window
+  the class `walker` (Memphis, Netrunner).
+- **Special workspaces as dashboards** (Netrunner's deck): give the workspace gaps with
+  `hl.workspace_rule`, open it together with a window (a special workspace with nothing on it has
+  nothing to close), and let Hyprland hide it when its last window closes.

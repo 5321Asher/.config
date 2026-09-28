@@ -25,3 +25,16 @@ cursors, icons, colour themes, wallpapers) switched with one command, each with 
 
 Generated files (colours, fonts, icon and cursor themes) are written on every theme switch and are
 not tracked.
+
+Every setup has the same features in its own look: root menu and app launcher, notifications,
+media, Wi-Fi / Bluetooth / Tailscale, screenshots and recording, dictation, focus timer, lighting,
+a lock screen, a polkit prompt, a workspace overview (which fits portrait monitors too), and a
+**vulnerability watch + pending updates** (`arch-audit`, `checkupdates`; `qs ipc call updates sweep`
+in Sharp, Observatory and Memphis, `status sweep` in Netrunner). Wallpaper changes use each setup's
+transition (fade, wipe, iris, dissolve, glitch).
+
+Packages beyond Hyprland and Quickshell that the setups use: `arch-audit`, `pacman-contrib`,
+`noto-fonts-cjk` (Netrunner's Japanese), `chicago95-theme` and `oldschool-pc-font-ttf`
+(Memphis). Fonts that aren't packaged live in `~/.local/share/fonts` (W95FA; Chakra Petch and
+Rajdhani).
+
