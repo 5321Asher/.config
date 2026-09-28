@@ -521,7 +521,7 @@ TRANSITION_DIR = f"{os.environ.get('XDG_RUNTIME_DIR', '/tmp')}/theme-transition"
 
 class Transition:
     """Hides a switch behind a snapshot of the screens, then reveals the result in the target setup's
-    style (setup.toml [transition] style = fade | wipe | iris | dissolve | glitch, duration = ms). Reentrant: a theme
+    style (setup.toml [transition] style = fade | wipe | iris | dissolve | glitch | burn, duration = ms). Reentrant: a theme
     switch inside a setup switch shares the setup's transition. Anything going wrong just means no
     transition, never a failed switch. settings.toml [transition] enabled = false turns it off."""
     depth = 0

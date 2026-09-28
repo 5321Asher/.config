@@ -1,0 +1,48 @@
+# Grimoire: the desktop as a wizard's spellbook on a candlelit desk. Oxblood leather, parchment,
+# gold leaf and glowing runes: a bookmark-ribbon bar of chapters, a spine of reagents with a candle
+# that burns down through the session, a summoning circle for a launcher, sealed letters for
+# notifications, gold-leaf frames with flourishes, and a closed book for a lock screen.
+name = "Grimoire"
+description = "leather · gold leaf · runes"
+default_theme = "oxblood"
+icon = "󰂽"
+
+# Run by `theme lock` (hypridle's lock_cmd, SUPER+L, the Sanctum's power runes): the closed book
+# (Grimoire's own Quickshell lock); hyprlock if Grimoire's Quickshell isn't answering.
+lock = "qs ipc call lock lock || pidof hyprlock || hyprlock"
+
+# Cardo, a book face, for everything you read; UnifrakturMaguntia (blackletter) for titles and the
+# illuminated capitals; IBM Plex Mono for the terminal. Quickshell also uses Uncial Antiqua (headings,
+# chapter names), Cinzel (engraved small caps) and Noto Sans Runic (the runes), by name.
+[fonts]
+mono    = "IBM Plex Mono"
+sans    = "Cardo"
+serif   = "Cardo"
+display = "UnifrakturMaguntia"
+size    = 12
+
+# style.py draws the cursors (Grimoire-Cursors: a gilded quill-arrow) and the icons (Papirus-Dark
+# with leather-bound folders); these are only the fallbacks.
+[cursor]
+theme = "Adwaita"
+size  = 24
+
+[icons]
+theme = "Papirus-Dark"
+
+# Gold leaf on the focused window (a gradient from the gold to its highlight), faded tooling on the rest
+[hyprland]
+border = "palette"
+
+# What SUPER + Space and SUPER + CTRL + Space open here (~/.config/theme/menu). Other setups: Walker.
+#   root: the table of contents, dropped from the clasp
+#   apps: the summoning circle
+[menus]
+root = "qs ipc call contents toggle"
+apps = "qs ipc call circle toggle"
+
+# How switching to this setup, or between its themes, is revealed: fade | wipe | iris | dissolve |
+# glitch | burn (the old page burns away from a scatter of embers, its edges glowing in the accent)
+[transition]
+style    = "burn"
+duration = 1300

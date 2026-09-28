@@ -1224,8 +1224,11 @@ inactive_tab_background {tp["bgDark"]}
     # ("palette": the theme's own activeBorder / inactiveBorder keys, e.g. Disguise's hairline greys)
     a, t, b = (p[k].lstrip("#") for k in ("accent", "purple", "border"))
     mode = SETUP.get("hyprland", {}).get("border", "gradient")
+    # (with activeBorder2 too, "palette" is a gradient between the two: Grimoire's gold leaf)
+    ab, ab2 = p.get("activeBorder", p["border"]).lstrip("#"), p.get("activeBorder2", "").lstrip("#")
     active = (f'{{ colors = {{ "rgba({a}ee)", "rgba({t}ee)" }}, angle = 45 }}' if mode == "gradient"
-              else f'"rgba({p.get("activeBorder", p["border"]).lstrip("#")}ff)"' if mode == "palette"
+              else f'{{ colors = {{ "rgba({ab}ff)", "rgba({ab2}ff)", "rgba({ab}ff)" }}, angle = 45 }}' if mode == "palette" and ab2
+              else f'"rgba({ab}ff)"' if mode == "palette"
               else f'"rgba({a}ee)"')
     inactive = f'{p.get("inactiveBorder", p["border"]).lstrip("#")}ff' if mode == "palette" else f"{b}aa"
     lua = f"""hl.config({{ general = {{ col = {{

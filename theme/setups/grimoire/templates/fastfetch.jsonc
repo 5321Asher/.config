@@ -1,0 +1,39 @@
+// Template for ~/.config/fastfetch/config.jsonc, rendered by ~/.config/theme/theme on every theme
+// switch. Edit this file, not config.jsonc. {{role}} = the theme colour as "r;g;b"; {{logo_*}} = the
+// theme's fastfetch image. Grimoire: an illuminated capital (images/<theme>/fastfetch.png) beside a
+// page of the book: the reader, their arcane rank, the tome and its spells, the candle, a motto.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
+  "logo": {
+    "type": "kitty",
+    "source": "{{logo_source}}",
+    "width": 26,
+    "height": 12,
+    "padding": { "top": 1, "left": 3, "right": 4 }
+  },
+  "display": {
+    "separator": "  ",
+    "key": { "width": 13 },
+    "color": { "keys": "38;2;{{accent}}", "separator": "38;2;{{dim}}", "output": "38;2;{{fg}}" }
+  },
+  "modules": [
+    { "type": "title", "format": "{#3;38;2;{{goldBright}}}{user-name}{#0;38;2;{{dim}}} of {#3;38;2;{{goldBright}}}{host-name}" },
+    { "type": "custom", "format": "{#38;2;{{accentMuted}}}──────── ❦ ────────" },
+    { "type": "command", "key": "arcane rank", "outputColor": "38;2;{{purple}}",
+      "text": "sh ~/.config/theme/setups/grimoire/templates/arcana.sh rank" },
+    { "type": "os", "key": "tome", "format": "{2}" },
+    { "type": "kernel", "key": "spine", "format": "{2}" },
+    { "type": "command", "key": "spells", "text": "sh ~/.config/theme/setups/grimoire/templates/arcana.sh spells" },
+    { "type": "command", "key": "candle", "outputColor": "38;2;{{flame}}",
+      "text": "sh ~/.config/theme/setups/grimoire/templates/arcana.sh candle" },
+    { "type": "command", "key": "binding ink", "text": "sh ~/.config/theme/setups/grimoire/templates/arcana.sh theme" },
+    { "type": "memory", "key": "elixir", "format": "{1} of {2}" },
+    { "type": "disk", "key": "the stores", "folders": "/", "format": "{1} of {2}" },
+    "break",
+    { "type": "command", "key": " ", "outputColor": "3;38;2;{{fg}}",
+      "text": "sh ~/.config/theme/setups/grimoire/templates/arcana.sh welcome" },
+    { "type": "command", "key": " ", "outputColor": "3;38;2;{{dim}}",
+      "text": "sh ~/.config/theme/setups/grimoire/templates/arcana.sh motto" },
+    { "type": "colors", "key": " ", "symbol": "circle" }
+  ]
+}

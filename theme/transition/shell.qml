@@ -17,6 +17,8 @@ import Quickshell.Wayland
 //   dissolve  the old picture breaks up into square blocks in random order (Memphis)
 //   glitch    the old picture tears into horizontal bands that jitter sideways with red/cyan edges
 //             in the new accent and its complement, then drop out one by one (Netrunner)
+//   burn      the old picture burns away from a scatter of embers: a ragged front with a scorched
+//             band and a glowing lip in the new accent (Grimoire; a shader, burn.frag.qsb)
 // params.json (written by the theme tool, next to the snapshots): style, accent, duration, dir.
 ShellRoot {
     id: root
@@ -33,7 +35,7 @@ ShellRoot {
         running: false
         from: 0; to: 1
         duration: root.duration
-        easing.type: root.style === "fade" ? Easing.InOutQuad : root.style === "dissolve" || root.style === "glitch" ? Easing.Linear : Easing.InOutCubic
+        easing.type: root.style === "fade" ? Easing.InOutQuad : root.style === "dissolve" || root.style === "glitch" ? Easing.Linear : root.style === "burn" ? Easing.InQuad : Easing.InOutCubic
         onFinished: cleanup.running = true
     }
     // The snapshots are ~10 MB each in RAM (tmpfs): gone with the overlay
@@ -132,7 +134,7 @@ ShellRoot {
             }
             MultiEffect {
                 anchors.fill: parent
-                visible: root.style !== "fade" && root.style !== "glitch"
+                visible: root.style !== "fade" && root.style !== "glitch" && root.style !== "burn"
                 source: shot
                 maskEnabled: true
                 maskSource: hole
@@ -180,6 +182,18 @@ ShellRoot {
                 // the progress jitters the whole thing a little
                 Timer { running: root.style === "glitch" && reveal.running; interval: 40; repeat: true
                         onTriggered: parent.x = (Math.random() - 0.5) * 12 * (1 - root.progress) }
+            }
+
+            // burn: the shader eats the old picture from a few embers outward
+            ShaderEffect {
+                anchors.fill: parent
+                visible: root.style === "burn"
+                property var source: shot
+                property real progress: root.progress
+                property real aspect: win.width / Math.max(1, win.height)
+                property real seed: 0.37 + Quickshell.screens.indexOf(win.modelData) * 0.21
+                property color accent: root.accent
+                fragmentShader: root.style === "burn" ? Qt.resolvedUrl("burn.frag.qsb") : ""
             }
 
             // The edge, in the new accent

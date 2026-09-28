@@ -40,6 +40,7 @@ Existing setups, as references:
 | **memphis** | 3 (fully custom) | Windows 98: grey bevels, Start button, Control Panel; W95FA + IBM VGA | `quickshell/memphis/` (taskbar, Start menu, shell windows: Control Panel + Properties sheets, Run…, Inbox, Media Player) | own Start menu + Run… launcher | own Quickshell lock (98 logon box) | gtk3/gtk4/qss/satty (98 widgets) + Chicago95 icons + pixel cursors |
 | **netrunner** | 3 (fully custom) | Cyberpunk: red/cyan on black glass, cut corners, HUD of real system state; Chakra Petch + JetBrains Mono + Noto CJK | `quickshell/netrunner/` (bar with ticker, window frames overlay, deck dashboard on special:deck, rig control panel) | own hub (quickhack list) + EXEC launcher | own Quickshell lock (pic-4 style) | gtk3/gtk4/qss/satty + folder icons + cursors |
 | **disguise** | 3 (fully custom) | Windows 11: Mica/Acrylic, centred taskbar, Fluent controls; Segoe UI Variable + Segoe Fluent Icons + Cascadia | `quickshell/disguise/` (taskbar, flyout layer: Start, Search, Quick Settings, notification centre, Widgets, tray; Settings as a real FloatingWindow; Task View; toasts; OSD) | own Start menu + Search | own Quickshell lock (curtain + sign-in) | gtk3/gtk4/qss/satty (WinUI) + Win11 icons + cursors |
+| **grimoire** | 3 (fully custom) | a spellbook on a candlelit desk: oxblood leather, parchment, gold leaf, glowing runes; Cardo + UnifrakturMaguntia + Uncial Antiqua + Cinzel + IBM Plex Mono + Noto Runic | `quickshell/grimoire/` (bar with chapter ribbon, spine of reagents + the uptime candle, window flourishes, codex = open-book control panel, sealed-letter notifications, shaders for the flame) | own table of contents + summoning-circle launcher | own Quickshell lock (the closed book) | gtk3/gtk4/qss/satty + leather-bound folders + gilded cursors |
 
 ---
 
@@ -57,7 +58,7 @@ unsure, build level 2 and offer level-3 extras at the end.
 - **Lock:** hyprlock with its own `files/hypr/hyprlock.conf`.
 - **GTK / Qt:** the built-in flat style from `writers.py` (no `style.py`); icons from
   `[icons] theme = "…"` (e.g. Papirus-Dark); cursor from `[cursor]`.
-- **Transition:** `fade` (or wipe / iris / dissolve / glitch, see §5).
+- **Transition:** `fade` (or wipe / iris / dissolve / glitch / burn, see §5).
 - **Wallpapers:** assigned stills from the pool.
 
 ### Level 2 — styled (like Sharp)
@@ -134,6 +135,10 @@ With where they live, so you can port them (`S` = `quickshell/sharp/modules/`,
 | polkit prompt | `S/PolkitPrompt.qml` | `O/utilities/PolkitPrompt.qml` | `M/utilities/PolkitPrompt.qml` |`N/utilities/PolkitPrompt.qml` |
 | vulnerability watch (arch-audit, by severity, fix ready) + pending updates (checkupdates) + update now | `S/Updates.qml`, `S/StatsTab.qml` (Security card) | `O/services/Updates.qml`, deck `Telemetry.qml` (watch) | `M/services/Updates.qml`, applet `SystemProps.qml` (Security), tray icon | `N/services/Status.qml`, deck `VulnWatch.qml`, the ticker |
 
+Grimoire (`G` = `quickshell/grimoire/`) has every row too: its README's mapping table says where (the codex
+chapters `G/codex/pages/`: Sanctum = quick toggles/levels/capture/power, Sendings = net, Minstrelsy =
+media, Letters = notifications, Almanac, Alchemy = stats + vulnerability watch/updates, Reliquary,
+Scrying, Lanterns, Hourglass, Familiar; the bar and spine for indicators).
 Disguise (`D` = `quickshell/disguise/`) has every row too: its README's mapping table says where (Quick Settings
 `D/flyouts/QuickSettings.qml`, Settings pages `D/settings/pages/`, Task View `D/utilities/TaskViewLayer.qml`…).
 
@@ -214,7 +219,7 @@ lock = "pidof hyprlock || hyprlock"       # or "qs ipc call lock lock || pidof h
 border = "gradient"                        # accent -> second accent, "accent" (solid), or "palette" (the theme's activeBorder / inactiveBorder)
 [menus]            # optional (level 3): root = "…", apps = "…"  (shell commands; default: Walker)
 [transition]
-style = "fade"                             # fade | wipe | iris | dissolve | glitch
+style = "fade"                             # fade | wipe | iris | dissolve | glitch | burn
 duration = 700                             # ms
 ```
 
@@ -255,7 +260,7 @@ All are in `.gitignore`. New themeable app? Add a writer to `theme/writers.py` (
 `theme set` / `theme setup` freeze the screens on a snapshot (`theme/transition/shell.qml`, its
 own `qs -p` process), switch underneath, then reveal in the target setup's `[transition]` style:
 `fade` (crossfade), `wipe` (hard edge from the left + accent line — Sharp), `iris` (circle from
-the centre with an accent ring — Observatory), `dissolve` (square blocks in random order — Memphis), `glitch` (torn, jittering bands with red/cyan edges — Netrunner). A new style = a new branch in that QML file
+the centre with an accent ring — Observatory), `dissolve` (square blocks in random order — Memphis), `glitch` (torn, jittering bands with red/cyan edges — Netrunner), `burn` (the old picture burns away from embers with a glowing edge — Grimoire; a ShaderEffect, `burn.frag` compiled to `.qsb` by `quickshell/grimoire/shaders/build.sh`). A new style = a new branch in that QML file
 (keep it generic: it only gets `style`, `accent`, `duration`). Skipped automatically when the
 screens are off. `settings.toml [transition] enabled = false` turns it off.
 
@@ -389,3 +394,12 @@ Check `git status` for generated files before committing (§4.4).
   close on the grab's `cleared`.
 - **Focusing a window by dispatch warps the pointer** to its middle (`hl.dsp.focus({ window = … })`).
   Only do it when the window isn't already active; never on navigation inside it.
+- **Shaders in Quickshell:** Qt 6 needs compiled `.qsb` files for `ShaderEffect` (Vulkan-style GLSL 440 in,
+  `/usr/lib/qt6/bin/qsb --glsl "100es,120,150" --hlsl 50 --msl 12` out). Grimoire's `shaders/build.sh`
+  does it (and pastes a shared `noise.glsl` in). Properties on the ShaderEffect map to the uniform block by
+  name (`color` → `vec4`).
+- **MultiEffect masks come out blocky** when the mask is a small `Shape` layer: to clip a fill to a shape,
+  put a copy of the shape (filled) inside a rectangular `clip: true` window instead (Grimoire's vials).
+- **Names that clash, again:** a directory type shadows nothing: `widgets/Seal.qml` imported beside a local
+  `Seal.qml` wins and the local one is unreachable (name them apart); a property called `left` is FINAL on
+  Item; a `PathLine` can't reach its `Shape` through `parent` (use the Shape's id).

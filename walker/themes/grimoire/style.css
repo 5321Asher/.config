@@ -1,0 +1,131 @@
+/* Grimoire — Walker as a page of the book: parchment with a gilt edge, a heading in uncials, the
+   search written on an inked line, the chosen row washed in gold with a red rule in the margin, and
+   the side picture (a slice of the cover's medallion) in a gold frame.
+   Location: ~/.config/walker/themes/grimoire/style.css
+   (Grimoire's own menus are the table of contents and the summoning circle; Walker still does
+   clipboard history, Find, and the prompts some menu entries open.) */
+
+@import url("file:///home/av/.config/walker/themes/grimoire/colors.css");
+
+* {
+  all: unset;
+  font-size: 15px;
+}
+
+.box-wrapper {
+  background: @parchment;
+  color: @ink;
+  border: 2px solid @blue;
+  border-radius: 4px;
+  padding: 18px;
+  box-shadow: inset 0 0 0 4px @parchment, inset 0 0 0 5px alpha(@goldDeep, 0.8), inset 0 0 60px alpha(@parchmentDeep, 0.9), 0 14px 36px rgba(0, 0, 0, 0.6);
+}
+
+.caption {
+  font-family: "Uncial Antiqua", serif;
+  font-size: 22px;
+  color: @ink;
+  padding: 2px 0 10px 4px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid alpha(@inkDim, 0.5);
+}
+
+popover {
+  background: @parchment;
+  color: @ink;
+  border: 1px solid alpha(@inkDim, 0.6);
+  border-radius: 3px;
+  padding: 6px;
+}
+
+scrollbar { opacity: 0; }
+
+.normal-icons { -gtk-icon-size: 20px; }
+.large-icons { -gtk-icon-size: 32px; }
+
+.search-container { margin-bottom: 8px; }
+
+.input {
+  background: alpha(#ffffff, 0.2);
+  color: @ink;
+  caret-color: @rubric;
+  padding: 9px 10px;
+  border-bottom: 2px solid @rubric;
+  border-radius: 2px;
+  font-size: 17px;
+}
+.input placeholder { color: alpha(@inkDim, 0.85); font-style: italic; opacity: 1; }
+.input selection { background: alpha(@blue, 0.45); color: @ink; }
+
+.list { color: @ink; }
+.item-box { padding: 7px 10px; border-left: 2px solid transparent; border-radius: 2px; }
+child:selected .item-box,
+row:selected .item-box {
+  background: alpha(@blue, 0.3);
+  border-left: 2px solid @rubric;
+}
+child:selected .item-text,
+row:selected .item-text { color: @ink; font-weight: bold; }
+.item-subtext { font-size: 13px; font-style: italic; color: @inkDim; }
+
+.item-quick-activation {
+  background: alpha(#ffffff, 0.25);
+  color: @rubric;
+  border: 1px solid alpha(@inkDim, 0.5);
+  border-radius: 3px;
+  padding: 2px 8px;
+}
+.item-image-text { font-size: 26px; }
+
+.preview-box, .elephant-hint, .placeholder { color: @inkDim; font-style: italic; }
+.preview { border: 1px solid alpha(@inkDim, 0.5); color: @ink; background: alpha(#ffffff, 0.2); border-radius: 3px; }
+.preview .large-icons { -gtk-icon-size: 64px; }
+
+.calc .item-text { font-size: 22px; color: @rubric; }
+.symbols .item-image { font-size: 24px; }
+.todo.done .item-text-box { opacity: 0.35; }
+.todo.urgent { color: @rubric; }
+.todo.active { font-weight: bold; color: @goldDeep; }
+.bluetooth.disconnected { opacity: 0.5; }
+:not(.calc).current { color: @rubric; }
+
+.keybinds { margin-top: 6px; font-size: 12px; color: @inkDim; }
+.keybind-button { opacity: 0.75; }
+.keybind-button:hover { opacity: 1; color: @rubric; }
+.keybind-bind { color: @inkDim; }
+.keybind-label { padding: 1px 6px; border: 1px solid alpha(@inkDim, 0.5); border-radius: 3px; color: @ink; }
+
+/* the side picture: the cover's medallion, in a gold frame */
+.side-image {
+  background-image: url("file:///home/av/.config/walker/themes/grimoire/side.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 2px solid @blue;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 3px @parchment, inset 0 0 0 4px @goldDeep;
+  margin: 0 0 0 16px;
+}
+
+.error { padding: 10px; background: alpha(@rubric, 0.15); color: @ink; border: 1px solid @rubric; border-radius: 3px; }
+
+.start-row { padding: 9px 12px; }
+.start-icon { font-size: 18px; color: @inkDim; }
+.start-text { font-size: 16px; }
+child:selected .start-icon { color: @rubric; }
+
+.list.grid .item-box {
+  padding: 12px 6px;
+  margin: 3px;
+  border: 1px solid alpha(@inkDim, 0.4);
+  border-radius: 3px;
+  background: alpha(#ffffff, 0.15);
+}
+.list.grid child:selected .item-box { background: alpha(@blue, 0.3); border: 1px solid @goldDeep; }
+.list.grid .item-image-text { font-size: 18px; }
+.list.grid .item-text { font-size: 12px; }
+.list.grid .item-subtext { font-size: 0; }
+
+.kb-row { padding: 5px 10px; }
+.kb-keys { color: @rubric; font-size: 13px; font-family: "IBM Plex Mono", monospace; }
+.kb-desc { color: @ink; }
