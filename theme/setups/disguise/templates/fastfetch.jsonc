@@ -1,0 +1,45 @@
+// Template for ~/.config/fastfetch/config.jsonc, rendered by ~/.config/theme/theme on every theme
+// switch. Edit this file, not config.jsonc. {{role}} = the theme colour as "r;g;b" (Disguise renders
+// it with the [terminal] palette: Windows Terminal's Campbell); {{logo_*}} = the theme's fastfetch image.
+// Disguise: what Command Prompt's `ver` and Settings → System → About would tell you.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
+  "logo": {
+    "type": "kitty",
+    "source": "{{logo_source}}",
+    "width": {{logo_width}},
+    "height": {{logo_height}},
+    "padding": { "top": 2, "left": 3, "right": 5 }
+  },
+  "display": {
+    "separator": "  ",
+    "key": { "width": 18 },
+    "color": {
+      "keys": "38;2;{{bright_cyan}}",
+      "separator": "38;2;{{dim}}",
+      "output": "38;2;{{fg}}"
+    }
+  },
+  "modules": [
+    { "type": "custom", "format": "{#38;2;{{fg}}}Disguise [Version 11.0.26100]" },
+    { "type": "custom", "format": "{#38;2;{{dim}}}(It's Hyprland underneath.)" },
+    "break",
+    { "type": "title", "format": "{#38;2;{{fg}}}C:\\Users\\{user-name}>{#38;2;{{bright_white}}} systeminfo" },
+    "break",
+    { "type": "os",       "key": "OS Name" },
+    { "type": "kernel",   "key": "OS Version" },
+    { "type": "host",     "key": "System Model" },
+    { "type": "uptime",   "key": "System Up Time" },
+    { "type": "packages", "key": "Installed apps" },
+    { "type": "wm",       "key": "Desktop" },
+    { "type": "cpu",      "key": "Processor" },
+    { "type": "gpu",      "key": "Graphics" },
+    { "type": "memory",   "key": "Installed RAM" },
+    { "type": "disk",     "key": "Local Disk (C:)", "folders": "/" },
+    { "type": "display",  "key": "Display" },
+    { "type": "localip",  "key": "IP Address" },
+    { "type": "battery",  "key": "Battery" },
+    "break",
+    { "type": "colors", "symbol": "block", "paddingLeft": 0 }
+  ]
+}

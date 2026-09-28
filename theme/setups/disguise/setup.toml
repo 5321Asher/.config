@@ -1,0 +1,44 @@
+# Disguise: Windows 11, as close as a Linux desktop can get. A centred taskbar on Mica, the Start
+# menu, Quick Settings, the notification centre and calendar, Widgets, a Settings app, Task View,
+# the Bloom wallpaper, Segoe UI Variable and Fluent icons. (It's still Hyprland underneath.)
+name = "Disguise"
+description = "mica · fluent · eleven"
+default_theme = "light"
+icon = "󰖳"
+
+# Run by `theme lock` (hypridle's lock_cmd, SUPER+L, Start → Power → Lock): Windows 11's lock screen
+# (Quickshell); hyprlock if Disguise's Quickshell isn't answering.
+lock = "qs ipc call lock lock || pidof hyprlock || hyprlock"
+
+# Segoe UI Variable (Microsoft's design download, in ~/.local/share/fonts/disguise) for everything on
+# screen, Cascadia Mono (Windows Terminal's) for terminals and code, Georgia for documents.
+[fonts]
+mono    = "CaskaydiaMono Nerd Font"
+sans    = "Segoe UI Variable Static Text"
+serif   = "Georgia"
+display = "Segoe UI Variable Static Display"
+size    = 11
+
+# style.py draws the cursors (Disguise-Cursors: Windows' white arrow and the spinning ring, in the
+# theme's accent) and picks the icons (Win11, light or dark); these are only the fallbacks.
+[cursor]
+theme = "Adwaita"
+size  = 24
+
+[icons]
+theme = "Win11"
+
+# Windows 11 frames windows in a hairline grey, not the accent: the palette's activeBorder / inactiveBorder
+[hyprland]
+border = "palette"
+
+# What SUPER + Space and SUPER + CTRL + Space open here (~/.config/theme/menu). Other setups: Walker.
+[menus]
+root = "qs ipc call start toggle"
+apps = "qs ipc call search toggle"
+
+# How switching to this setup, or between its themes, is revealed: fade | wipe | iris | dissolve | glitch
+# (Windows 11 fades between everything)
+[transition]
+style    = "fade"
+duration = 600

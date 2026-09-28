@@ -1221,12 +1221,16 @@ inactive_tab_background {tp["bgDark"]}
     run("pkill", "-USR1", "-x", "kitty")
 
     # Hyprland borders (setup.toml [hyprland] border = "gradient" | "accent") and cursor
+    # ("palette": the theme's own activeBorder / inactiveBorder keys, e.g. Disguise's hairline greys)
     a, t, b = (p[k].lstrip("#") for k in ("accent", "purple", "border"))
-    active = (f'{{ colors = {{ "rgba({a}ee)", "rgba({t}ee)" }}, angle = 45 }}'
-              if SETUP.get("hyprland", {}).get("border", "gradient") == "gradient" else f'"rgba({a}ee)"')
+    mode = SETUP.get("hyprland", {}).get("border", "gradient")
+    active = (f'{{ colors = {{ "rgba({a}ee)", "rgba({t}ee)" }}, angle = 45 }}' if mode == "gradient"
+              else f'"rgba({p.get("activeBorder", p["border"]).lstrip("#")}ff)"' if mode == "palette"
+              else f'"rgba({a}ee)"')
+    inactive = f'{p.get("inactiveBorder", p["border"]).lstrip("#")}ff' if mode == "palette" else f"{b}aa"
     lua = f"""hl.config({{ general = {{ col = {{
   active_border   = {active},
-  inactive_border = "rgba({b}aa)",
+  inactive_border = "rgba({inactive})",
 }} }} }})
 """
     env = (f'hl.env("XCURSOR_THEME", "{cursor["theme"]}")\nhl.env("XCURSOR_SIZE", "{cursor["size"]}")\n'

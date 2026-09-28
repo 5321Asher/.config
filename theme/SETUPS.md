@@ -39,6 +39,7 @@ Existing setups, as references:
 | **observatory** | 3 (fully custom) | brass instruments, orbits, phosphor; JetBrains + Cormorant | `quickshell/observatory/` (horizon line, dome sundial, orbital workspaces, gauges, control deck) | own console + star-chart launcher | own Quickshell lock | gtk3/gtk4/qss/satty + icons + cursors |
 | **memphis** | 3 (fully custom) | Windows 98: grey bevels, Start button, Control Panel; W95FA + IBM VGA | `quickshell/memphis/` (taskbar, Start menu, shell windows: Control Panel + Properties sheets, Run…, Inbox, Media Player) | own Start menu + Run… launcher | own Quickshell lock (98 logon box) | gtk3/gtk4/qss/satty (98 widgets) + Chicago95 icons + pixel cursors |
 | **netrunner** | 3 (fully custom) | Cyberpunk: red/cyan on black glass, cut corners, HUD of real system state; Chakra Petch + JetBrains Mono + Noto CJK | `quickshell/netrunner/` (bar with ticker, window frames overlay, deck dashboard on special:deck, rig control panel) | own hub (quickhack list) + EXEC launcher | own Quickshell lock (pic-4 style) | gtk3/gtk4/qss/satty + folder icons + cursors |
+| **disguise** | 3 (fully custom) | Windows 11: Mica/Acrylic, centred taskbar, Fluent controls; Segoe UI Variable + Segoe Fluent Icons + Cascadia | `quickshell/disguise/` (taskbar, flyout layer: Start, Search, Quick Settings, notification centre, Widgets, tray; Settings as a real FloatingWindow; Task View; toasts; OSD) | own Start menu + Search | own Quickshell lock (curtain + sign-in) | gtk3/gtk4/qss/satty (WinUI) + Win11 icons + cursors |
 
 ---
 
@@ -133,6 +134,9 @@ With where they live, so you can port them (`S` = `quickshell/sharp/modules/`,
 | polkit prompt | `S/PolkitPrompt.qml` | `O/utilities/PolkitPrompt.qml` | `M/utilities/PolkitPrompt.qml` |`N/utilities/PolkitPrompt.qml` |
 | vulnerability watch (arch-audit, by severity, fix ready) + pending updates (checkupdates) + update now | `S/Updates.qml`, `S/StatsTab.qml` (Security card) | `O/services/Updates.qml`, deck `Telemetry.qml` (watch) | `M/services/Updates.qml`, applet `SystemProps.qml` (Security), tray icon | `N/services/Status.qml`, deck `VulnWatch.qml`, the ticker |
 
+Disguise (`D` = `quickshell/disguise/`) has every row too: its README's mapping table says where (Quick Settings
+`D/flyouts/QuickSettings.qml`, Settings pages `D/settings/pages/`, Task View `D/utilities/TaskViewLayer.qml`…).
+
 The *logic* singletons (Net, Capture, Devices, Displays, Brightness, FocusTimer, Rgb, SysStats,
 Voxtype, Weather, MicLevel, ClaudeStatus, Config, Updates, Elephant, StayAwake) are the same in every setup: copy them into the
 new shell (a setup never imports another setup's files) and write only the UI.
@@ -207,7 +211,7 @@ lock = "pidof hyprlock || hyprlock"       # or "qs ipc call lock lock || pidof h
 [cursor]           # theme size   (fallback if style.py has no cursors())
 [icons]            # theme        (fallback if style.py has no icons())
 [hyprland]
-border = "gradient"                        # accent -> second accent, or "accent" (solid)
+border = "gradient"                        # accent -> second accent, "accent" (solid), or "palette" (the theme's activeBorder / inactiveBorder)
 [menus]            # optional (level 3): root = "…", apps = "…"  (shell commands; default: Walker)
 [transition]
 style = "fade"                             # fade | wipe | iris | dissolve | glitch
@@ -369,3 +373,13 @@ Check `git status` for generated files before committing (§4.4).
 - **Special workspaces as dashboards** (Netrunner's deck): give the workspace gaps with
   `hl.workspace_rule`, open it together with a window (a special workspace with nothing on it has
   nothing to close), and let Hyprland hide it when its last window closes.
+- **QML reserved-ish names, again:** a property called `signal` doesn't parse; property names can't start
+  with a capital (`W`, `H`); a Theme colour and a size can't share a name (`control`). `Column` and
+  `Row` have a read-only `implicitHeight`. `ListView` sections need model roles: with a JS array
+  model, put header rows into the array instead.
+- **A PopupWindow isn't an Item:** inside one, `parent.hovered` is undefined; give the target an id.
+- **Laptop brightness without root:** logind's `SetBrightness` on the session
+  (`busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto org.freedesktop.login1.Session SetBrightness ssu backlight <dev> <raw>`)
+  — Disguise's `services/Backlight.qml`.
+- **Don't edit a shell's QML while the session is locked by it:** live reload would rebuild the lock.
+  Wait for the user to unlock.

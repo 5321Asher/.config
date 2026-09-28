@@ -1,0 +1,261 @@
+/* Disguise — Walker as a Windows 11 flyout (the Win+V clipboard / search pane): Acrylic, 8 px
+   corners, a search box with the accent underline, rows with a rounded highlight and the accent pill.
+   Location: ~/.config/walker/themes/disguise/style.css
+   (Disguise's own menus are the Start menu and Search; Walker still does clipboard history, file
+   search and the prompts some menu entries open.) */
+
+/* Colours come from the theme (generated colors.css): Disguise's Fluent tokens are there by name
+   (@mica @flyout @card @control @controlStroke @text @text2 @text3 @accent @accentText …) */
+@import url("file:///home/av/.config/walker/themes/disguise/colors.css");
+
+* {
+  all: unset;
+  /* font-family: from colors.css (Segoe UI Variable) */
+  font-size: 14px;
+}
+
+/* ---------- window ---------- */
+
+.box-wrapper {
+  background: alpha(@flyout, 0.97);
+  color: @text;
+  border: 1px solid alpha(@text, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px alpha(black, 0.3);
+  padding: 12px;
+}
+
+.caption {
+  color: @text;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 2px 4px 4px 4px;
+}
+
+popover {
+  background: @flyout;
+  border: 1px solid alpha(@text, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+scrollbar {
+  opacity: 0;
+}
+
+.normal-icons {
+  -gtk-icon-size: 24px;
+}
+
+.large-icons {
+  -gtk-icon-size: 32px;
+}
+
+/* ---------- search ---------- */
+
+.search-container {
+  margin: 0 0 6px 0;
+}
+
+.input {
+  background: @field;
+  color: @text;
+  caret-color: @text;
+  padding: 7px 11px;
+  border-radius: 4px;
+  border: 1px solid @controlStroke;
+  border-bottom: 2px solid @accent;
+}
+
+.input placeholder {
+  color: @text3;
+  opacity: 1;
+}
+
+.input selection {
+  background: @accent;
+  color: @accentText;
+}
+
+/* ---------- list ---------- */
+
+.list {
+  color: @text;
+}
+
+.item-box {
+  padding: 8px 10px;
+  border-radius: 4px;
+  margin: 1px 0;
+}
+
+child:hover .item-box,
+row:hover .item-box {
+  background: alpha(@text, 0.05);
+}
+
+child:selected .item-box,
+row:selected .item-box {
+  background: alpha(@text, 0.08);
+  box-shadow: inset 3px 0 @accent;
+}
+
+.item-subtext {
+  font-size: 12px;
+  color: @text2;
+}
+
+.item-quick-activation {
+  background: @control;
+  color: @text2;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid @controlStroke;
+  font-size: 12px;
+}
+
+.item-image-text {
+  font-size: 24px;
+}
+
+.providerlist .item-subtext {
+  font-size: unset;
+  color: @text2;
+}
+
+.preview-box,
+.elephant-hint,
+.placeholder {
+  color: @text3;
+}
+
+/* ---------- preview: a card ---------- */
+
+.preview {
+  background: @card;
+  color: @text;
+  border: 1px solid @cardStroke;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.preview .large-icons {
+  -gtk-icon-size: 64px;
+}
+
+/* ---------- provider accents ---------- */
+
+.calc .item-text {
+  font-size: 22px;
+}
+
+.symbols .item-image {
+  font-size: 24px;
+}
+
+.todo.done .item-text-box {
+  opacity: 0.4;
+}
+
+.todo.urgent {
+  color: @danger;
+}
+
+.todo.active {
+  font-weight: 600;
+}
+
+.bluetooth.disconnected {
+  opacity: 0.5;
+}
+
+:not(.calc).current {
+  font-weight: 600;
+}
+
+/* ---------- keybind hints ---------- */
+
+.keybinds {
+  padding: 6px 2px 0 2px;
+  border-top: 1px solid @divider;
+  color: @text2;
+  font-size: 12px;
+}
+
+.keybind-button {
+  opacity: 0.8;
+}
+
+.keybind-button:hover {
+  opacity: 1;
+}
+
+.keybind-bind {
+  color: @text3;
+  font-size: 12px;
+}
+
+.keybind-label {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: @control;
+  border: 1px solid @controlStroke;
+  color: @text2;
+  font-size: 12px;
+}
+
+/* ---------- the side picture: the theme's Bloom ---------- */
+
+.side-image {
+  background-image: url("file:///home/av/.config/walker/themes/disguise/side.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 8px;
+  margin: 0 0 0 12px;
+}
+
+/* ---------- errors ---------- */
+
+.error {
+  padding: 8px 12px;
+  background: alpha(@danger, 0.15);
+  color: @text;
+  border-radius: 4px;
+}
+
+/* ---------- root menu (SUPER+Space, if Walker is ever asked) ---------- */
+
+.start-row { padding: 8px 10px; }
+.start-icon { font-size: 20px; color: @text; }
+.start-text { font-size: 14px; }
+
+/* ---------- power panel: a row of buttons ---------- */
+
+.list.grid .item-box {
+  padding: 12px 6px;
+  margin: 3px;
+  background: @control;
+  color: @text;
+  border-radius: 4px;
+  border: 1px solid @controlStroke;
+  border-bottom-color: @controlStrokeBottom;
+}
+
+.list.grid child:selected .item-box {
+  background: @accent;
+  box-shadow: none;
+}
+
+.list.grid child:selected .item-text,
+.list.grid child:selected .item-image-text { color: @accentText; }
+
+.list.grid .item-image-text { font-size: 20px; }
+.list.grid .item-text { font-size: 14px; }
+.list.grid .item-subtext { font-size: 0; }
+
+/* ---------- keybind cheat sheet rows ---------- */
+
+.kb-row { padding: 4px 10px; }
+.kb-keys { font-weight: 600; }
+.kb-desc { color: @text2; }

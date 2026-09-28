@@ -123,6 +123,8 @@ def gpu():
             return 0
 
     v = [s.strip() for s in out.split(",")]
+    if len(v) < 9:          # nvidia-smi present but no driver: it prints an error, not the fields
+        return None
     return {
         "name": v[0].replace("NVIDIA GeForce ", ""),
         "usage": num(v[1]), "temp": num(v[2]),
