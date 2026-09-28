@@ -191,8 +191,8 @@ Item {
                     x: res.best ? 58 : 46
                     width: parent.width - x - 12
                     anchors.verticalCenter: parent.verticalCenter
-                    Txt { width: parent.width; text: res.modelData.title; size: res.best ? Theme.bodyLarge - 2 : Theme.body; strong: res.best }
-                    Txt { visible: res.best || res.modelData.kind === "web"; width: parent.width; text: res.modelData.sub; size: Theme.caption; level: 2 }
+                    Txt { width: parent.width; text: res.modelData.title ?? ""; size: res.best ? Theme.bodyLarge - 2 : Theme.body; strong: res.best }
+                    Txt { visible: res.best || res.modelData.kind === "web"; width: parent.width; text: res.modelData.sub ?? ""; size: Theme.caption; level: 2 }
                 }
                 MouseArea {
                     id: resMouse

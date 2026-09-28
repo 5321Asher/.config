@@ -54,25 +54,25 @@ Column {
         StatusCard {
             glyph: ""; title: Net.ssid || (Net.wifiEnabled ? "Not connected" : "Wi-Fi is off")
             sub: Net.ssid ? "Connected, secured" : "Network & internet"
-            onClicked: SettingsApp.open("network")
+            onClicked: SettingsApp.go("network")
         }
         StatusCard {
             glyph: ""; title: Updates.pending > 0 ? Updates.pending + " updates available" : "You're up to date"
             sub: "Windows Update"
-            onClicked: SettingsApp.open("update")
+            onClicked: SettingsApp.go("update")
         }
         StatusCard {
             readonly property var dev: (Bluetooth.defaultAdapter?.devices.values ?? []).find(d => d.connected)
             glyph: ""; title: dev?.name ?? (Bluetooth.defaultAdapter?.enabled ? "No devices connected" : "Bluetooth is off")
             sub: "Bluetooth & devices"
-            onClicked: SettingsApp.open("bluetooth")
+            onClicked: SettingsApp.go("bluetooth")
         }
     }
 
     Header { text: "Recommended settings" }
-    SettingRow { width: parent.width; glyph: ""; title: "Display"; subtitle: "Brightness, resolution, arrangement"; clickable: true; onClicked: SettingsApp.open("display") }
-    SettingRow { width: parent.width; glyph: ""; title: "Sound"; subtitle: "Volume levels, output, input, sound devices"; clickable: true; onClicked: SettingsApp.open("sound") }
-    SettingRow { width: parent.width; glyph: ""; title: "Notifications"; subtitle: "Alerts from apps, do not disturb"; clickable: true; onClicked: SettingsApp.open("notifications") }
+    SettingRow { width: parent.width; glyph: ""; title: "Display"; subtitle: "Brightness, resolution, arrangement"; clickable: true; onClicked: SettingsApp.go("display") }
+    SettingRow { width: parent.width; glyph: ""; title: "Sound"; subtitle: "Volume levels, output, input, sound devices"; clickable: true; onClicked: SettingsApp.go("sound") }
+    SettingRow { width: parent.width; glyph: ""; title: "Notifications"; subtitle: "Alerts from apps, do not disturb"; clickable: true; onClicked: SettingsApp.go("notifications") }
 
     Header { text: "Personalize your device" }
     Card {

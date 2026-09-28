@@ -82,5 +82,5 @@ Column {
     }
     Txt { visible: Net.wifiError !== ""; width: parent.width; wrapMode: Text.Wrap; color: Theme.danger; text: Net.wifiError }
     Header { text: "More" }
-    SettingRow { width: parent.width; glyph: ""; title: "VPN"; subtitle: Net.tsRunning ? "Tailscale · connected" : "Tailscale"; clickable: true; onClicked: SettingsApp.open("vpn") }
+    SettingRow { width: parent.width; glyph: ""; title: "VPN"; subtitle: Net.tsRunning ? "Tailscale · connected" : "Tailscale"; clickable: true; onClicked: SettingsApp.go("vpn") }
 }

@@ -51,14 +51,20 @@ Singleton {
     function parentOf(id) { return pages[id]?.[2] ?? ""; }
     function section(id) { let p = id; while (parentOf(p)) p = parentOf(p); return p; }
 
+    // From outside (Start, Quick Settings, IPC): show the page and bring the window forward
     function open(id) {
+        const wasOpen = isOpen;
+        go(id);
+        if (wasOpen && Hyprland.activeToplevel?.title !== "Settings") raise.restart();
+    }
+    // Inside Settings (the left pane, breadcrumbs, rows): just change the page. No focus
+    // dispatch: Hyprland warps the pointer to the middle of a window it focuses that way.
+    function go(id) {
         const target = pages[id] ? id : "home";
         if (isOpen && page !== target) history = history.concat([page]);
         page = target;
         if (!isOpen) { history = []; isOpen = true; }
-        else raise.restart();
     }
-    function go(id) { open(id); }
     function back() {
         if (!history.length) return;
         page = history[history.length - 1];

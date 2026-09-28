@@ -22,18 +22,18 @@ Column {
             anchors.right: parent.right; anchors.rightMargin: 20
             anchors.verticalCenter: parent.verticalCenter
             spacing: 24
-            Mini { glyph: ""; title: "Windows Update"; sub: Updates.pending > 0 ? Updates.pending + " available" : "Up to date"; onClicked: SettingsApp.open("update") }
+            Mini { glyph: ""; title: "Windows Update"; sub: Updates.pending > 0 ? Updates.pending + " available" : "Up to date"; onClicked: SettingsApp.go("update") }
         }
     }
     Item { width: 1; height: 8 }
-    SettingRow { width: parent.width; glyph: ""; title: "Display"; subtitle: "Monitors, brightness, night light, display profile"; clickable: true; onClicked: SettingsApp.open("display") }
-    SettingRow { width: parent.width; glyph: ""; title: "Sound"; subtitle: "Volume levels, output, input, sound devices"; clickable: true; onClicked: SettingsApp.open("sound") }
-    SettingRow { width: parent.width; glyph: ""; title: "Notifications"; subtitle: "Alerts from apps and system, do not disturb"; clickable: true; onClicked: SettingsApp.open("notifications") }
-    SettingRow { width: parent.width; glyph: ""; title: "Focus"; subtitle: "Focus sessions, pomodoro, timer"; clickable: true; onClicked: SettingsApp.open("focus") }
-    SettingRow { width: parent.width; glyph: ""; title: "Power & battery"; subtitle: "Sleep, battery usage, stay awake"; clickable: true; onClicked: SettingsApp.open("power") }
-    SettingRow { width: parent.width; glyph: ""; title: "Storage"; subtitle: "Drives, space, mount and eject"; clickable: true; onClicked: SettingsApp.open("storage") }
-    SettingRow { width: parent.width; glyph: ""; title: "Task Manager"; subtitle: "Processor, memory, graphics, disks, network"; clickable: true; onClicked: SettingsApp.open("performance") }
-    SettingRow { width: parent.width; glyph: ""; title: "About"; subtitle: "Device specifications, rename PC, Windows specifications"; clickable: true; onClicked: SettingsApp.open("about") }
+    SettingRow { width: parent.width; glyph: ""; title: "Display"; subtitle: "Monitors, brightness, night light, display profile"; clickable: true; onClicked: SettingsApp.go("display") }
+    SettingRow { width: parent.width; glyph: ""; title: "Sound"; subtitle: "Volume levels, output, input, sound devices"; clickable: true; onClicked: SettingsApp.go("sound") }
+    SettingRow { width: parent.width; glyph: ""; title: "Notifications"; subtitle: "Alerts from apps and system, do not disturb"; clickable: true; onClicked: SettingsApp.go("notifications") }
+    SettingRow { width: parent.width; glyph: ""; title: "Focus"; subtitle: "Focus sessions, pomodoro, timer"; clickable: true; onClicked: SettingsApp.go("focus") }
+    SettingRow { width: parent.width; glyph: ""; title: "Power & battery"; subtitle: "Sleep, battery usage, stay awake"; clickable: true; onClicked: SettingsApp.go("power") }
+    SettingRow { width: parent.width; glyph: ""; title: "Storage"; subtitle: "Drives, space, mount and eject"; clickable: true; onClicked: SettingsApp.go("storage") }
+    SettingRow { width: parent.width; glyph: ""; title: "Task Manager"; subtitle: "Processor, memory, graphics, disks, network"; clickable: true; onClicked: SettingsApp.go("performance") }
+    SettingRow { width: parent.width; glyph: ""; title: "About"; subtitle: "Device specifications, rename PC, Windows specifications"; clickable: true; onClicked: SettingsApp.go("about") }
 
     component Mini: Item {
         id: mini

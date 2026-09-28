@@ -26,7 +26,7 @@ Column {
     Spec { title: "Device specifications"; glyph: ""; rows: root.device }
     Spec { title: "Windows specifications"; glyph: ""; rows: root.windows }
     Header { text: "Related" }
-    SettingRow { width: parent.width; glyph: ""; title: "Task Manager"; subtitle: "What's using the processor, memory and graphics"; clickable: true; onClicked: SettingsApp.open("performance") }
+    SettingRow { width: parent.width; glyph: ""; title: "Task Manager"; subtitle: "What's using the processor, memory and graphics"; clickable: true; onClicked: SettingsApp.go("performance") }
     SettingRow { width: parent.width; glyph: ""; title: "System information"; subtitle: "fastfetch, in the terminal"; clickable: true; chevron: ""
                  onClicked: Quickshell.execDetached(["kitty", "--hold", "fastfetch"]) }
 

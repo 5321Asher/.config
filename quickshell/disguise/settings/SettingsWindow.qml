@@ -82,7 +82,7 @@ FloatingWindow {
             onAccepted: {
                 const q = text.trim().toLowerCase();
                 const hit = SettingsApp.index.find(s => (s.title + " " + s.keywords).toLowerCase().includes(q));
-                if (hit) { SettingsApp.open(hit.id); text = ""; }
+                if (hit) { SettingsApp.go(hit.id); text = ""; }
             }
         }
         Column {
@@ -110,7 +110,7 @@ FloatingWindow {
                     }
                     Glyph { x: 16; anchors.verticalCenter: parent.verticalCenter; g: SettingsApp.glyph(navItem.modelData); size: 16; color: navItem.current ? Theme.accentLink : Theme.text }
                     Txt { visible: !win.compact; x: 48; height: parent.height; text: SettingsApp.title(navItem.modelData) }
-                    MouseArea { id: nm; anchors.fill: parent; hoverEnabled: true; onClicked: SettingsApp.open(navItem.modelData) }
+                    MouseArea { id: nm; anchors.fill: parent; hoverEnabled: true; onClicked: SettingsApp.go(navItem.modelData) }
                 }
             }
         }
@@ -145,7 +145,7 @@ FloatingWindow {
                         size: Theme.title
                         strong: true
                         color: crumb.last ? Theme.text : cm.containsMouse ? Theme.text : Theme.text2
-                        MouseArea { id: cm; anchors.fill: parent; enabled: !crumb.last; hoverEnabled: true; onClicked: SettingsApp.open(crumb.modelData) }
+                        MouseArea { id: cm; anchors.fill: parent; enabled: !crumb.last; hoverEnabled: true; onClicked: SettingsApp.go(crumb.modelData) }
                     }
                     Glyph { visible: !crumb.last; anchors.verticalCenter: parent.verticalCenter; g: ""; size: 14; color: Theme.text2 }
                 }

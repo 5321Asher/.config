@@ -33,6 +33,7 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "disguise-taskbar"
     exclusiveZone: Theme.taskbarHeight
+    Component.onCompleted: Flyouts.registerBar(sname, root)
 
     Rectangle {
         anchors.fill: parent

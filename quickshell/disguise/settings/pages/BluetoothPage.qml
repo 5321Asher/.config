@@ -88,5 +88,5 @@ Column {
         }
     }
     Header { text: "Related" }
-    SettingRow { width: parent.width; glyph: ""; title: "Drives"; subtitle: "Mount, eject and open your disks"; clickable: true; onClicked: SettingsApp.open("storage") }
+    SettingRow { width: parent.width; glyph: ""; title: "Drives"; subtitle: "Mount, eject and open your disks"; clickable: true; onClicked: SettingsApp.go("storage") }
 }

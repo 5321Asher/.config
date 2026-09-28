@@ -383,3 +383,9 @@ Check `git status` for generated files before committing (§4.4).
   — Disguise's `services/Backlight.qml`.
 - **Don't edit a shell's QML while the session is locked by it:** live reload would rebuild the lock.
   Wait for the user to unlock.
+- **Flyouts must not take the keyboard exclusively:** while a layer holds `WlrKeyboardFocus.Exclusive`,
+  Hyprland sends clicks nowhere else, so the bar button that opened a flyout can't close it. Use
+  `OnDemand` plus a `HyprlandFocusGrab` whose windows include the bar (Disguise's FlyoutLayer), and
+  close on the grab's `cleared`.
+- **Focusing a window by dispatch warps the pointer** to its middle (`hl.dsp.focus({ window = … })`).
+  Only do it when the window isn't already active; never on navigation inside it.

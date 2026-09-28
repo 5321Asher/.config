@@ -23,6 +23,16 @@ Singleton {
     readonly property bool isOpen: kind !== ""
     property var opts: ({})             // per-flyout extras: { page, text, x, … }
 
+    // each screen's taskbar window: the flyout's focus grab includes it, so the taskbar's buttons still
+    // take clicks (and toggle) while a flyout is open
+    property var bars: ({})
+    function registerBar(screenName, win) { const b = Object.assign({}, bars); b[screenName] = win; bars = b; }
+
+    // A click outside clears the focus grab (closing the flyout). If that click was on the button
+    // that opened it, its toggle arrives just after: it mustn't open it again.
+    property string lastClosed: ""
+    property real closedAt: 0
+
     // menus: [{ items, x, y, up, sel, from }] in screen coordinates (x, y = the menu's corner)
     property var levels: []
 
@@ -40,11 +50,14 @@ Singleton {
     }
     function toggle(k, screenName, o) {
         const s = screenName ?? focusedScreen()?.name ?? "";
-        if (kind === k && screen === s && !closing) close();
-        else show(k, s, o);
+        if (kind === k && screen === s) { close(); return; }          // open (or closing): close
+        if (lastClosed === k + "@" + s && Date.now() - closedAt < 300) return;
+        show(k, s, o);
     }
     function close() {
         if (!isOpen || closing) return;
+        lastClosed = kind + "@" + screen;
+        closedAt = Date.now();
         closing = true;
         hideTimer.restart();
     }

@@ -39,7 +39,7 @@ Column {
         visible: Updates.fixable > 0
         width: parent.width
         glyph: ""; title: Updates.fixable + " can be fixed by updating"
-        Btn { kind: "accent"; text: "Go to Windows Update"; onClicked: SettingsApp.open("update") }
+        Btn { kind: "accent"; text: "Go to Windows Update"; onClicked: SettingsApp.go("update") }
     }
     Header { text: "Current threats"; visible: Updates.count > 0 }
     Repeater {

@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../theme"
 import "../widgets"
@@ -23,7 +24,15 @@ PanelWindow {
     color: "transparent"
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "disguise-flyout"
-    WlrLayershell.keyboardFocus: mine ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    // Not an exclusive keyboard grab: while a layer holds one, Hyprland gives clicks to nothing
+    // else, so the taskbar button that opened a flyout couldn't close it. A Hyprland focus grab
+    // keeps the keyboard here and lets the taskbar work; a click anywhere else clears it.
+    WlrLayershell.keyboardFocus: mine ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    HyprlandFocusGrab {
+        active: root.mine && !Flyouts.closing
+        windows: [root].concat(Flyouts.bars[root.modelData.name] ? [Flyouts.bars[root.modelData.name]] : [])
+        onCleared: Flyouts.close()
+    }
 
     // the screen's size (the layer's is 0 until it's first mapped)
     readonly property real sw: width > 0 ? width : modelData.width

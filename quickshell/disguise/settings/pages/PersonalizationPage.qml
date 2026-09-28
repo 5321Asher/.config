@@ -37,7 +37,7 @@ Column {
             }
         }
     }
-    SettingRow { width: parent.width; glyph: ""; title: "Background"; subtitle: "Background image, slideshow"; clickable: true; onClicked: SettingsApp.open("background") }
-    SettingRow { width: parent.width; glyph: ""; title: "Themes"; subtitle: "Colours, and the whole desktop (setups)"; clickable: true; onClicked: SettingsApp.open("themes") }
-    SettingRow { width: parent.width; glyph: ""; title: "Dynamic Lighting"; subtitle: "Connected RGB devices (OpenRGB)"; clickable: true; onClicked: SettingsApp.open("lighting") }
+    SettingRow { width: parent.width; glyph: ""; title: "Background"; subtitle: "Background image, slideshow"; clickable: true; onClicked: SettingsApp.go("background") }
+    SettingRow { width: parent.width; glyph: ""; title: "Themes"; subtitle: "Colours, and the whole desktop (setups)"; clickable: true; onClicked: SettingsApp.go("themes") }
+    SettingRow { width: parent.width; glyph: ""; title: "Dynamic Lighting"; subtitle: "Connected RGB devices (OpenRGB)"; clickable: true; onClicked: SettingsApp.go("lighting") }
 }

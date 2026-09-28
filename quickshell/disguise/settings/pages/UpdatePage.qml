@@ -47,7 +47,7 @@ Column {
         glyph: ""; title: "Security"
         subtitle: !Updates.auditAvailable ? "arch-audit isn't installed" : Updates.count === 0 ? "No known vulnerabilities" : Updates.count + " vulnerable packages (" + Updates.high + " high risk)"
         clickable: true
-        onClicked: SettingsApp.open("security")
+        onClicked: SettingsApp.go("security")
     }
     SettingRow { width: parent.width; glyph: ""; title: "Update history"; subtitle: "pacman's log"; clickable: true; chevron: ""
                  onClicked: Quickshell.execDetached(["kitty", "--hold", "sh", "-c", "grep -E 'upgraded|installed' /var/log/pacman.log | tail -60"]) }
