@@ -78,12 +78,16 @@ Singleton {
         snapping.command = ["sh", "-c", `d="$1"; id="$2"; shift 2; mkdir -p "$d"; rm -f "$d"/*.ppm
             for o in "$@"; do grim -t ppm -o "$o" "$d/$o-$id.ppm" & done; wait`,
             "sh", shotDir, id].concat(Quickshell.screens.map(s => s.name));
-        shot = id;
+        // published once grim has written the files (an Image asked earlier fails and never retries)
+        pendingShot = id;
+        shot = "";
         snapping.running = true;
         snapGuard.restart();
     }
+    property string pendingShot: ""
     function engage() {
         snapGuard.stop();
+        shot = pendingShot;
         if (snapFor) previewing = true;
         else { previewing = false; locked = true; }
         arrive.restart();

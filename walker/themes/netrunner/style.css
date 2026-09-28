@@ -1,0 +1,129 @@
+/* Netrunner — Walker as a deck panel: near-black glass, a red rule and a tracked-caps header,
+   a dark field with a red edge, the selection lit red with a bar down its left.
+   Location: ~/.config/walker/themes/netrunner/style.css
+   (Netrunner's own menus are the hub and EXEC; Walker still does clipboard history, Find, and the
+   prompts some menu entries open.) */
+
+@import url("file:///home/av/.config/walker/themes/netrunner/colors.css");
+
+* {
+  all: unset;
+  font-size: 14px;
+}
+
+.box-wrapper {
+  background: alpha(@bg_dark, 0.94);
+  border: 1px solid alpha(@blue, 0.6);
+  padding: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.caption {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: @fg;
+  padding: 0 0 10px 12px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid @border;
+  box-shadow: inset 4px 0 @blue;
+}
+
+popover {
+  background: @bg_dark;
+  border: 1px solid @border;
+  padding: 6px;
+}
+
+scrollbar { opacity: 0; }
+
+.normal-icons { -gtk-icon-size: 20px; }
+.large-icons { -gtk-icon-size: 32px; }
+
+.search-container { margin-bottom: 10px; }
+
+.input {
+  background: @bg;
+  color: @bright;
+  caret-color: @blue;
+  padding: 10px 12px;
+  border: 1px solid @border;
+  box-shadow: inset 2px 0 @blue;
+}
+.input placeholder { color: @fg_dim; opacity: 1; }
+.input selection { background: alpha(@blue, 0.35); color: @bright; }
+
+.list { color: @fg; }
+.item-box { padding: 7px 10px; border-left: 2px solid transparent; }
+child:selected .item-box,
+row:selected .item-box {
+  background: alpha(@blue, 0.16);
+  border-left: 2px solid @blue;
+}
+child:selected .item-text,
+row:selected .item-text { color: @bright; }
+.item-subtext { font-size: 11px; color: @fg_dim; }
+child:selected .item-subtext,
+row:selected .item-subtext { color: @magenta; }
+
+.item-quick-activation {
+  background: @bg;
+  color: @blue;
+  border: 1px solid @border;
+  padding: 2px 8px;
+}
+.item-image-text { font-size: 26px; }
+
+.preview-box, .elephant-hint, .placeholder { color: @fg_dim; }
+.preview { border: 1px solid @border; color: @fg; background: @bg; }
+.preview .large-icons { -gtk-icon-size: 64px; }
+
+.calc .item-text { font-size: 22px; color: @magenta; }
+.symbols .item-image { font-size: 24px; }
+.todo.done .item-text-box { opacity: 0.35; }
+.todo.urgent { color: @red; }
+.todo.active { font-weight: bold; color: @orange; }
+.bluetooth.disconnected { opacity: 0.5; }
+:not(.calc).current { color: @magenta; }
+
+.keybinds { margin-top: 6px; font-size: 11px; color: @fg_dim; }
+.keybind-button { opacity: 0.7; }
+.keybind-button:hover { opacity: 1; color: @blue; }
+.keybind-bind { color: @fg_dim; }
+.keybind-label { padding: 1px 6px; border: 1px solid @border; color: @fg; }
+
+/* the side picture: the city, framed with a red corner */
+.side-image {
+  background-image: url("file:///home/av/.config/walker/themes/netrunner/side.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 1px solid @border;
+  box-shadow: inset 3px 3px 0 -1px @blue;
+  margin: 0 0 0 14px;
+}
+
+.error { padding: 10px; background: alpha(@red, 0.25); color: @bright; border: 1px solid @red; }
+
+.start-row { padding: 9px 12px; }
+.start-icon { font-size: 18px; color: @fg_dim; }
+.start-text { font-size: 15px; }
+child:selected .start-icon { color: @blue; }
+
+.list.grid .item-box {
+  padding: 12px 6px;
+  margin: 3px;
+  border: 1px solid @border;
+  background: @bg;
+}
+.list.grid child:selected .item-box { background: alpha(@blue, 0.18); border: 1px solid @blue; }
+.list.grid child:selected .item-text,
+.list.grid child:selected .item-image-text { color: @bright; }
+.list.grid .item-image-text { font-size: 18px; }
+.list.grid .item-text { font-size: 12px; }
+.list.grid .item-subtext { font-size: 0; }
+
+.kb-row { padding: 5px 10px; }
+.kb-keys { color: @blue; font-size: 13px; }
+.kb-desc { color: @fg; }

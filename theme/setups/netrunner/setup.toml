@@ -1,0 +1,45 @@
+# Netrunner: a cyberdeck's desktop, after Night City. Red and cyan on near-black, cut corners,
+# tracked caps with // between them, Japanese in the margins, and the machine's real state
+# (vulnerabilities, updates, the firewall, failed units) read out like a netrunner's HUD.
+name = "Netrunner"
+description = "neon · ice · night city"
+default_theme = "circuit"
+icon = "󰚩"
+
+# Run by `theme lock` (hypridle's lock_cmd, SUPER+L, the rig's power buttons): Netrunner's own
+# lock (Quickshell); hyprlock if Netrunner's Quickshell isn't answering.
+lock = "qs ipc call lock lock || pidof hyprlock || hyprlock"
+
+# JetBrains Mono for data and labels (tracked caps), Chakra Petch for everything else and the big
+# numbers (its cut corners match the frames), Rajdhani for condensed titles. Noto Sans CJK JP draws
+# the Japanese accents (by name, from Quickshell).
+[fonts]
+mono    = "JetBrainsMono Nerd Font"
+sans    = "Chakra Petch"
+serif   = "Rajdhani"
+display = "Chakra Petch"
+size    = 11
+
+# style.py draws the cursors (Netrunner-Cursors, in the profile's colours) and the icons (Papirus-Dark
+# with folders in the profile's accent); these are only the fallbacks.
+[cursor]
+theme = "Adwaita"
+size  = 24
+
+[icons]
+theme = "Papirus-Dark"
+
+# Hyprland draws no borders here (look.lua: border_size 0): Quickshell's frames layer does.
+[hyprland]
+border = "accent"
+
+# What SUPER + Space and SUPER + CTRL + Space open here (~/.config/theme/menu). Other setups: Walker.
+[menus]
+root = "qs ipc call hub toggle"
+apps = "qs ipc call exec toggle"
+
+# How switching to this setup, or between its profiles, is revealed: fade | wipe | iris | dissolve | glitch
+# (the old picture tears into shifted bands with a red/cyan split, and breaks away)
+[transition]
+style    = "glitch"
+duration = 650

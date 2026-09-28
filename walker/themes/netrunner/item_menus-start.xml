@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Root panel row, omarchy-style:   󰀻  Apps -->
+<interface>
+  <requires lib="gtk" version="4.0"></requires>
+  <object class="GtkBox" id="ItemBox">
+    <style>
+      <class name="item-box"></class>
+      <class name="start-row"></class>
+    </style>
+    <property name="orientation">horizontal</property>
+    <property name="spacing">14</property>
+    <child>
+      <object class="GtkLabel" id="ItemImageFont">
+        <style>
+          <class name="start-icon"></class>
+        </style>
+        <property name="width-chars">2</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="ItemText">
+        <style>
+          <class name="item-text"></class>
+          <class name="start-text"></class>
+        </style>
+        <property name="hexpand">true</property>
+        <property name="xalign">0</property>
+      </object>
+    </child>
+  </object>
+</interface>

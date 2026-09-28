@@ -15,6 +15,8 @@ import Quickshell.Wayland
 //   wipe   a hard-edged sweep from the left with a line in the new accent (Sharp)
 //   iris   a circle opening from the centre, edged with a ring in the new accent (Observatory)
 //   dissolve  the old picture breaks up into square blocks in random order (Memphis)
+//   glitch    the old picture tears into horizontal bands that jitter sideways with red/cyan edges
+//             in the new accent and its complement, then drop out one by one (Netrunner)
 // params.json (written by the theme tool, next to the snapshots): style, accent, duration, dir.
 ShellRoot {
     id: root
@@ -31,7 +33,7 @@ ShellRoot {
         running: false
         from: 0; to: 1
         duration: root.duration
-        easing.type: root.style === "fade" ? Easing.InOutQuad : root.style === "dissolve" ? Easing.Linear : Easing.InOutCubic
+        easing.type: root.style === "fade" ? Easing.InOutQuad : root.style === "dissolve" || root.style === "glitch" ? Easing.Linear : Easing.InOutCubic
         onFinished: cleanup.running = true
     }
     // The snapshots are ~10 MB each in RAM (tmpfs): gone with the overlay
@@ -130,13 +132,54 @@ ShellRoot {
             }
             MultiEffect {
                 anchors.fill: parent
-                visible: root.style !== "fade"
+                visible: root.style !== "fade" && root.style !== "glitch"
                 source: shot
                 maskEnabled: true
                 maskSource: hole
                 maskInverted: true
                 maskThresholdMin: 0.5
                 maskSpreadAtMin: 0.02
+            }
+
+            // glitch: bands of the old picture, torn sideways, dropping out at random moments
+            Item {
+                anchors.fill: parent
+                visible: root.style === "glitch"
+                clip: true
+                Repeater {
+                    id: bands
+                    model: root.style === "glitch" ? 22 : 0
+                    Item {
+                        id: band
+                        required property int index
+                        readonly property real at: 0.15 + Math.random() * 0.8
+                        readonly property real jitter: (Math.random() - 0.5) * 140
+                        readonly property real bandY: index / 22 * win.height
+                        readonly property bool alive: root.progress < at
+                        readonly property bool torn: root.progress > at - 0.18
+                        y: bandY
+                        width: win.width
+                        height: win.height / 22 + 1
+                        visible: alive
+                        clip: true
+                        Image {
+                            y: -band.bandY
+                            x: band.torn ? band.jitter * (0.3 + Math.random() * 0.7) : 0
+                            width: win.width
+                            height: win.height
+                            source: shot.source
+                            cache: true
+                            asynchronous: false
+                        }
+                        // chromatic edges while it tears
+                        Rectangle { visible: band.torn; width: parent.width; height: 2; color: root.accent; opacity: 0.8 }
+                        Rectangle { visible: band.torn; y: parent.height - 2; width: parent.width; height: 2
+                                    color: Qt.rgba(1 - root.accent.r, 1 - root.accent.g, 1 - root.accent.b, 1); opacity: 0.6 }
+                    }
+                }
+                // the progress jitters the whole thing a little
+                Timer { running: root.style === "glitch" && reveal.running; interval: 40; repeat: true
+                        onTriggered: parent.x = (Math.random() - 0.5) * 12 * (1 - root.progress) }
             }
 
             // The edge, in the new accent

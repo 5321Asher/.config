@@ -38,6 +38,7 @@ Existing setups, as references:
 | **sharp** | 2 (styled) | flat, square, quick; tabbed top bar; Cascadia | `quickshell/sharp/` (bar + side ControlPanel with tabs) | Walker | hyprlock | icons + cursors |
 | **observatory** | 3 (fully custom) | brass instruments, orbits, phosphor; JetBrains + Cormorant | `quickshell/observatory/` (horizon line, dome sundial, orbital workspaces, gauges, control deck) | own console + star-chart launcher | own Quickshell lock | gtk3/gtk4/qss/satty + icons + cursors |
 | **memphis** | 3 (fully custom) | Windows 98: grey bevels, Start button, Control Panel; W95FA + IBM VGA | `quickshell/memphis/` (taskbar, Start menu, shell windows: Control Panel + Properties sheets, Run…, Inbox, Media Player) | own Start menu + Run… launcher | own Quickshell lock (98 logon box) | gtk3/gtk4/qss/satty (98 widgets) + Chicago95 icons + pixel cursors |
+| **netrunner** | 3 (fully custom) | Cyberpunk: red/cyan on black glass, cut corners, HUD of real system state; Chakra Petch + JetBrains Mono + Noto CJK | `quickshell/netrunner/` (bar with ticker, window frames overlay, deck dashboard on special:deck, rig control panel) | own hub (quickhack list) + EXEC launcher | own Quickshell lock (pic-4 style) | gtk3/gtk4/qss/satty + folder icons + cursors |
 
 ---
 
@@ -107,29 +108,29 @@ leaves a key that silently does nothing. Verify every item (§7).
 With where they live, so you can port them (`S` = `quickshell/sharp/modules/`,
 `O` = `quickshell/observatory/`):
 
-| feature | Sharp | Observatory | Memphis (`M` = `quickshell/memphis/`) |
-|---|---|---|---|
-| workspaces + focused window | `S/Workspaces.qml` | `O/bar/Orbits.qml` | `M/taskbar/Pager.qml`, `TaskButtons.qml` |
-| clock / calendar | `S/Clock.qml`, `S/Calendar.qml` | `O/bar/Sundial.qml`, deck `Almanac.qml` | `M/taskbar/NotifyArea.qml`, applet `DateTime.qml` |
-| Wi-Fi (scan, connect with password), Bluetooth (pair, forget), Tailscale (exit node) | `S/Net.qml`, `WifiPage`, `BluetoothPage`, `TailscalePage` | `O/services/Net.qml`, deck `Comms.qml` | applet `Network.qml` |
-| quick toggles: Wi-Fi, Bluetooth, Tailscale, **DND**, **stay awake** (`systemd-inhibit --what=idle`), **lights follow theme** (OpenRGB) | `S/QuickTab.qml` | deck `Helm.qml` | `M/desk/windows/ControlPanel.qml` (web-view pane) |
-| volume per app, outputs / inputs, mic test | `S/MediaTab.qml` | deck `Media.qml` | `M/desk/windows/VolumeControl.qml`, applet `Multimedia.qml` |
-| media player (MPRIS) + visualiser (cava) | `S/MediaPanel.qml`, `S/Cava.qml` | deck `Media.qml`, `O/services/Radio.qml` (waveform on the horizon) | `M/desk/windows/MediaPlayer.qml`, applet `Multimedia.qml` |
-| monitor brightness (ddcutil) | `S/Brightness.qml` | `O/services/Brightness.qml` | applet `Display.qml` (Brightness) |
-| display layout (resolution, refresh, scale, rotation, arrangement, revert timer) | `S/DisplayTab.qml` | deck `Optics.qml` | applet `Display.qml` (Settings) |
-| capture: region / screen screenshots, OCR, screen recording + REC indicator | `S/Capture.qml` | `O/services/Capture.qml`, `O/bar/Beacons.qml` | `M/services/Capture.qml`, REC in `NotifyArea.qml` |
-| dictation (voxtype) overlay **with a live mic meter** | `S/VoxtypeOsd.qml`, `S/MicLevel.qml` | `O/utilities/DictationOsd.qml`, `O/services/MicLevel.qml` | `M/utilities/DictationOsd.qml` |
-| weather + 7-day + **moon phase** | `S/WeatherTab.qml` | deck `Almanac.qml` | applet `DateTime.qml` (Weather) |
-| CPU / GPU / RAM / VRAM / storage / network stats + **"open btop"** | `S/StatsTab.qml`, `scripts/stats.py` | deck `Telemetry.qml`, bar gauges | applet `SystemProps.qml` (Performance) |
-| device batteries, drives (mount / eject), fans | `S/DevicesTab.qml` | deck `Hangar.qml` | applet `SystemProps.qml` (Device Manager) |
-| RGB lighting (OpenRGB colour, profiles, follow theme) | `S/RgbTab.qml` | deck `Lamps.qml` | applet `Lighting.qml` |
-| focus timer + pomodoro (+ indicator in the bar) | `S/FocusTab.qml` | deck `Chronometer.qml` | applet `Timer98.qml`, hourglass in `NotifyArea.qml` |
-| Claude Code usage / limits | `S/ClaudeInfo.qml` | deck `Claude.qml` | applet `ClaudeProps.qml` |
-| notification history + DND + clear | `S/NotificationList.qml`, `S/Notifs.qml` | deck `Log.qml`, `O/services/Transmissions.qml` | `M/desk/windows/Messages.qml`, `M/services/Notifs.qml` |
-| workspace overview | `S/Overview.qml` | `O/utilities/Overview.qml` | `M/utilities/Overview.qml` |
-| tray with menus | `S/SysTray.qml`, `S/TrayMenu.qml` | `O/bar/Tray.qml`, `O/utilities/TrayMenu.qml` | `M/taskbar/NotifyArea.qml`, `TrayMenus.qml` |
-| power: lock, sleep, log out, restart, shut down | `S/QuickTab.qml` | deck `Helm.qml` | `M/desk/windows/ShutDownDialog.qml`, Control Panel pane |
-| polkit prompt | `S/PolkitPrompt.qml` | `O/utilities/PolkitPrompt.qml` | `M/utilities/PolkitPrompt.qml` |
+| feature | Sharp | Observatory | Memphis (`M` = `quickshell/memphis/`) | Netrunner (`N` = `quickshell/netrunner/`) |
+|---|---|---|---|---|
+| workspaces + focused window | `S/Workspaces.qml` | `O/bar/Orbits.qml` | `M/taskbar/Pager.qml`, `TaskButtons.qml` |`N/bar/Workspaces.qml`, frames `N/frames/Frames.qml` |
+| clock / calendar | `S/Clock.qml`, `S/Calendar.qml` | `O/bar/Sundial.qml`, deck `Almanac.qml` | `M/taskbar/NotifyArea.qml`, applet `DateTime.qml` |`N/bar/Bar.qml`, rig `Almanac.qml` |
+| Wi-Fi (scan, connect with password), Bluetooth (pair, forget), Tailscale (exit node) | `S/Net.qml`, `WifiPage`, `BluetoothPage`, `TailscalePage` | `O/services/Net.qml`, deck `Comms.qml` | applet `Network.qml` |rig `Comms.qml` |
+| quick toggles: Wi-Fi, Bluetooth, Tailscale, **DND**, **stay awake** (`systemd-inhibit --what=idle`), **lights follow theme** (OpenRGB) | `S/QuickTab.qml` | deck `Helm.qml` | `M/desk/windows/ControlPanel.qml` (web-view pane) |rig `Helm.qml`, IDLE // HOLD in the bar |
+| volume per app, outputs / inputs, mic test | `S/MediaTab.qml` | deck `Media.qml` | `M/desk/windows/VolumeControl.qml`, applet `Multimedia.qml` |rig `Airwaves.qml` |
+| media player (MPRIS) + visualiser (cava) | `S/MediaPanel.qml`, `S/Cava.qml` | deck `Media.qml`, `O/services/Radio.qml` (waveform on the horizon) | `M/desk/windows/MediaPlayer.qml`, applet `Multimedia.qml` |rig `Airwaves.qml`, deck `SignalPanel.qml` |
+| monitor brightness (ddcutil) | `S/Brightness.qml` | `O/services/Brightness.qml` | applet `Display.qml` (Brightness) |rig `Helm.qml`, `Optics.qml` |
+| display layout (resolution, refresh, scale, rotation, arrangement, revert timer) | `S/DisplayTab.qml` | deck `Optics.qml` | applet `Display.qml` (Settings) |rig `Optics.qml` |
+| capture: region / screen screenshots, OCR, screen recording + REC indicator | `S/Capture.qml` | `O/services/Capture.qml`, `O/bar/Beacons.qml` | `M/services/Capture.qml`, REC in `NotifyArea.qml` |`N/services/Capture.qml`, REC in the bar |
+| dictation (voxtype) overlay **with a live mic meter** | `S/VoxtypeOsd.qml`, `S/MicLevel.qml` | `O/utilities/DictationOsd.qml`, `O/services/MicLevel.qml` | `M/utilities/DictationOsd.qml` |`N/utilities/DictationOsd.qml` |
+| weather + 7-day + **moon phase** | `S/WeatherTab.qml` | deck `Almanac.qml` | applet `DateTime.qml` (Weather) |rig `Almanac.qml` |
+| CPU / GPU / RAM / VRAM / storage / network stats + **"open btop"** | `S/StatsTab.qml`, `scripts/stats.py` | deck `Telemetry.qml`, bar gauges | applet `SystemProps.qml` (Performance) |rig `Telemetry.qml`, deck `SysDiag.qml` |
+| device batteries, drives (mount / eject), fans | `S/DevicesTab.qml` | deck `Hangar.qml` | applet `SystemProps.qml` (Device Manager) |rig `Hangar.qml` |
+| RGB lighting (OpenRGB colour, profiles, follow theme) | `S/RgbTab.qml` | deck `Lamps.qml` | applet `Lighting.qml` |rig `Lamps.qml` |
+| focus timer + pomodoro (+ indicator in the bar) | `S/FocusTab.qml` | deck `Chronometer.qml` | applet `Timer98.qml`, hourglass in `NotifyArea.qml` |rig `Chrono.qml`, the bar |
+| Claude Code usage / limits | `S/ClaudeInfo.qml` | deck `Claude.qml` | applet `ClaudeProps.qml` |rig `Claude.qml` |
+| notification history + DND + clear | `S/NotificationList.qml`, `S/Notifs.qml` | deck `Log.qml`, `O/services/Transmissions.qml` | `M/desk/windows/Messages.qml`, `M/services/Notifs.qml` |rig `Log.qml`, `N/notifications/` |
+| workspace overview | `S/Overview.qml` | `O/utilities/Overview.qml` | `M/utilities/Overview.qml` |`N/utilities/Overview.qml` |
+| tray with menus | `S/SysTray.qml`, `S/TrayMenu.qml` | `O/bar/Tray.qml`, `O/utilities/TrayMenu.qml` | `M/taskbar/NotifyArea.qml`, `TrayMenus.qml` |`N/bar/Tray.qml`, `TrayMenus.qml` |
+| power: lock, sleep, log out, restart, shut down | `S/QuickTab.qml` | deck `Helm.qml` | `M/desk/windows/ShutDownDialog.qml`, Control Panel pane |rig `Helm.qml` |
+| polkit prompt | `S/PolkitPrompt.qml` | `O/utilities/PolkitPrompt.qml` | `M/utilities/PolkitPrompt.qml` |`N/utilities/PolkitPrompt.qml` |
 
 The *logic* singletons (Net, Capture, Devices, Displays, Brightness, FocusTimer, Rgb, SysStats,
 Voxtype, Weather, MicLevel, ClaudeStatus, Config) are the same in both setups: copy them into the
@@ -208,7 +209,7 @@ lock = "pidof hyprlock || hyprlock"       # or "qs ipc call lock lock || pidof h
 border = "gradient"                        # accent -> second accent, or "accent" (solid)
 [menus]            # optional (level 3): root = "…", apps = "…"  (shell commands; default: Walker)
 [transition]
-style = "fade"                             # fade | wipe | iris | dissolve
+style = "fade"                             # fade | wipe | iris | dissolve | glitch
 duration = 700                             # ms
 ```
 
@@ -249,7 +250,7 @@ All are in `.gitignore`. New themeable app? Add a writer to `theme/writers.py` (
 `theme set` / `theme setup` freeze the screens on a snapshot (`theme/transition/shell.qml`, its
 own `qs -p` process), switch underneath, then reveal in the target setup's `[transition]` style:
 `fade` (crossfade), `wipe` (hard edge from the left + accent line — Sharp), `iris` (circle from
-the centre with an accent ring — Observatory), `dissolve` (square blocks in random order — Memphis). A new style = a new branch in that QML file
+the centre with an accent ring — Observatory), `dissolve` (square blocks in random order — Memphis), `glitch` (torn, jittering bands with red/cyan edges — Netrunner). A new style = a new branch in that QML file
 (keep it generic: it only gets `style`, `accent`, `duration`). Skipped automatically when the
 screens are off. `settings.toml [transition] enabled = false` turns it off.
 
@@ -343,3 +344,12 @@ Check `git status` for generated files before committing (§4.4).
   cached per provider; restart `elephant` after adding a menu file, and register new menus in
   `walker/config.toml`.
 - Don't send `wtype` keystrokes unless your own window has focus.
+- **QML names that clash:** don't call a signal or function `left`, `right`, `focus` or `set` (they
+  shadow Item properties or are reserved); a `Repeater` whose model is a plain count rebuilds every
+  delegate when the count changes (use a `ScriptModel` of indices); a singleton that only holds an
+  `IpcHandler` isn't created (so its target doesn't exist) until something touches it: touch it in
+  `shell.qml`'s `Component.onCompleted`.
+- **An `Image` that fails to load never retries:** publish a file path only once the file exists
+  (the lock screens' snapshots: `LockState.engage()` sets `shot` after grim finishes).
+- **Test a new shell beside the live one** with `qs -c <id> -d` and `qs ipc -c <id> call …`; nothing
+  renders while the session is locked (not even `grabToImage`), so wait for the user to come back.

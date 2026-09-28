@@ -1,0 +1,39 @@
+// Template for ~/.config/fastfetch/config.jsonc, rendered by ~/.config/theme/theme on every theme
+// switch. Edit this file, not config.jsonc. {{role}} = the profile colour as "r;g;b"; {{logo_*}} =
+// the profile's fastfetch image. Netrunner: the Arch logo in dim type, keys in tracked caps, the
+// deck's state (session, profile, queue, vulns, shield, ICE) and a greeting (greeting.sh).
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
+  "logo": {
+    "type": "builtin",
+    "source": "arch",
+    "color": { "1": "38;2;{{dim}}", "2": "38;2;{{dim}}" },
+    "padding": { "top": 1, "left": 3, "right": 6 }
+  },
+  "display": {
+    "separator": "  ",
+    "key": { "width": 10 },
+    "color": { "keys": "38;2;{{dim}}", "output": "38;2;{{fg}}" }
+  },
+  "modules": [
+    { "type": "title", "color": { "user": "38;2;{{fg}}", "at": "38;2;{{dim}}", "host": "38;2;{{fg}}" } },
+    { "type": "custom", "format": "{#38;2;{{dim}}}----------------" },
+    { "type": "os", "key": "OS", "format": "{2}" },
+    { "type": "kernel", "key": "KERNEL", "format": "{2}" },
+    { "type": "command", "key": "SESSION", "text": "sh ~/.config/theme/setups/netrunner/templates/greeting.sh session" },
+    { "type": "command", "key": "PROFILE", "text": "sh ~/.config/theme/setups/netrunner/templates/greeting.sh profile" },
+    { "type": "uptime", "key": "UPTIME" },
+    { "type": "command", "key": "QUEUE", "text": "sh ~/.config/theme/setups/netrunner/templates/greeting.sh queue" },
+    { "type": "command", "key": "VULN", "keyColor": "38;2;{{dim}}", "outputColor": "38;2;{{accent}}",
+      "text": "sh ~/.config/theme/setups/netrunner/templates/greeting.sh vuln" },
+    { "type": "command", "key": "SHIELD", "outputColor": "38;2;{{purple}}",
+      "text": "sh ~/.config/theme/setups/netrunner/templates/greeting.sh shield" },
+    { "type": "command", "key": "ICE", "outputColor": "38;2;{{purple}}",
+      "text": "sh ~/.config/theme/setups/netrunner/templates/greeting.sh ice" },
+    "break",
+    { "type": "command", "key": " ", "text": "sh ~/.config/theme/setups/netrunner/templates/greeting.sh welcome", "outputColor": "38;2;{{fg}}" },
+    { "type": "command", "key": " ", "text": "sh ~/.config/theme/setups/netrunner/templates/greeting.sh watch", "outputColor": "38;2;{{warn}}" },
+    { "type": "command", "key": " ", "text": "sh ~/.config/theme/setups/netrunner/templates/greeting.sh pkg", "outputColor": "38;2;{{fg}}" },
+    { "type": "custom", "key": " ", "format": "{#38;2;{{dim}}}Ready when you are." }
+  ]
+}
