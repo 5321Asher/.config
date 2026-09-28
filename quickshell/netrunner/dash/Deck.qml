@@ -6,7 +6,7 @@ import "../theme"
 import "../services"
 
 // The deck: Netrunner's dashboard, on the special workspace "deck" (the bar's DECK chip, the hub,
-// or `hyprctl dispatch 'hl.dsp.workspace.toggle_special("deck")'`). Windows opened there tile in
+// or `qs ipc call dash toggle`: it opens with a terminal, see DeckState.qml). Windows opened there tile in
 // the top-left (look.lua gives special:deck wide right and bottom gaps); these panels fill the
 // rest: SYS.DIAG down the right, SIGNAL under it, QUEUE and VULN WATCH along the bottom.
 PanelWindow {

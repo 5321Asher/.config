@@ -38,10 +38,16 @@ Singleton {
         }));
     }
 
-    // Openers go when the menu closes
+    // Openers go a moment after the menu closes (a clicked entry runs after the menu is gone, and
+    // needs its opener alive to do it)
     Connections {
         target: Menus
-        function onOpenChanged() {
+        function onOpenChanged() { if (!Menus.open) cleanup.restart(); else cleanup.stop(); }
+    }
+    Timer {
+        id: cleanup
+        interval: 1000
+        onTriggered: {
             if (Menus.open) return;
             for (const o of root.openers) o.destroy();
             root.openers = [];

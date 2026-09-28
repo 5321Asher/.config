@@ -73,10 +73,22 @@ PanelWindow {
 
         Win {
             id: frame
-            readonly property int cols: Math.min(root.count, 5)
+            // the column count that makes the little desktops biggest on this screen (a row on a
+            // landscape screen, a stack on a portrait one); each keeps its own monitor's shape
             readonly property var mon: root.monitorSize(Hyprland.focusedMonitor)
-            readonly property real tileW: Math.min(340, (root.width - 160) / cols)
-            readonly property real tileH: tileW * mon.h / mon.w
+            readonly property var fit: {
+                const W = root.width - 100, H = root.height - Theme.taskbarHeight - Theme.titleHeight - 110, gap = 14, label = 40, a = mon.w / mon.h;
+                let best = { cols: 1, w: 0 };
+                for (let c = 1; c <= root.count; c++) {
+                    const r = Math.ceil(root.count / c);
+                    const w = Math.min((W - (c - 1) * gap) / c - 6, ((H - (r - 1) * gap) / r - label) * a, 340);
+                    if (w > best.w) best = { cols: c, w: w };
+                }
+                return best;
+            }
+            readonly property int cols: fit.cols
+            readonly property real tileW: fit.w
+            readonly property real tileH: fit.w * mon.h / mon.w
             anchors.centerIn: parent
             width: cols * (tileW + 14) + 26
             height: Math.ceil(root.count / cols) * (tileH + 40) + Theme.titleHeight + 60
@@ -99,7 +111,7 @@ PanelWindow {
                         readonly property int wsId: index + 1
                         readonly property var ws: Hyprland.workspaces.values.find(w => w.id === wsId) ?? null
                         readonly property var mon: root.monitorSize(ws?.monitor ?? Hyprland.focusedMonitor)
-                        readonly property real k: frame.tileW / mon.w
+                        readonly property real k: Math.min(frame.tileW / mon.w, frame.tileH / mon.h)
                         readonly property var windows: Hyprland.toplevels.values.filter(t => t.workspace?.id === wsId)
                         readonly property bool current: Hyprland.focusedWorkspace?.id === wsId
                         spacing: 4
@@ -112,8 +124,8 @@ PanelWindow {
                             Bevel {
                                 id: tile
                                 x: 3; y: 3
-                                width: frame.tileW
-                                height: frame.tileH
+                                width: col.mon.w * col.k
+                                height: col.mon.h * col.k
                                 kind: "sunken"
                                 fill: Theme.desktop
                                 clip: true

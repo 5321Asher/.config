@@ -79,10 +79,23 @@ PanelWindow {
             Grid {
                 id: grid
                 anchors.horizontalCenter: parent.horizontalCenter
+                // the column count that makes the tiles biggest on this screen: a row on a landscape
+                // screen, a stack on a portrait one. Each tile keeps its own monitor's shape inside
+                // a cell of the focused monitor's shape.
                 readonly property var mon: root.monitorSize(Hyprland.focusedMonitor)
-                readonly property int cols: Math.min(root.count, 5)
-                readonly property real tileW: Math.min(380, (root.width - 200) / cols)
-                readonly property real tileH: tileW * mon.h / mon.w
+                readonly property var fit: {
+                    const W = root.width - 120, H = root.height - 220, gap = 18, label = 30, a = mon.w / mon.h;
+                    let best = { cols: 1, w: 0 };
+                    for (let c = 1; c <= root.count; c++) {
+                        const r = Math.ceil(root.count / c);
+                        const w = Math.min((W - (c - 1) * gap) / c, ((H - (r - 1) * gap) / r - label) * a, 420);
+                        if (w > best.w) best = { cols: c, w: w };
+                    }
+                    return best;
+                }
+                readonly property int cols: fit.cols
+                readonly property real cellW: fit.w
+                readonly property real cellH: fit.w * mon.h / mon.w
                 columns: cols
                 spacing: 18
 
@@ -94,7 +107,7 @@ PanelWindow {
                         readonly property int wsId: index + 1
                         readonly property var ws: Hyprland.workspaces.values.find(w => w.id === wsId) ?? null
                         readonly property var mon: root.monitorSize(ws?.monitor ?? Hyprland.focusedMonitor)
-                        readonly property real k: grid.tileW / mon.w
+                        readonly property real k: Math.min(grid.cellW / mon.w, grid.cellH / mon.h)
                         readonly property var windows: Hyprland.toplevels.values.filter(t => t.workspace?.id === wsId)
                         readonly property bool current: Hyprland.focusedWorkspace?.id === wsId
                         function hits(p) { const q = tile.mapFromItem(null, p.x, p.y); return q.x >= 0 && q.y >= 0 && q.x < tile.width && q.y < tile.height; }
@@ -102,8 +115,8 @@ PanelWindow {
 
                         Item {
                             id: tile
-                            width: grid.tileW
-                            height: grid.tileH
+                            width: col.mon.w * col.k
+                            height: col.mon.h * col.k
                             clip: true
                             Chamfer { anchors.fill: parent; cut: 12; corners: "tr bl"; fill: Theme.alpha(Theme.bg, 0.9)
                                       stroke: root.hoverWs === col.wsId ? Theme.cyan : col.current ? Theme.red : Theme.line

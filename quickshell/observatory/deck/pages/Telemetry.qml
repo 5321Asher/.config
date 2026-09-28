@@ -139,6 +139,92 @@ Column {
         }
     }
 
+    // Watch: packages with known vulnerabilities (arch-audit) and updates waiting (checkupdates)
+    Section {
+        title: "watch"
+        trailing: !Updates.auditAvailable ? "arch-audit not installed" : Updates.count + " affected" + (Updates.auditAt ? "  ·  " + Updates.ago() : "")
+        trailingColor: Updates.high > 0 ? Theme.signal : Updates.count > 0 ? Theme.warn : Theme.phosphor
+        Row {
+            visible: Updates.auditAvailable
+            width: parent.width
+            spacing: 8
+            Repeater {
+                model: [["high", Updates.high, Theme.signal], ["medium", Updates.bySeverity.Medium ?? 0, Theme.warn],
+                        ["low", Updates.bySeverity.Low ?? 0, Theme.dim]]
+                Rectangle {
+                    required property var modelData
+                    width: (parent.width - 16) / 3
+                    height: 26
+                    radius: 3
+                    color: modelData[1] > 0 ? Theme.alpha(modelData[2], 0.12) : "transparent"
+                    border.width: 1
+                    border.color: modelData[1] > 0 ? modelData[2] : Theme.alpha(Theme.border, 0.8)
+                    Text {
+                        anchors.centerIn: parent
+                        text: modelData[0] + "  " + modelData[1]
+                        color: modelData[1] > 0 ? modelData[2] : Theme.dim
+                        font.family: Theme.fontLabel
+                        font.pixelSize: Theme.labelSize
+                        font.capitalization: Font.SmallCaps
+                        font.letterSpacing: Theme.labelSpacing
+                        font.weight: Font.DemiBold
+                    }
+                }
+            }
+        }
+        Repeater {
+            model: Updates.vulns.slice(0, 5)
+            Item {
+                required property var modelData
+                width: parent.width
+                height: 20
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 6; height: 6; radius: 3
+                    color: modelData.severity === "Critical" || modelData.severity === "High" ? Theme.signal
+                         : modelData.severity === "Medium" ? Theme.warn : Theme.dim
+                }
+                Text {
+                    x: 14
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - 150
+                    elide: Text.ElideRight
+                    text: modelData.name + "  ·  " + modelData.type
+                    color: Theme.fg
+                    font.family: Theme.fontData
+                    font.pixelSize: Theme.dataSizeSmall
+                }
+                Text {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: modelData.cves + " cve  ·  " + (modelData.fix ? "fix ready" : "no fix")
+                    color: modelData.fix ? Theme.phosphor : Theme.dim
+                    font.family: Theme.fontData
+                    font.pixelSize: Theme.dataSizeSmall
+                }
+            }
+        }
+        Text {
+            visible: Updates.count > 5
+            text: "+" + (Updates.count - 5) + " more  ·  " + Updates.fixable + " fixed by updating"
+            color: Theme.dim
+            font.family: Theme.fontData
+            font.pixelSize: Theme.dataSizeSmall
+        }
+        Text {
+            text: !Updates.pendingAvailable ? "install pacman-contrib to count updates"
+                : Updates.checking ? "checking for updates…" : Updates.pending + " package updates pending"
+            color: Updates.pending > 0 ? Theme.brassBright : Theme.dim
+            font.family: Theme.fontData
+            font.pixelSize: Theme.dataSize
+        }
+        Row {
+            spacing: 10
+            Link { text: Updates.auditing || Updates.checking ? "scanning…" : "scan again"; onClicked: Updates.sweep() }
+            Link { text: "update now"; primary: true; enabled: Updates.pending > 0; onClicked: { DeckState.open = false; Updates.update(); } }
+        }
+    }
+
     Link {
         text: "open btop"
         glyph: "\u{f0128}"

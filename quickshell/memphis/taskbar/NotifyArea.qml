@@ -106,6 +106,16 @@ Bevel {
             onLeftClick: Voxtype.toggle()
         }
 
+        // ---------------------------------------------------------------- updates (Windows Update)
+        Slot {
+            visible: Updates.pending > 0 || Updates.high > 0
+            tip: (Updates.pending > 0 ? Updates.pending + " updates are ready to install" : "")
+                + (Updates.pending > 0 && Updates.count > 0 ? "\n" : "")
+                + (Updates.count > 0 ? Updates.count + " packages with known vulnerabilities" + (Updates.high ? " (" + Updates.high + " high)" : "") : "")
+            Icon { anchors.centerIn: parent; name: Updates.high > 0 ? "security-low" : "software-update-available"; size: Theme.trayIcon }
+            onLeftClick: Desk.show("applet:system", { tab: "Security" })
+        }
+
         // ---------------------------------------------------------------- notifications
         Slot {
             id: mail

@@ -38,6 +38,9 @@ PanelWindow {
         function onGrab(what, path) { if (what === "bar" && root.modelData === Quickshell.screens[0]) body.grabToImage(r => r.saveToFile(path)); }
     }
 
+    // how much fits: 2 = everything (landscape), 1 = no ticker / Japanese, 0 = portrait (the essentials)
+    readonly property int tier: width >= 1800 ? 2 : width >= 1300 ? 1 : 0
+
     readonly property var s: SysStats.data
     readonly property var bt: Bluetooth.defaultAdapter
     readonly property var btConnected: (bt?.devices?.values ?? []).filter(d => d.connected)
@@ -77,6 +80,7 @@ PanelWindow {
         }
         Sep { id: sep1; x: ws.x + ws.width + 8 }
         Ticker {
+            visible: root.tier >= 1
             x: sep1.x + 12
             width: Math.max(0, readouts.x - x - 16)
             height: parent.height
@@ -91,7 +95,7 @@ PanelWindow {
             height: parent.height
             spacing: 16
 
-            Jp { anchors.verticalCenter: parent.verticalCenter; text: "レイス" }
+            Jp { visible: root.tier >= 2; anchors.verticalCenter: parent.verticalCenter; text: "レイス" }
 
             Readout {
                 onClicked: RigState.toggleTo("telemetry")
@@ -107,7 +111,7 @@ PanelWindow {
                 Label { text: "MEM"; anchors.verticalCenter: parent.verticalCenter }
                 Blocks { anchors.verticalCenter: parent.verticalCenter
                          value: root.s ? root.s.mem.used / root.s.mem.total : 0 }
-                Label { anchors.verticalCenter: parent.verticalCenter; strong: true
+                Label { visible: root.tier >= 1; anchors.verticalCenter: parent.verticalCenter; strong: true
                         text: root.s ? (root.s.mem.used / 1073741824).toFixed(1) + "/" + (root.s.mem.total / 1073741824).toFixed(1) + "G" : "" }
             }
             Sep {}
@@ -129,23 +133,25 @@ PanelWindow {
                     }
                 }
                 Spark {
+                    visible: root.tier >= 1
                     anchors.verticalCenter: parent.verticalCenter
                     width: 50; height: 16
                     values: SysStats.rxHistory
                     base: Theme.alpha(Theme.cyan, 0.5)
                 }
-                Label { anchors.verticalCenter: parent.verticalCenter; text: "▲" + root.rate(root.s?.net?.tx ?? 0); color: Theme.red; strong: true }
-                Label { anchors.verticalCenter: parent.verticalCenter; text: "▼" + root.rate(root.s?.net?.rx ?? 0); color: Theme.cyan; strong: true }
+                Label { visible: root.tier >= 1; anchors.verticalCenter: parent.verticalCenter; text: "▲" + root.rate(root.s?.net?.tx ?? 0); color: Theme.red; strong: true }
+                Label { visible: root.tier >= 1; anchors.verticalCenter: parent.verticalCenter; text: "▼" + root.rate(root.s?.net?.rx ?? 0); color: Theme.cyan; strong: true }
             }
             Readout {
                 onClicked: RigState.toggleTo("comms")
                 Text { anchors.verticalCenter: parent.verticalCenter; text: "\u{f00af}"; color: root.bt?.enabled ? Theme.fg : Theme.dim
                        font.family: Theme.mono; font.pixelSize: Theme.data }
-                Label { anchors.verticalCenter: parent.verticalCenter; strong: root.btConnected.length > 0
+                Label { visible: root.tier >= 1; anchors.verticalCenter: parent.verticalCenter; strong: root.btConnected.length > 0
                         text: !root.bt?.enabled ? "OFF" : root.btConnected.length ? root.btConnected[0].name : "NONE"
                         color: root.btConnected.length ? Theme.cyan : Theme.dim }
             }
             Readout {
+                visible: root.tier >= 1 || (root.battery?.isLaptopBattery ?? false)
                 onClicked: RigState.toggleTo("hangar")
                 Label { anchors.verticalCenter: parent.verticalCenter; text: "PWR" }
                 Label {
@@ -191,7 +197,7 @@ PanelWindow {
                     border.width: 1
                     border.color: StayAwake.on ? Theme.red : Theme.line
                 }
-                Label { id: idleLabel; anchors.centerIn: parent; text: StayAwake.on ? "IDLE // HOLD" : "IDLE // AUTO"; color: StayAwake.on ? Theme.red : Theme.dim }
+                Label { id: idleLabel; anchors.centerIn: parent; text: root.tier >= 1 ? (StayAwake.on ? "IDLE // HOLD" : "IDLE // AUTO") : (StayAwake.on ? "HOLD" : "AUTO"); color: StayAwake.on ? Theme.red : Theme.dim }
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: StayAwake.on = !StayAwake.on }
             }
 
@@ -229,7 +235,7 @@ PanelWindow {
                     font.pixelSize: 11
                     font.weight: Font.Bold
                 }
-                Label { anchors.verticalCenter: parent.verticalCenter; leftPadding: 8
+                Label { visible: root.tier >= 1; anchors.verticalCenter: parent.verticalCenter; leftPadding: 8
                         text: Qt.formatDate(clock.date, "MM.dd.yy ddd"); strong: true; color: Theme.fg }
             }
         }
@@ -253,6 +259,7 @@ PanelWindow {
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: ro.clicked() }
     }
     component Sep: Rectangle {
+        visible: root.tier >= 1
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
         width: 1; height: 18
         color: Theme.alpha(Theme.line, 1)

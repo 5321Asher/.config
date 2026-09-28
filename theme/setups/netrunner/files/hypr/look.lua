@@ -1,13 +1,14 @@
--- Netrunner: a cyberdeck. No Hyprland borders (Quickshell's frames layer draws the cut-corner frames,
--- red for the focused window), square corners, translucent glass with blur, hard fast motion.
+-- Netrunner: a cyberdeck. Every window cut at the corners (rounding with rounding_power 1 draws the
+-- corners as straight diagonals, not curves) with a 1 px hairline, red on the focused window;
+-- Quickshell's frames layer adds the red accents. Translucent glass with blur, hard fast motion.
 -- The active setup's look, linked here as ~/.config/hypr/look.lua on a setup switch.
--- Border colours come after, from colors.lua (unused: border_size is 0).
+-- Border colours come after, from colors.lua (the profile's accent / border colour).
 
 hl.config({
   general = {
     gaps_in          = 8,
     gaps_out         = { top = 12, right = 14, bottom = 14, left = 14 },
-    border_size      = 0,
+    border_size      = 1,
     col              = {
       active_border   = "rgba(ff3a4cee)",
       inactive_border = "rgba(26323caa)",
@@ -18,8 +19,9 @@ hl.config({
   },
 
   decoration = {
-    rounding         = 0,
-    rounding_power   = 2,
+    -- cut corners: power 1 makes the "rounding" a straight chamfer
+    rounding         = 22,
+    rounding_power   = 1.0,
 
     active_opacity   = 1.0,
     inactive_opacity = 0.92,
@@ -92,4 +94,11 @@ hl.window_rule({
   name    = "netrunner-brave-newtab-glass",
   match   = { class = "^brave-browser$", title = "^New (Private )?Tab - Brave$" },
   opacity = "0.55 override 0.55 override",
+})
+
+-- The deck's terminal (DeckState.qml starts `kitty --class netrunner-deck` when the deck opens empty)
+hl.window_rule({
+  name      = "netrunner-deck-terminal",
+  match     = { class = "^netrunner-deck$" },
+  workspace = "special:deck",
 })

@@ -13,12 +13,13 @@ import ".."
 //   Device Manager   drives (mount, unmount, eject), device batteries, fans
 //   Performance      CPU, graphics, memory, disks and network as meters, and System Monitor's charts;
 //                    Task Manager opens btop
+//   Security         packages with known vulnerabilities (arch-audit) and updates waiting (checkupdates)
 Props {
     id: root
 
     title: "System Properties"
     icon: "computer"
-    tabs: ["General", "Device Manager", "Performance"]
+    tabs: ["General", "Device Manager", "Performance", "Security"]
 
     Component.onCompleted: { SysStats.active = true; Devices.active = true; }
     Component.onDestruction: { SysStats.active = false; Devices.active = false; }
@@ -193,6 +194,59 @@ Props {
             spacing: 8
             Txt { height: Theme.button; text: root.d ? root.d.procs + " processes running" : "" }
             Btn { text: "Task Manager…"; onClicked: Quickshell.execDetached(["kitty", "--class", "btop", "-e", "btop"]) }
+        }
+    }
+
+    // ---------------------------------------------------------------- Security
+    Column {
+        spacing: 8
+        Row {
+            spacing: 12
+            Icon { name: Updates.high > 0 ? "security-low" : Updates.count > 0 ? "security-medium" : "security-high"; size: 40 }
+            Column {
+                anchors.verticalCenter: parent.verticalCenter
+                Txt { bold: true; text: !Updates.auditAvailable ? "The vulnerability check isn't installed (arch-audit)."
+                        : Updates.count === 0 ? "No known vulnerabilities." : Updates.count + " packages have known vulnerabilities." }
+                Txt { text: Updates.auditAt && Updates.auditAvailable ? "Last checked " + Updates.ago() + "." : "" }
+            }
+        }
+        Row {
+            visible: Updates.auditAvailable
+            spacing: 18
+            Txt { text: "High: " + Updates.high; color: Updates.high > 0 ? Theme.danger : Theme.text }
+            Txt { text: "Medium: " + (Updates.bySeverity.Medium ?? 0) }
+            Txt { text: "Low: " + (Updates.bySeverity.Low ?? 0) }
+            Txt { text: Updates.fixable + " fixed by updating" }
+        }
+        ListBox {
+            visible: Updates.auditAvailable
+            width: parent.width
+            height: 250
+            model: Updates.vulns
+            iconOf: v => v.severity === "Critical" || v.severity === "High" ? "security-low" : v.severity === "Medium" ? "security-medium" : "security-high"
+            columns: [
+                { title: "Package", width: 120, text: v => v.name },
+                { title: "Risk", width: 76, text: v => v.severity },
+                { title: "Problem", width: 0, text: v => v.type },
+                { title: "CVEs", width: 50, text: v => String(v.cves) },
+                { title: "Fix", width: 76, text: v => v.fix ? "Ready" : "None yet" },
+            ]
+        }
+        Group {
+            title: "Windows Update"
+            width: parent.width
+            Row {
+                spacing: 12
+                Icon { name: "software-update-available"; size: 32 }
+                Txt { height: 32; text: !Updates.pendingAvailable ? "Install pacman-contrib to check for updates."
+                        : Updates.checking ? "Checking for updates…" : Updates.pending === 0 ? "Your computer is up to date."
+                        : Updates.pending + " updates are ready to install." }
+            }
+            Row {
+                spacing: 6
+                Btn { text: "Update Now"; isDefault: true; enabled: Updates.pending > 0; onClicked: { root.closeRequested(); Updates.update(); } }
+                Btn { text: Updates.auditing || Updates.checking ? "Checking…" : "Check Again"; onClicked: Updates.sweep() }
+            }
         }
     }
 }

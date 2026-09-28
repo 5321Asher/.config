@@ -4,6 +4,7 @@ import Quickshell.Hyprland
 import "../theme"
 import "../widgets"
 import "../utilities"
+import "../dash"
 
 // Workspaces: "P1 ▪▪▪" (this screen, and how many windows are on it), then 01 02 03 … with the
 // one showing here in a red box. While the deck (special:deck) is open on this screen it reads
@@ -23,7 +24,7 @@ Row {
     height: parent ? parent.height : Theme.barHeight
 
     function go(id) { Hyprland.dispatch(`hl.dsp.focus({ workspace = ${id} })`); }
-    function toggleDeck() { Hyprland.dispatch(`hl.dsp.workspace.toggle_special("deck")`); refresh.restart(); }
+    function toggleDeck() { DeckState.toggle(); }
     Timer { id: refresh; interval: 120; onTriggered: Hyprland.refreshMonitors() }
     Connections {
         target: Hyprland

@@ -91,7 +91,8 @@ Singleton {
                 for (const line of all.split("\n")) {
                     const p = line.split("|");
                     if (p.length < 4) continue;
-                    const sev = p[1] || "Low";
+                    const w = (p[1] || "Low").split(" ")[0];          // "High risk" -> "High"
+                    const sev = w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
                     by[sev] = (by[sev] ?? 0) + 1;
                     out.push({ name: p[0], severity: sev, type: p[2].toLowerCase(), cves: p[3].split(",").filter(c => c).length, fix: fixed.has(p[0]) });
                 }

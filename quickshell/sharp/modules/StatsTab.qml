@@ -275,6 +275,72 @@ Flickable {
             }
         }
 
+        // Security: packages with known vulnerabilities (arch-audit) and updates waiting (checkupdates)
+        Card {
+            title: "Security"
+            trailing: !Updates.auditAvailable ? "arch-audit not installed"
+                : Updates.count + " affected" + (Updates.auditAt ? "  ·  " + Updates.ago() : "")
+            trailingColor: Updates.high > 0 ? Theme.danger : Updates.count > 0 ? Theme.warn : Theme.green
+
+            RowLayout {
+                Layout.fillWidth: true
+                visible: Updates.auditAvailable
+                spacing: 8
+                Repeater {
+                    model: [["High", Updates.high, Theme.danger], ["Medium", Updates.bySeverity.Medium ?? 0, Theme.warn],
+                            ["Low", Updates.bySeverity.Low ?? 0, Theme.dim]]
+                    Rectangle {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        implicitHeight: 26
+                        color: "transparent"
+                        border.width: 1
+                        border.color: modelData[1] > 0 ? modelData[2] : Theme.border
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData[0] + "  " + modelData[1]
+                            font.family: Theme.font
+                            font.pixelSize: 11
+                            font.bold: true
+                            color: modelData[1] > 0 ? modelData[2] : Theme.dim
+                        }
+                    }
+                }
+            }
+            Repeater {
+                model: Updates.vulns.slice(0, 5)
+                RowLayout {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    spacing: 8
+                    Rectangle { implicitWidth: 6; implicitHeight: 6
+                                color: modelData.severity === "Critical" || modelData.severity === "High" ? Theme.danger
+                                     : modelData.severity === "Medium" ? Theme.warn : Theme.dim }
+                    Text { text: modelData.name; font.family: Theme.font; font.pixelSize: 11; font.bold: true; color: Theme.fg }
+                    Text { Layout.fillWidth: true; elide: Text.ElideRight; text: modelData.type; font.family: Theme.font; font.pixelSize: 11; color: Theme.dim }
+                    Text { text: modelData.cves + " CVE"; font.family: Theme.font; font.pixelSize: 11; color: Theme.dim }
+                    Text { Layout.preferredWidth: 64; horizontalAlignment: Text.AlignRight; text: modelData.fix ? "fix ready" : "no fix"
+                           font.family: Theme.font; font.pixelSize: 11; color: modelData.fix ? Theme.green : Theme.dim }
+                }
+            }
+            Text {
+                visible: Updates.count > 5
+                text: "+" + (Updates.count - 5) + " more  ·  " + Updates.fixable + " fixed by updating"
+                font.family: Theme.font; font.pixelSize: 11; color: Theme.dim
+            }
+            InfoRow {
+                label: "Updates pending"
+                value: Updates.pendingAvailable ? (Updates.checking ? "checking…" : Updates.pending) : "install pacman-contrib"
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 8
+                Item { Layout.fillWidth: true }
+                SmallButton { label: Updates.auditing || Updates.checking ? "Scanning…" : "Scan again"; onClicked: Updates.sweep() }
+                SmallButton { label: "Update now"; enabled: Updates.pending > 0; onClicked: { root.closeRequested(); Updates.update(); } }
+            }
+        }
+
         // Everything else: btop
         Rectangle {
             Layout.alignment: Qt.AlignRight
@@ -314,6 +380,7 @@ Flickable {
 
         property string title
         property string trailing
+        property color trailingColor: Theme.border
         default property alias items: body.data
 
         Layout.fillWidth: true
@@ -349,7 +416,7 @@ Flickable {
                     text: card.trailing
                     font.family: Theme.font
                     font.pixelSize: 10
-                    color: Theme.border
+                    color: card.trailingColor
                 }
             }
 
@@ -600,6 +667,22 @@ Flickable {
             font.pixelSize: 11
             color: Theme.dim
         }
+    }
+
+    component SmallButton: Rectangle {
+        id: sb
+        property string label
+        signal clicked()
+        implicitWidth: sbText.implicitWidth + 24
+        implicitHeight: 26
+        opacity: enabled ? 1 : 0.4
+        color: sbMouse.containsMouse ? Theme.surface : "transparent"
+        border.width: 1
+        border.color: sbMouse.containsMouse ? Theme.accent : Theme.border
+        Text { id: sbText; anchors.centerIn: parent; text: sb.label; font.family: Theme.font; font.pixelSize: 11
+               color: sbMouse.containsMouse ? Theme.accent : Theme.dim }
+        MouseArea { id: sbMouse; anchors.fill: parent; hoverEnabled: true; enabled: sb.enabled
+                    cursorShape: Qt.PointingHandCursor; onClicked: sb.clicked() }
     }
 
     component InfoRow: RowLayout {

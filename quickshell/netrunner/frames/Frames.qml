@@ -1,16 +1,15 @@
 import QtQuick
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Wayland
 import "../theme"
 
-// The window frames from the references: every window on this screen gets its top-right and
-// bottom-left corners cut, a hairline round it (red for the focused window, grey otherwise) and,
-// on the focused one, a short red bar along the top edge. Hyprland draws no borders here
-// (look.lua); this layer sits over the windows, takes no input, and follows them on every
-// window event (and a slow poll, for resizes Hyprland doesn't announce).
-// Fullscreen windows get none; windows under a floating window lose theirs where it covers them.
+// The window frames' accents, after the references. Hyprland cuts the corners and draws the hairline
+// itself (look.lua: rounding with rounding_power 1 makes the corners straight diagonals; the border
+// is red on the focused window, grey on the rest). This layer adds what Hyprland can't: a short red
+// bar along the focused window's top edge and a tick down its right side (a grey stub on the others).
+// It sits over the windows, takes no input, and follows them on every window event (and a slow
+// poll, for resizes Hyprland doesn't announce). Fullscreen windows get none.
 PanelWindow {
     id: root
 
@@ -70,42 +69,11 @@ PanelWindow {
             height: o.size?.[1] ?? 0
             z: o.floating ? 2 : 1
 
-            // the cut corners: the window's corner hidden under the background, then the diagonal
-            Shape {
-                anchors.fill: parent
-                preferredRendererType: Shape.CurveRenderer
-                ShapePath {
-                    fillColor: Theme.bgDark
-                    strokeColor: "transparent"
-                    startX: f.width - f.c - 1; startY: -1
-                    PathLine { x: f.width + 1; y: -1 }
-                    PathLine { x: f.width + 1; y: f.c + 1 }
-                }
-                ShapePath {
-                    fillColor: Theme.bgDark
-                    strokeColor: "transparent"
-                    startX: -1; startY: f.height - f.c - 1
-                    PathLine { x: f.c + 1; y: f.height + 1 }
-                    PathLine { x: -1; y: f.height + 1 }
-                }
-                // the outline
-                ShapePath {
-                    fillColor: "transparent"
-                    strokeColor: f.active ? Theme.red : Theme.alpha(Theme.line, 1)
-                    strokeWidth: 1
-                    joinStyle: ShapePath.MiterJoin
-                    startX: 0.5; startY: 0.5
-                    PathLine { x: f.width - f.c - 0.5; y: 0.5 }
-                    PathLine { x: f.width - 0.5; y: f.c + 0.5 }
-                    PathLine { x: f.width - 0.5; y: f.height - 0.5 }
-                    PathLine { x: f.c + 0.5; y: f.height - 0.5 }
-                    PathLine { x: 0.5; y: f.height - f.c - 0.5 }
-                    PathLine { x: 0.5; y: 0.5 }
-                }
-            }
             // the focused window's red bar, top left, and a tick at the far corner
-            Rectangle { visible: f.active; x: 0; y: 0; width: Math.min(90, f.width / 4); height: 3; color: Theme.red }
-            Rectangle { visible: f.active; x: f.width - 3; y: f.height - 18; width: 3; height: 18; color: Theme.red }
+            // (the outline and the cut corners are Hyprland's own: look.lua, rounding_power 1)
+            Rectangle { visible: f.active; x: f.c; y: -1; width: Math.min(90, f.width / 4); height: 3; color: Theme.red }
+            Rectangle { visible: f.active; x: f.width - 2; y: f.height - f.c - 20; width: 3; height: 20; color: Theme.red }
+            Rectangle { visible: !f.active; x: f.c; y: -1; width: Math.min(40, f.width / 8); height: 2; color: Theme.alpha(Theme.dim, 0.6) }
         }
     }
 }

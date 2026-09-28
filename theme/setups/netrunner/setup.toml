@@ -29,7 +29,7 @@ size  = 24
 [icons]
 theme = "Papirus-Dark"
 
-# Hyprland draws no borders here (look.lua: border_size 0): Quickshell's frames layer does.
+# Hyprland draws the hairline and cuts the corners (look.lua: rounding_power 1); solid accent when focused.
 [hyprland]
 border = "accent"
 

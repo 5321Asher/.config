@@ -15,7 +15,7 @@ import "lock"
 // Netrunner: a cyberdeck's desktop, after Night City. Structure and tweaking notes: README.md
 ShellRoot {
     // Singletons that only answer IPC are created on first use: use them now
-    Component.onCompleted: { HubState.toString(); ExecState.open; RigState.open; TrayMenus.openers; OverviewState.open; Debug.toString(); }
+    Component.onCompleted: { HubState.toString(); ExecState.open; RigState.open; TrayMenus.openers; OverviewState.open; Debug.toString(); DeckState.windows; }
 
     Variants {
         model: Quickshell.screens

@@ -8,6 +8,7 @@ import "../menus"
 import "../services"
 import "../rig"
 import "../utilities"
+import "../dash"
 
 // The hub: Netrunner's root menu (SUPER + Space, or the red tag), dropped from under the tag as a
 // quickhack list. Its entries are the shared menus (~/.config/elephant/menus, the ones Walker
@@ -37,7 +38,7 @@ Singleton {
             done(shared.concat([
                 { sep: true },
                 { text: "Rig", sub_text: "switches // levels // system", run: () => RigState.show("helm") },
-                { text: "Deck", sub_text: "sys.diag // queue // vuln watch", run: () => Hyprland.dispatch(`hl.dsp.workspace.toggle_special("deck")`) },
+                { text: "Deck", sub_text: "sys.diag // queue // vuln watch", run: () => DeckState.toggle() },
                 { text: "Subnet map", sub_text: "every workspace at once", run: () => OverviewState.open = true },
             ]));
         });

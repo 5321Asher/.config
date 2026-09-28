@@ -353,3 +353,10 @@ Check `git status` for generated files before committing (§4.4).
   (the lock screens' snapshots: `LockState.engage()` sets `shot` after grim finishes).
 - **Test a new shell beside the live one** with `qs -c <id> -d` and `qs ipc -c <id> call …`; nothing
   renders while the session is locked (not even `grabToImage`), so wait for the user to come back.
+- **Cut (chamfered) window corners:** Hyprland's `rounding` with `rounding_power = 1.0` draws the
+  corners as straight diagonals, and the border follows them. An overlay can't cut a window: it can
+  only paint over its corner (Netrunner's first frames did that, and it showed as black triangles).
+- **Portrait screens:** bars and overviews must adapt to the screen they're on (Netrunner's bar has
+  width tiers; both overviews pick the column count that makes the tiles biggest).
+- **Vulnerabilities / updates:** every setup has an `Updates.qml` service (arch-audit, checkupdates;
+  `qs ipc call updates report`); Netrunner's lives inside its Status.qml.

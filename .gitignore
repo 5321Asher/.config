@@ -46,6 +46,7 @@ __pycache__/
 /walker/themes/active
 /walker/themes/*/side.jpg
 /kitty/kitty.conf
+/kitty/tab_bar.py
 /hypr/look.lua
 /hypr/hyprlock.conf
 /cava/config
