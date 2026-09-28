@@ -1,0 +1,43 @@
+# Memphis: your dad's computer, around 1998. Grey bevelled windows, a Start button, a taskbar
+# with a clock in the corner, Control Panel for everything. (Memphis was Windows 98's code name.)
+name = "Memphis"
+description = "grey · bevelled · 1998"
+default_theme = "standard"
+icon = "󰖳"
+
+# Run by `theme lock` (hypridle's lock_cmd, SUPER+L, Shut Down → Lock). Memphis's logon dialog
+# (Quickshell); hyprlock if Memphis's Quickshell isn't answering.
+lock = "qs ipc call lock lock || pidof hyprlock || hyprlock"
+
+# W95FA (a Windows 95 system-font lookalike, crisp at 16 px = 12 pt) for everything on screen,
+# the IBM VGA text-mode font for terminals and code, Times New Roman / Arial Black for documents
+# and the Start menu banner.
+[fonts]
+mono    = "Px437 IBM VGA 8x16"
+sans    = "W95FA"
+serif   = "Times New Roman"
+display = "Arial Black"
+size    = 12
+
+# style.py draws the cursors (Memphis-Cursors: the white arrow, the hourglass) and picks the icons
+# (Chicago95); these are only the fallbacks if it can't.
+[cursor]
+theme = "Adwaita"
+size  = 32
+
+[icons]
+theme = "Chicago95"
+
+[hyprland]
+border = "gradient"   # the active window is framed in its title-bar gradient (accent -> purple)
+
+# What SUPER + Space and SUPER + CTRL + Space open here (~/.config/theme/menu). Other setups: Walker.
+[menus]
+root = "qs ipc call start toggle"
+apps = "qs ipc call run toggle"
+
+# How switching to this setup, or between its themes, is revealed: fade | wipe | iris | dissolve (ms)
+# (the old picture breaks up into square blocks, like a slide show from 1998)
+[transition]
+style    = "dissolve"
+duration = 800

@@ -14,6 +14,7 @@ import Quickshell.Wayland
 //   fade   a plain crossfade
 //   wipe   a hard-edged sweep from the left with a line in the new accent (Sharp)
 //   iris   a circle opening from the centre, edged with a ring in the new accent (Observatory)
+//   dissolve  the old picture breaks up into square blocks in random order (Memphis)
 // params.json (written by the theme tool, next to the snapshots): style, accent, duration, dir.
 ShellRoot {
     id: root
@@ -30,7 +31,7 @@ ShellRoot {
         running: false
         from: 0; to: 1
         duration: root.duration
-        easing.type: root.style === "fade" ? Easing.InOutQuad : Easing.InOutCubic
+        easing.type: root.style === "fade" ? Easing.InOutQuad : root.style === "dissolve" ? Easing.Linear : Easing.InOutCubic
         onFinished: cleanup.running = true
     }
     // The snapshots are ~10 MB each in RAM (tmpfs): gone with the overlay
@@ -98,6 +99,23 @@ ShellRoot {
                     width: win.width * root.progress
                     height: win.height
                     color: "white"
+                }
+                // dissolve: blocks, each gone once progress passes its own random moment
+                Repeater {
+                    id: blocks
+                    readonly property int size: 32
+                    readonly property int cols: Math.ceil(win.width / size)
+                    model: root.style === "dissolve" ? cols * Math.ceil(win.height / size) : 0
+                    Rectangle {
+                        required property int index
+                        readonly property real at: Math.random() * 0.94
+                        x: (index % blocks.cols) * blocks.size
+                        y: Math.floor(index / blocks.cols) * blocks.size
+                        width: blocks.size
+                        height: blocks.size
+                        visible: root.progress > at
+                        color: "white"
+                    }
                 }
                 Rectangle {
                     visible: root.style === "iris"

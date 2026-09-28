@@ -1191,26 +1191,32 @@ def apply(theme, openrgb=True, settings=None, cell_ratio=2.4):
 * {{ font-family: "{fonts["sans"]}", "{fonts["mono"]}", monospace; }}
 """)
 
+    # Terminal apps (kitty, btop, Neovim) use the palette with the theme's optional [terminal] table on
+    # top, so a light theme can keep a dark terminal (Memphis: an MS-DOS Prompt under grey windows)
+    # (and [terminal.syntax] for Neovim's syntax colours)
+    tp = p | {k: v for k, v in theme.get("terminal", {}).items() if isinstance(v, str)}
+    tsyn = syn | {k: v for k, v in theme.get("terminal", {}).get("syntax", {}).items() if k in SYNTAX_KEYS}
+
     # Kitty: font, UI colours + the theme's ANSI palette (included last by kitty.conf, so it wins)
     ansi_lines = "".join(f"color{i:<2}                 {ansi[n]}\n" for i, n in enumerate(ANSI_NAMES))
     ansi_lines += "".join(f"color{i + 8:<2}                 {ansi['bright_' + n]}\n"
                           for i, n in enumerate(ANSI_NAMES))
     write(f"{HOME}/.config/kitty/skwd-colors.conf", f"""# {HEAD}
 font_family             family="{fonts["mono"]}"
-foreground              {p["fg"]}
-background              {p["bg"]}
-selection_foreground    {p["fg"]}
-selection_background    {p["hover"]}
-cursor                  {p["accent"]}
-cursor_text_color       {p["bg"]}
-url_color               {p["purple"]}
-active_border_color     {p["accent"]}
-inactive_border_color   {p["surface"]}
-tab_bar_background      {p["bgDark"]}
-active_tab_foreground   {p["accent"]}
-active_tab_background   {p["surface"]}
-inactive_tab_foreground {p["dim"]}
-inactive_tab_background {p["bgDark"]}
+foreground              {tp["fg"]}
+background              {tp["bg"]}
+selection_foreground    {tp["fg"]}
+selection_background    {tp["hover"]}
+cursor                  {tp["accent"]}
+cursor_text_color       {tp["bg"]}
+url_color               {tp["purple"]}
+active_border_color     {tp["accent"]}
+inactive_border_color   {tp["surface"]}
+tab_bar_background      {tp["bgDark"]}
+active_tab_foreground   {tp["accent"]}
+active_tab_background   {tp["surface"]}
+inactive_tab_foreground {tp["dim"]}
+inactive_tab_background {tp["bgDark"]}
 """ + ansi_lines)
     run("pkill", "-USR1", "-x", "kitty")
 
@@ -1236,6 +1242,9 @@ inactive_tab_background {p["bgDark"]}
           + "".join(f"${k:<11} = rgb({p[k].lstrip('#')})\n"
                     for k in ("bg", "bgDark", "surface", "border", "dim", "fg", "accent",
                               "accentText", "purple", "warn", "danger"))
+          + "".join(f"${k:<11} = rgb({v.lstrip('#')})\n" for k, v in p.items()        # a setup's own keys too
+                    if k not in ("bg", "bgDark", "surface", "border", "dim", "fg", "accent", "accentText",
+                                 "purple", "warn", "danger") and isinstance(v, str) and v.startswith("#"))
           + f"$shade       = rgba({p['bgDark'].lstrip('#')}99)\n"
           + f"$font        = {fonts['mono']}\n$fontDisplay = {fonts['display']}\n")
 
@@ -1247,12 +1256,12 @@ inactive_tab_background {p["bgDark"]}
     write_satty(p, style, ctx)
     write_gtk(p, style, ctx)
     write_qbittorrent(p, write_qt(p, style, ctx))
-    write_btop(p)
+    write_btop(tp)
     write_zed(p, ansi, syn, appearance)
-    write_nvim(p, syn, theme.get("native_nvim", False))
+    write_nvim(tp, tsyn, theme.get("native_nvim", False))
     write_obsidian(p, fonts)
     write_walker_image(theme["id"])
-    write_fastfetch(theme["id"], p, ansi, (settings or {}).get("fastfetch", {}), cell_ratio)
+    write_fastfetch(theme["id"], tp, ansi, (settings or {}).get("fastfetch", {}), cell_ratio)   # it runs in the terminal
 
     # GTK4/libadwaita apps pick light or dark from this
     run("gsettings", "set", "org.gnome.desktop.interface", "color-scheme",

@@ -1,0 +1,274 @@
+/* Memphis — Walker as a Windows 98 dialog: a raised grey box with a navy caption, a sunken white
+   text box, a white list with the selection in the highlight colour, the 95 sky down the side.
+   Location: ~/.config/walker/themes/memphis/style.css
+   (Memphis's own menus are the Start menu and Run…; Walker still does clipboard history, Find…
+   and the prompts some menu entries open.) */
+
+/* Colours come from the scheme (generated colors.css): 98's system colours are there by name
+   (@face @light @hilight @shadow @dkShadow @window @windowText @title @title2 @select …) */
+@import url("file:///home/av/.config/walker/themes/memphis/colors.css");
+
+* {
+  all: unset;
+  /* font-family: from colors.css (the setup font, W95FA) */
+  font-size: 16px;
+}
+
+/* ---------- window ---------- */
+
+.box-wrapper {
+  background: @face;
+  color: @btnText;
+  border: 1px solid;
+  border-color: @light @dkShadow @dkShadow @light;
+  box-shadow: inset -1px -1px @shadow, inset 1px 1px @hilight;
+  padding: 4px;
+}
+
+.caption {
+  background: linear-gradient(to right, @title, @title2);
+  color: @titleText;
+  font-weight: bold;
+  padding: 4px 6px;
+  margin-bottom: 6px;
+}
+
+popover {
+  background: @face;
+  border: 1px solid;
+  border-color: @light @dkShadow @dkShadow @light;
+  box-shadow: inset -1px -1px @shadow, inset 1px 1px @hilight;
+  padding: 3px;
+}
+
+scrollbar {
+  opacity: 0;
+}
+
+.normal-icons {
+  -gtk-icon-size: 20px;
+}
+
+.large-icons {
+  -gtk-icon-size: 32px;
+}
+
+/* ---------- search ---------- */
+
+.search-container {
+  margin: 0 6px 8px 6px;
+}
+
+.input {
+  background: @window;
+  color: @windowText;
+  caret-color: @windowText;
+  padding: 5px 6px;
+  border: 1px solid;
+  border-color: @shadow @hilight @hilight @shadow;
+  box-shadow: inset 1px 1px @dkShadow, inset -1px -1px @light;
+}
+
+.input placeholder {
+  color: @grayText;
+  opacity: 1;
+}
+
+.input selection {
+  background: @select;
+  color: @selectText;
+}
+
+/* ---------- list ---------- */
+
+.content-container {
+  margin: 0 6px 6px 6px;
+}
+
+.scroll {
+  background: @window;
+  border: 1px solid;
+  border-color: @shadow @hilight @hilight @shadow;
+  box-shadow: inset 1px 1px @dkShadow, inset -1px -1px @light;
+  padding: 2px;
+}
+
+.list {
+  color: @windowText;
+}
+
+.item-box {
+  padding: 4px 6px;
+}
+
+child:selected .item-box,
+row:selected .item-box {
+  background: @select;
+}
+
+child:selected .item-text,
+row:selected .item-text,
+child:selected .item-subtext,
+row:selected .item-subtext {
+  color: @selectText;
+}
+
+.item-subtext {
+  font-size: 16px;
+  color: @grayText;
+}
+
+.item-quick-activation {
+  background: @face;
+  color: @btnText;
+  padding: 1px 6px;
+  border: 1px solid;
+  border-color: @hilight @dkShadow @dkShadow @hilight;
+}
+
+.item-image-text {
+  font-size: 28px;
+}
+
+.providerlist .item-subtext {
+  font-size: unset;
+  color: @grayText;
+}
+
+.preview-box,
+.elephant-hint,
+.placeholder {
+  color: @grayText;
+}
+
+/* ---------- preview ---------- */
+
+.preview {
+  background: @window;
+  color: @windowText;
+  border: 1px solid;
+  border-color: @shadow @hilight @hilight @shadow;
+  box-shadow: inset 1px 1px @dkShadow, inset -1px -1px @light;
+}
+
+.preview .large-icons {
+  -gtk-icon-size: 64px;
+}
+
+/* ---------- provider accents ---------- */
+
+.calc .item-text {
+  font-size: 24px;
+}
+
+.symbols .item-image {
+  font-size: 24px;
+}
+
+.todo.done .item-text-box {
+  opacity: 0.4;
+}
+
+.todo.urgent {
+  color: @danger;
+}
+
+.todo.active {
+  font-weight: bold;
+}
+
+.bluetooth.disconnected {
+  opacity: 0.5;
+}
+
+:not(.calc).current {
+  font-weight: bold;
+}
+
+/* ---------- keybind hints: a status bar ---------- */
+
+.keybinds {
+  margin: 0 6px 2px 6px;
+  padding: 2px 4px;
+  border: 1px solid;
+  border-color: @shadow @hilight @hilight @shadow;
+  color: @btnText;
+}
+
+.keybind-button {
+  opacity: 0.8;
+}
+
+.keybind-button:hover {
+  opacity: 1;
+}
+
+.keybind-bind {
+  color: @grayText;
+}
+
+.keybind-label {
+  padding: 0 5px;
+  border: 1px solid;
+  border-color: @hilight @dkShadow @dkShadow @hilight;
+  color: @btnText;
+}
+
+/* ---------- the side picture: the 95 sky, in a sunken frame ---------- */
+
+.side-image {
+  background-image: url("file:///home/av/.config/walker/themes/memphis/side.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 1px solid;
+  border-color: @shadow @hilight @hilight @shadow;
+  margin: 0 0 0 6px;
+}
+
+/* ---------- errors ---------- */
+
+.error {
+  padding: 8px;
+  background: @info;
+  color: @infoText;
+  border: 1px solid @dkShadow;
+}
+
+/* ---------- root menu (SUPER+Space, if Walker is ever asked) ---------- */
+
+.start-row { padding: 6px 8px; }
+.start-icon { font-size: 20px; color: @windowText; }
+.start-text { font-size: 16px; }
+child:selected .start-icon { color: @selectText; }
+
+/* ---------- power panel: a row of push buttons ---------- */
+
+.list.grid .item-box {
+  padding: 10px 6px;
+  margin: 3px;
+  background: @face;
+  color: @btnText;
+  border: 1px solid;
+  border-color: @hilight @dkShadow @dkShadow @hilight;
+  box-shadow: inset -1px -1px @shadow, inset 1px 1px @light;
+}
+
+.list.grid child:selected .item-box {
+  border-color: @dkShadow @hilight @hilight @dkShadow;
+  box-shadow: inset 1px 1px @shadow;
+  background: @face;
+}
+
+.list.grid child:selected .item-text,
+.list.grid child:selected .item-image-text { color: @btnText; }
+
+.list.grid .item-image-text { font-size: 20px; }
+.list.grid .item-text { font-size: 16px; }
+.list.grid .item-subtext { font-size: 0; }
+
+/* ---------- keybind cheat sheet rows ---------- */
+
+.kb-row { padding: 3px 8px; }
+.kb-keys { font-weight: bold; }
+.kb-desc { color: @windowText; }

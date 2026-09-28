@@ -1,0 +1,48 @@
+// Template for ~/.config/fastfetch/config.jsonc, rendered by ~/.config/theme/theme on every theme
+// switch. Edit this file, not config.jsonc. {{role}} = the theme colour as "r;g;b" (Memphis renders
+// it with the [terminal] palette: the MS-DOS Prompt's); {{logo_*}} = the theme's fastfetch image.
+// Memphis: what `ver` and `mem` would have told you in an MS-DOS Prompt, dotted leaders and all.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
+  "logo": {
+    "type": "kitty",
+    "source": "{{logo_source}}",
+    "width": {{logo_width}},
+    "height": {{logo_height}},
+    "padding": { "top": 1, "left": 2, "right": 4 }
+  },
+  "display": {
+    "separator": " ",
+    "key": { "width": 16 },
+    "color": {
+      "keys": "38;2;{{dim}}",
+      "separator": "38;2;{{dim}}",
+      "output": "38;2;{{fg}}"
+    }
+  },
+  "modules": [
+    { "type": "custom", "format": "{#1;38;2;{{bright_white}}}Memphis [Version 4.10.1998]" },
+    { "type": "custom", "format": "{#38;2;{{fg}}}(C)Copyright 1981-1998, your dad." },
+    "break",
+    { "type": "title", "format": "{#38;2;{{bright_yellow}}}C:\\USERS\\{user-name}{#38;2;{{fg}}}> ver /all" },
+    "break",
+    { "type": "os",       "key": "System....." },
+    { "type": "kernel",   "key": "Kernel....." },
+    { "type": "host",     "key": "Computer..." },
+    { "type": "uptime",   "key": "Up for....." },
+    { "type": "packages", "key": "Programs..." },
+    { "type": "wm",       "key": "Windows...." },
+    { "type": "theme",    "key": "Scheme....." },
+    { "type": "font",     "key": "Fonts......" },
+    { "type": "terminal", "key": "Prompt....." },
+    "break",
+    { "type": "cpu",     "key": "Processor.." },
+    { "type": "gpu",     "key": "Display...." },
+    { "type": "memory",  "key": "Memory....." },
+    { "type": "disk",    "key": "Drive C:..", "folders": "/" },
+    { "type": "display", "key": "Screen....." },
+    { "type": "localip", "key": "Network...." },
+    "break",
+    { "type": "colors", "symbol": "block", "paddingLeft": 0 }
+  ]
+}
