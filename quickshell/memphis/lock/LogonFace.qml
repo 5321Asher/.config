@@ -23,7 +23,7 @@ Item {
         id: shot
         anchors.fill: parent
         cache: false
-        source: LockState.shotPath(root.screenName)
+        source: root.screenName ? LockState.shotPath(root.screenName) : ""
     }
     Item {
         anchors.fill: parent

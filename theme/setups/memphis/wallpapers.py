@@ -142,14 +142,17 @@ def fastfetch_logo(path):
     f = flag(220)
     img.alpha_composite(f, ((440 - f.width) // 2, 10))
     d = ImageDraw.Draw(img)
-    big = font(["ariblk.ttf", "Arial_Black.ttf", "W95FA.otf"], 54)
-    small = font(["arial.ttf", "W95FA.otf"], 54)
     word, num = "Memphis", "98"
-    ww = d.textlength(word, font=big)
-    nw = d.textlength(num, font=small)
+    for size in range(54, 20, -2):          # as big as fits the width
+        big = font(["ariblk.ttf", "Arial_Black.ttf", "W95FA.otf"], size)
+        small = font(["arial.ttf", "W95FA.otf"], size)
+        ww = d.textlength(word, font=big)
+        nw = d.textlength(num, font=small)
+        if ww + nw + 8 <= 420:
+            break
     x = (440 - ww - nw - 8) // 2
-    d.text((x, 205), word, font=big, fill="#ffffff")
-    d.text((x + ww + 8, 205), num, font=small, fill="#c0c0c0")
+    d.text((x, 262), word, font=big, fill="#ffffff", anchor="ls")
+    d.text((x + ww + 8, 262), num, font=small, fill="#c0c0c0", anchor="ls")
     img.save(path)
 
 

@@ -60,7 +60,7 @@ Win {
         { id: "volume", name: "Volume Control", icon: "multimedia-volume-control", about: "Sets the volume of your speakers and of each program." },
         { id: "network", name: "Network", icon: "network-workgroup", about: "Connects to Wi-Fi networks, Bluetooth devices and your Tailscale network." },
         { id: "system", name: "System", icon: "computer", about: "Shows how hard your computer is working, and your drives, batteries and fans." },
-        { id: "lighting", name: "Lighting", icon: "preferences-desktop-color", about: "Sets the colour of your RGB lights, or lets them follow the colour scheme." },
+        { id: "lighting", name: "Lighting", icon: "color-select", about: "Sets the colour of your RGB lights, or lets them follow the colour scheme." },
         { id: "timer", name: "Focus Timer", icon: "appointment-soon", about: "A focus timer and pomodoro, shown in the notification area while it runs." },
         { id: "power", name: "Power Management", icon: "preferences-system-power", about: "Keeps the computer awake, and locks, stands by or shuts it down." },
         { id: "messages", name: "Notifications", icon: "internet-mail", about: "Your notifications, and Do Not Disturb." },

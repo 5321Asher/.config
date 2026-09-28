@@ -35,11 +35,13 @@ PanelWindow {
 
         Repeater {
             id: panels
-            model: root.mine ? Menus.levels.length : 0
+            // depths as a ScriptModel: opening a submenu adds a panel instead of rebuilding them all
+            // (a plain count would recreate every level, and the Start menu would slide out again)
+            model: ScriptModel { values: root.mine ? Menus.levels.map((_, i) => i) : [] }
             MenuPanel {
-                required property int index
-                depth: index
-                level: Menus.levels[index] ?? ({ items: [] })
+                required property int modelData
+                depth: modelData
+                level: Menus.levels[modelData] ?? ({ items: [] })
                 limitBottom: stage.height - (Menus.kind === "start" || Menus.kind === "tray" ? Theme.taskbarHeight : 0)
                 limitRight: stage.width
             }

@@ -59,7 +59,7 @@ Singleton {
             const fixed = [
                 { text: "Control Panel", icon: "preferences-system", run: () => Desk.show("control") },
                 { text: "Display", icon: "preferences-desktop-display", run: () => Desk.show("applet:display", { tab: "Appearance" }) },
-                { text: "Taskbar & Notifications…", icon: "preferences-system-notifications", run: () => Desk.show("messages") },
+                { text: "Taskbar & Notifications…", icon: "mail-inbox", run: () => Desk.show("messages") },
             ];
             if (!style) { done(fixed); return; }
             Elephant.query(style.identifier.split("::")[0], l => done(fixed.concat([{ sep: true }]).concat(Elephant.toItems(l))));

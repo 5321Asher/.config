@@ -13,7 +13,7 @@ lock = "qs ipc call lock lock || pidof hyprlock || hyprlock"
 # the IBM VGA text-mode font for terminals and code, Times New Roman / Arial Black for documents
 # and the Start menu banner.
 [fonts]
-mono    = "Px437 IBM VGA 8x16"
+mono    = "Mx437 IBM VGA 8x16"
 sans    = "W95FA"
 serif   = "Times New Roman"
 display = "Arial Black"

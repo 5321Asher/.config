@@ -59,7 +59,7 @@ Win {
             Sep { vertical: true; height: 44; y: 2 }
             ToolBtn {
                 text: "Do Not Disturb"
-                icon: "notification-disabled"
+                icon: "mail-mark-junk"
                 checked: Notifs.dnd
                 onClicked: Notifs.dnd = !Notifs.dnd
             }

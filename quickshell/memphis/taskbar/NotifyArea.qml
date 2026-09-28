@@ -139,7 +139,10 @@ Bevel {
                 + (bt?.enabled ? "\nBluetooth: on" : "")
             Icon {
                 anchors.centerIn: parent
-                name: !Net.wifiEnabled ? "network-wireless-offline" : Net.ssid ? "network-wireless" : "network-idle"
+                // bars for the connected network's signal (Chicago95: network-wireless-connected-00…100)
+                readonly property int sig: Net.networks.find(n => n.inUse)?.signal ?? 0
+                name: !Net.wifiEnabled ? "network-wireless-disconnected" : !Net.ssid ? "network-idle"
+                    : "network-wireless-connected-" + (sig >= 88 ? "100" : sig >= 63 ? "75" : sig >= 38 ? "50" : sig >= 13 ? "25" : "00")
                 fallback: "network-wired"
                 size: Theme.trayIcon
             }

@@ -39,7 +39,7 @@
     { "type": "cpu",     "key": "Processor.." },
     { "type": "gpu",     "key": "Display...." },
     { "type": "memory",  "key": "Memory....." },
-    { "type": "disk",    "key": "Drive C:..", "folders": "/" },
+    { "type": "disk",    "key": "Drive C:...", "folders": "/" },
     { "type": "display", "key": "Screen....." },
     { "type": "localip", "key": "Network...." },
     "break",

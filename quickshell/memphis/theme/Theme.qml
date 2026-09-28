@@ -49,7 +49,7 @@ Singleton {
     // ---------------------------------------------------------------- type
     // W95FA is drawn on a 16 px grid: keep it at 16 (or 32) and it stays crisp
     readonly property string font: palette.fontSans ?? "W95FA"
-    readonly property string fontMono: palette.fontMono ?? "Px437 IBM VGA 8x16"
+    readonly property string fontMono: palette.fontMono ?? "Mx437 IBM VGA 8x16"
     readonly property string fontSerif: palette.fontSerif ?? "Times New Roman"
     readonly property string fontBanner: palette.fontDisplay ?? "Arial Black"
     readonly property int fontSize: 16

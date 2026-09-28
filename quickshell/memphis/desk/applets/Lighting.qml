@@ -14,7 +14,7 @@ Props {
     id: root
 
     title: "Lighting Properties"
-    icon: "preferences-desktop-color"
+    icon: "color-select"
     tabs: ["Colour", "Devices", "Profiles"]
 
     Component.onCompleted: if (!Rgb.scanned) Rgb.scan()
@@ -178,7 +178,7 @@ Props {
             model: Rgb.devices
             currentIndex: root.devSel
             onClicked: i => root.devSel = i
-            iconOf: d => "preferences-desktop-color"
+            iconOf: d => "color-select"
             columns: [
                 { title: "Device", width: 0, text: d => d.name },
                 { title: "Type", width: 120, text: d => d.type },

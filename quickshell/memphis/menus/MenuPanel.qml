@@ -45,7 +45,10 @@ Item {
 
     // 98 menus slide out (Start: upwards)
     property real reveal: 0
-    NumberAnimation on reveal { from: 0; to: 1; duration: Theme.menuSlide; easing.type: Easing.OutQuad; running: true }
+    NumberAnimation on reveal { id: slide; from: 0; to: 1; duration: Theme.menuSlide; easing.type: Easing.OutQuad; running: true }
+    // a different submenu at this depth (another item hovered): slide that one out too
+    readonly property var from: level.from
+    onFromChanged: slide.restart()
 
     Item {
         id: clipper
