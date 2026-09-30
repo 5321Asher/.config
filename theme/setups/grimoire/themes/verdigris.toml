@@ -1,7 +1,7 @@
 # Verdigris: a herbalist's grimoire. Deep green leather, bronze tooling, a sea-green glow.
 name = "Verdigris"
 appearance = "dark"
-wallpaper = "grimoire-verdigris-desk.png"
+wallpaper = "grimoire-verdigris-light.mp4"
 
 [palette]
 bg          = "#122420"

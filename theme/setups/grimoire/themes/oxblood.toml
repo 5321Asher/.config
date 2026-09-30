@@ -1,7 +1,7 @@
 # Oxblood: the spellbook itself. Oxblood leather, aged parchment, gold leaf, arcane violet.
 name = "Oxblood"
 appearance = "dark"
-wallpaper = "grimoire-oxblood-desk.png"
+wallpaper = "grimoire-oxblood-light.mp4"
 
 [palette]
 bg          = "#2a1414"

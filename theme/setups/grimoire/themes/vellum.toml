@@ -1,7 +1,7 @@
 # Vellum: the open page by daylight. Calfskin vellum, iron-gall ink, burnished gold, red rubrics.
 name = "Vellum"
 appearance = "light"
-wallpaper = "grimoire-vellum-desk.png"
+wallpaper = "grimoire-vellum-light.mp4"
 
 [palette]
 bg          = "#e7d9b9"

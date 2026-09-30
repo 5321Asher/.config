@@ -279,6 +279,11 @@ screens are off. `settings.toml [transition] enabled = false` turns it off.
   theme) and `skyvideo.py` (2-minute seamless looping 2560x1440 video per theme: Pillow in
   `~/.local/share/theme/venv`, NVENC HEVC; skwd-wall plays .mp4 via `skwd-wall-vk`). Copy that
   pattern: output into `_pool/`, hardlink into `<setup>/<theme>/`, set the theme's `wallpaper =`.
+  For looks Pillow can't do (volumetric light, smoke), render on the GPU like Grimoire's
+  `lightvideo.py`: one GLSL fragment shader via moderngl (headless EGL) piped to ffmpeg, ~20 s per
+  60 s loop. Loop seamlessly by making the noise periodic in time/drift and every particle move on
+  whole cycles. When the theme is active, also update `state.json` setups.<id>.wallpapers (it wins
+  over the toml) and `skwd-helm apply ~/Pictures/Wallpapers/<file>`.
 - Never run `skwd-wall-scan` with `SKWD_WALL_V2_CONFIG` overrides (it writes the real index).
 
 ---

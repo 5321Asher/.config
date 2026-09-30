@@ -87,6 +87,12 @@ Sizes, timings, the candle's life (`candleHours`) and the rune table are in `the
 editing a shader: `sh shaders/build.sh` (a brand-new shader file needs `theme shell` once: Qt
 remembers a shader it failed to find). Paper and leather are shaders now (no texture files). Wallpapers, Walker images and the illuminated capital:
 `… setups/grimoire/wallpapers.py [theme]`.
+Each theme's default wallpaper is a 60 s looping video, `setups/grimoire/lightvideo.py [theme]`: light
+from an off-screen stained-glass window (above the top-right corner, clear of the bar and the spine)
+falling through incense smoke, dust motes glinting in the beams, plus the theme's sparks (Nightshade
+witch-lights, Verdigris fireflies, Ember embers). One GLSL shader on the GPU (moderngl + numpy in the
+theme venv, headless EGL), ~20 s per theme with NVENC; `--frame <theme> <sec> <out.png>` for a still.
+The old book-cover stills (`grimoire-<theme>-desk.png`) are still assigned alongside.
 
 ## If the lock screen ever misbehaves
 

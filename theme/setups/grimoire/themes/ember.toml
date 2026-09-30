@@ -1,7 +1,7 @@
 # Ember: a fire-mage's book, scorched at the edges. Charred leather, bright gold, an ember glow.
 name = "Ember"
 appearance = "dark"
-wallpaper = "grimoire-ember-desk.png"
+wallpaper = "grimoire-ember-light.mp4"
 
 [palette]
 bg          = "#1b1311"
