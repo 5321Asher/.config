@@ -63,7 +63,7 @@ Column {
                 Component.onCompleted: place()
                 width: size.w * arrange.k
                 height: size.h * arrange.k
-                z: drag.drag.active ? 10 : 1
+                z: dragArea.drag.active ? 10 : 1
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 2
@@ -79,13 +79,14 @@ Column {
                     }
                 }
                 MouseArea {
-                    id: drag
+                    id: dragArea
                     anchors.fill: parent
                     drag.target: box
                     drag.threshold: 4
                     onPressed: root.selected = box.modelData.name
-                    onReleased: {
-                        if (!drag.active) return;
+                    // commit when the drag ends: by `released`, drag.active is already false,
+                    // so a check there threw every move away
+                    drag.onActiveChanged: if (!drag.active) {
                         let nx = arrange.bounds.x + (box.x - arrange.ox) / arrange.k;
                         let ny = arrange.bounds.y + (box.y - arrange.oy) / arrange.k;
                         const snap = 20 / arrange.k, me = box.size;

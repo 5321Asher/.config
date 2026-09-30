@@ -489,3 +489,8 @@ Check `git status` for generated files before committing (§4.4).
 - **Live reload can silently stop** after many quick edits (the log shows "Configuration Loaded" but old code
   runs). If a change doesn't show, `touch shell.qml`, or `theme shell`.
 - **Live reload doesn't pick up an imported `.js` file** (`import "seal.js" as X`): after editing one, `theme shell`.
+- **Commit a drag when it ends, not on `released`:** by `released`, a MouseArea's `drag.active` is already
+  false, so `onReleased: if (!drag.active) return` throws every move away (the box stays where it was
+  dropped, but the draft never changes and Apply never appears). Use `drag.onActiveChanged: if
+  (!drag.active) …`, and never give the MouseArea the id `drag` (then `drag.active` is undefined). Every
+  setup's display arrangement had this until 2026-09-30.

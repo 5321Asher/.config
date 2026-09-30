@@ -180,9 +180,9 @@ Flickable {
                             drag.threshold: 4
 
                             onPressed: root.selected = box.modelData.name
-                            onReleased: {
-                                if (!drag.active)
-                                    return;
+                            // commit when the drag ends: by `released`, drag.active is already false,
+                            // so a check there threw every move away
+                            drag.onActiveChanged: if (!drag.active) {
                                 // Back to layout coordinates, then snap to other monitors' edges
                                 let nx = canvas.bounds.x + (box.x - canvas.ox) / canvas.k;
                                 let ny = canvas.bounds.y + (box.y - canvas.oy) / canvas.k;

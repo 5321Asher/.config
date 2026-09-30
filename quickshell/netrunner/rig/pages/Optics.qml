@@ -81,7 +81,7 @@ Column {
                     Component.onCompleted: place()
                     width: size.w * canvas.k
                     height: size.h * canvas.k
-                    z: drag.drag.active ? 10 : 1
+                    z: dragArea.drag.active ? 10 : 1
                     Chamfer { anchors.fill: parent; cut: 8; corners: "tr bl"; fill: box.sel ? Theme.alpha(Theme.red, 0.18) : Theme.alpha(Theme.surface, 0.9)
                               stroke: box.sel ? Theme.red : Theme.line }
                     Column {
@@ -90,14 +90,15 @@ Column {
                         Label { anchors.horizontalCenter: parent.horizontalCenter; text: box.modelData.width + "×" + box.modelData.height }
                     }
                     MouseArea {
-                        id: drag
+                        id: dragArea
                         anchors.fill: parent
                         drag.target: box
                         drag.threshold: 4
                         cursorShape: Qt.OpenHandCursor
                         onPressed: root.selected = box.modelData.name
-                        onReleased: {
-                            if (!drag.active) return;
+                        // commit when the drag ends: by `released`, drag.active is already false,
+                        // so a check there threw every move away
+                        drag.onActiveChanged: if (!drag.active) {
                             let nx = canvas.bounds.x + (box.x - canvas.ox) / canvas.k;
                             let ny = canvas.bounds.y + (box.y - canvas.oy) / canvas.k;
                             const snap = 20 / canvas.k, me = box.size;
