@@ -138,6 +138,14 @@ Singleton {
     readonly property int consoleRingMax: 14        // more than this: a ledger list instead
     readonly property int consoleLedgerWidth: 560
 
+    // ---------------------------------------------------------------- prompt + plate archive (clipboard)
+    readonly property int promptWidth: 620
+    readonly property int promptRow: 30
+    readonly property int promptRows: 10            // ledger rows shown before it scrolls
+    readonly property int clipWidth: 1000
+    readonly property int clipHeight: 620
+    readonly property int clipRow: 42
+
     // ---------------------------------------------------------------- lock screen
     readonly property int lockRing: 150             // password ring radius
     readonly property int lockBeads: 24             // beads per lap of the ring

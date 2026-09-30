@@ -47,6 +47,7 @@ import random
 import shutil
 import subprocess
 import sys
+import time
 import tomllib
 
 HERE = os.path.dirname(os.path.realpath(__file__))
@@ -389,11 +390,16 @@ def current_wallpaper_rel():
 def apply_wallpaper(path):
     if not shutil.which("skwd-helm"):
         return False
-    try:
-        return subprocess.run(["skwd-helm", "apply", path], stdout=subprocess.DEVNULL,
-                              stderr=subprocess.DEVNULL, timeout=20).returncode == 0
-    except (OSError, subprocess.SubprocessError):
-        return False
+    # skwd-wall indexes a new file in the view a moment after it appears: retry for a few seconds
+    for attempt in range(12):
+        try:
+            if subprocess.run(["skwd-helm", "apply", path], stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL, timeout=20).returncode == 0:
+                return True
+        except (OSError, subprocess.SubprocessError):
+            return False
+        time.sleep(0.5)
+    return False
 
 
 def pick_wallpaper(tid, theme, state, avoid=None):

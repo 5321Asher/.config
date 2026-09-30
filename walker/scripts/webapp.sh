@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Create a web app: a launcher that opens a site in Brave's app mode (its own window, no tabs or toolbar).
-# usage: webapp.sh [url] [name]   — prompts through walker for anything not given
+# usage: webapp.sh [url] [name]   — asks (the setup's prompt, see theme/prompt) for anything not given
 set -u
 
-prompt() { walker --dmenu --inputonly --placeholder "$1" 2>/dev/null; }
+prompt() { ~/.config/theme/prompt --input --placeholder "$1"; }
 
 url=${1:-$(prompt "Web app URL (e.g. chatgpt.com)")}
 url=$(printf '%s' "$url" | tr -d '[:space:]')
@@ -50,7 +50,7 @@ Version=1.0
 Type=Application
 Name=$name
 Comment=Web app for $url
-Exec=brave --app="$exec_url"
+Exec=brave-origin-nightly --app="$exec_url"
 Icon=$icon_value
 Terminal=false
 StartupNotify=true

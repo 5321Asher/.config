@@ -6,8 +6,9 @@
 For each profile (all by default), a night-city skyline in its colours, into the wallpaper pool and
 hardlinked into ~/Pictures/Wallpaper-Themes/netrunner/<profile>/: netrunner-<profile>-skyline.png.
 Layers of towers fading into haze, lit windows, vertical neon signs (katakana), glow, a rain veil
-and faint scanlines. Circuit's default wallpaper is the night city from the reference picture
-(netrunner-nightcity.png, made once from --reference <file>).
+and faint scanlines. Every profile's default wallpaper is its animated version (cityvideo.py).
+--reference <file> still makes netrunner-nightcity.png from the reference picture, but nothing uses it
+by default (the user prefers the generated city to the game's art).
 Also the setup's images/_default/: walker.png (a tall strip of the Circuit skyline) and fastfetch.png.
 """
 
@@ -59,7 +60,10 @@ def font(names, size):
     return None
 
 
-def skyline(pal, seed=2077):
+def skyline(pal, seed=2077, rain=True, lights=None):
+    """The city in a profile's colours. rain=False leaves the rain out (cityvideo.py animates it);
+    `lights`, a list, collects every lit window and neon sign for flickering:
+    {kind: "window"|"sign", box: (x0, y0, x1, y1), body: (r, g, b)}."""
     rnd = random.Random(seed)
     bg, red, cyan, yellow = rgb(pal["bg"]), rgb(pal["accent"]), rgb(pal["purple"]), rgb(pal["warn"])
     white = (225, 235, 245)
@@ -110,6 +114,8 @@ def skyline(pal, seed=2077):
                         c = rnd.choice([white, cyan, cyan, yellow, red])
                         c = mix(c, body[:3], haze * 0.75)
                         td.rectangle([wx, wy, wx + 2 + li, wy + 1 + li // 2], fill=c + (255,))
+                        if lights is not None and li >= 1:
+                            lights.append({"kind": "window", "box": (wx, wy, wx + 2 + li, wy + 1 + li // 2), "body": body[:3]})
             # rooftop edge in neon on some near towers
             if li >= 2 and rnd.random() < 0.35:
                 c = rnd.choice([cyan, red])
@@ -124,6 +130,8 @@ def skyline(pal, seed=2077):
                 sh = rnd.randint(120, 300)
                 td.rectangle([sx, sy, sx + sw, sy + sh], fill=mix(c, (0, 0, 0), 0.7) + (255,), outline=c + (255,), width=2)
                 gd.rectangle([sx - 4, sy - 4, sx + sw + 4, sy + sh + 4], fill=c + (170,))
+                if lights is not None:
+                    lights.append({"kind": "sign", "box": (sx - 40, sy - 40, sx + sw + 40, sy + sh + 40), "body": body[:3]})
                 if jp:
                     for i, ch in enumerate(rnd.choice(SIGNS)):
                         td.text((sx + sw // 2, sy + 22 + i * 32), ch, font=jp, fill=mix(c, (255, 255, 255), 0.45) + (255,), anchor="mm")
@@ -159,7 +167,9 @@ def skyline(pal, seed=2077):
     rd = ImageDraw.Draw(rain)
     for _ in range(3000):
         x, y, l = rnd.randint(-100, W), rnd.randint(-50, H), rnd.randint(14, 44)
-        rd.line([(x, y), (x - l * 0.22, y + l)], fill=(200, 215, 235, rnd.randint(14, 42)), width=1)
+        a = rnd.randint(14, 42)
+        if rain:
+            rd.line([(x, y), (x - l * 0.22, y + l)], fill=(200, 215, 235, a), width=1)
     img = Image.alpha_composite(img, rain)
     # scanlines, barely
     lines = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -227,8 +237,7 @@ def main(args):
     with open(f"{HERE}/themes/circuit.toml", "rb") as f:
         pal = tomllib.load(f)["palette"]
     os.makedirs(f"{HERE}/images/_default", exist_ok=True)
-    side = (Image.open(f"{POOL}/netrunner-nightcity.png") if os.path.exists(f"{POOL}/netrunner-nightcity.png")
-            else skyline(pal)).convert("RGB")
+    side = skyline(pal, seed=sum(map(ord, "circuit")) * 97).convert("RGB")
     side.crop((W // 2 - 300, 200, W // 2 + 300, 1400)).resize((400, 800), Image.LANCZOS).save(f"{HERE}/images/_default/walker.png")
     fastfetch_logo(pal, f"{HERE}/images/_default/fastfetch.png")
     print("images/_default: walker.png, fastfetch.png")

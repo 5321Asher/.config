@@ -13,6 +13,9 @@ Item {
     required property string screenName
     property bool active: false
     property int sel: 0
+    // Where the pointer last really moved (screen coords): results that scroll under a still
+    // cursor mustn't take the selection, or stepping up past the top of the list jumps back down
+    property point pointer: Qt.point(-1, -1)
 
     onActiveChanged: if (active) {
         field.text = Flyouts.opts.text ?? "";
@@ -38,7 +41,7 @@ Item {
         if (sum) out.push({ kind: "calc", title: sum, sub: q + " =", glyph: "", group: "Calculator",
                             run: () => Quickshell.execDetached(["wl-copy", sum]), action: "Copy the result" });
         for (const e of Apps.find(q).slice(0, 8))
-            out.push({ kind: "app", title: e.name, sub: "App", icon: e.icon, entry: e, group: "Apps", run: () => Apps.launch(e) });
+            out.push({ kind: "app", title: Apps.nameOf(e), sub: "App", icon: e.icon, entry: e, group: "Apps", run: () => Apps.launch(e) });
         const ql = q.toLowerCase();
         for (const s of SettingsApp.index.filter(s => (s.title + " " + (s.keywords ?? "")).toLowerCase().includes(ql)).slice(0, 5))
             out.push({ kind: "setting", title: s.title, sub: "System settings", glyph: s.glyph, group: "Settings", run: () => SettingsApp.open(s.id) });
@@ -112,7 +115,7 @@ Item {
                     Rectangle { anchors.fill: parent; radius: Theme.radius; color: tm.containsMouse ? Theme.subtle : "transparent" }
                     Card { anchors.fill: parent; color: "transparent"; opacity: tm.containsMouse ? 0 : 0.8 }
                     AppIcon { anchors.horizontalCenter: parent.horizontalCenter; y: 14; size: 32; name: topApp.modelData.icon }
-                    Txt { anchors.horizontalCenter: parent.horizontalCenter; y: 54; width: parent.width - 10; horizontalAlignment: Text.AlignHCenter; size: Theme.caption; text: topApp.modelData.name }
+                    Txt { anchors.horizontalCenter: parent.horizontalCenter; y: 54; width: parent.width - 10; horizontalAlignment: Text.AlignHCenter; size: Theme.caption; text: Apps.nameOf(topApp.modelData) }
                     MouseArea { id: tm; anchors.fill: parent; hoverEnabled: true; onClicked: root.go({ run: () => Apps.launch(topApp.modelData) }) }
                 }
             }
@@ -200,7 +203,7 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     onClicked: { root.sel = res.index; root.go(res.modelData); }
-                    onEntered: root.sel = res.index
+                    onPositionChanged: mouse => { const p = mapToGlobal(mouse.x, mouse.y); if (p.x !== root.pointer.x || p.y !== root.pointer.y) { root.pointer = p; root.sel = res.index; } }
                 }
             }
         }

@@ -37,6 +37,8 @@ border = "accent"
 [menus]
 root = "qs ipc call hub toggle"
 apps = "qs ipc call exec toggle"
+clipboard = "qs ipc call clipboard toggle"
+prompt = "qs ipc call prompt ask"
 
 # How switching to this setup, or between its profiles, is revealed: fade | wipe | iris | dissolve | glitch
 # (the old picture tears into shifted bands with a red/cyan split, and breaks away)

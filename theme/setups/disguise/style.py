@@ -30,7 +30,8 @@ def gtk_css(p, ctx, gtk4):
     win = "window:not(.walker)" if gtk4 else "window"
     return f"""
 /* Disguise: Windows 11's WinUI controls */
-{s}* {{ -gtk-icon-shadow: none; text-shadow: none; outline-color: {rgba(fg, 0.9)}; outline-offset: 1px; outline-width: 2px; }}
+{s}* {{ -gtk-icon-shadow: none; text-shadow: none; outline: 0 solid transparent; outline-offset: 1px; }}
+{s}*:focus-visible {{ outline: 2px solid {rgba(fg, 0.9)}; }}
 {win}, {s}.background, {s}dialog {{ background-color: {mica}; color: {fg}; }}
 {s}.view, {s}textview text, {s}iconview, {s}treeview.view, {s}columnview, {s}listview, {s}list, {s}scrolledwindow > viewport > list {{
   background-color: {card}; color: {fg};
@@ -184,17 +185,47 @@ def gtk4(p, ctx):
 :root {{ --window-radius: 8px; --accent-color: {p["accentLink"]}; --accent-bg-color: {p["accent"]}; --accent-fg-color: {p["accentText"]};
   --window-bg-color: {p["mica"]}; --view-bg-color: {p["card"]}; --headerbar-bg-color: {p["mica"]}; --popover-bg-color: {p["flyout"]};
   --card-bg-color: {p["card"]}; --sidebar-bg-color: {p["mica"]}; }}
-"""
+""" + snipping(p, ctx, "window:not(.walker) ")
 
 
 def satty(p, ctx):
+    return gtk_css(p, ctx, False) + snipping(p, ctx, "")
+
+
+def snipping(p, ctx, s):
+    # Satty dressed as Snipping Tool: one flat command bar on Mica above the picture (icon buttons, no
+    # frames; the chosen tool gets a soft fill and an accent glyph), the snip centred on a darker canvas,
+    # the pen colours as round swatches in a second flat row, and Copy as the accent button. Also in
+    # gtk4() (s = its window prefix): the user gtk.css outranks Satty's own overrides.css.
     rgba = ctx["rgba"]
     light = ctx["appearance"] == "light"
-    return gtk_css(p, ctx, False) + f"""
-.toolbar {{ background: {rgba(p["flyout"], 0.96)}; border: 1px solid {p["cardStroke"]}; border-radius: 8px;
-  box-shadow: 0 8px 16px {"rgba(0,0,0,0.14)" if light else "rgba(0,0,0,0.45)"}; }}
-.toolbar button {{ background: transparent; border-color: transparent; }}
-.toolbar button:checked, .toolbar button.editing {{ background: {rgba(p["text"], 0.08)}; color: {p["accentLink"]}; box-shadow: inset 0 -3px {p["accent"]}; }}
+    fg, mica = p["text"], p["mica"]
+    subtle, subtle2 = rgba(fg, 0.06 if light else 0.08), rgba(fg, 0.035 if light else 0.05)
+    canvas = rgba("#000000", 0.05) if light else rgba("#000000", 0.28)
+    return f"""
+{s}.outer_box, {s}.overlay {{ background: {mica}; }}
+{s}.inner_box {{ background: {canvas}; border-top: 1px solid {p["divider"]}; border-bottom: 1px solid {p["divider"]}; }}
+{s}.toolbar, {s}.outer_box .toolbar-top, {s}.outer_box .toolbar-bottom, {s}.overlay .toolbar-top, {s}.overlay .toolbar-bottom {{
+  background: {mica}; color: {fg}; border: none; border-radius: 0; box-shadow: none; padding: 6px 12px; }}
+{s}.toolbar > * {{ margin: 0 1px; }}
+{s}.toolbar button, {s}.toolbar togglebutton, {s}.toolbar button.toggle, {s}.toolbar .linked > button {{
+  background: transparent; border: 1px solid transparent; border-radius: 4px; box-shadow: none;
+  min-width: 36px; min-height: 32px; padding: 0 4px; color: {fg}; outline: 0 solid transparent; }}
+{s}.toolbar button:hover {{ background: {subtle}; }}
+{s}.toolbar button:active {{ background: {subtle2}; color: {p["text2"]}; }}
+{s}.toolbar button:checked, {s}.toolbar button.editing {{ background: {subtle}; color: {p["accentLink"]}; box-shadow: none; }}
+{s}.toolbar button:disabled {{ color: {p["textDisabled"]}; background: transparent; }}
+{s}.toolbar separator {{ background: {p["divider"]}; min-width: 1px; margin: 6px 8px; }}
+{s}.toolbar label {{ color: {p["text2"]}; }}
+{s}.toolbar spinbutton, {s}.toolbar entry {{ background: {rgba(fg, 0.04)}; border: 1px solid {p["controlStroke"]}; border-radius: 4px; box-shadow: none; }}
+/* the pen colours: round swatches, a ring around the chosen one */
+{s}.toolbar-bottom button image {{ -gtk-icon-size: 18px; }}
+{s}.toolbar-bottom button {{ min-width: 32px; border-radius: 9999px; }}
+{s}.toolbar-bottom button:checked {{ background: transparent; box-shadow: inset 0 0 0 2px {p["accentLink"]}; }}
+/* Copy, Save, Save as sit last in the bar: Copy is the accent action, as in Snipping Tool */
+{s}.toolbar-top > box:last-child > button:first-child, {s}.toolbar-top > button:nth-last-child(3) {{ background: {p["accent"]}; color: {p["accentText"]}; }}
+{s}.toolbar-top > box:last-child > button:first-child:hover, {s}.toolbar-top > button:nth-last-child(3):hover {{ background: {p["accentHover"]}; }}
+{s}.toast {{ background: {p["flyout"]}; color: {fg}; border: 1px solid {p["cardStroke"]}; border-radius: 8px; }}
 """
 
 

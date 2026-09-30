@@ -27,7 +27,8 @@ FocusScope {
     signal helpRequested()
     signal minRequested()
     signal pressed()                        // any click inside: raise me
-    signal dragBy(real dx, real dy)         // the caption is being dragged: the host moves me
+    signal dragStarted()                    // the caption was pressed: the host notes where I am
+    signal dragBy(real dx, real dy)         // pointer moved (dx, dy) since that press: the host moves me
     signal menuRequested(var menu, real x, real y)
 
     Keys.onEscapePressed: if (closable) closeRequested()
@@ -77,9 +78,15 @@ FocusScope {
 
         MouseArea {
             anchors.fill: parent
-            property point grab
-            onPressed: e => { root.pressed(); grab = Qt.point(e.x, e.y); }
-            onPositionChanged: e => { if (pressed) root.dragBy(e.x - grab.x, e.y - grab.y); }
+            // In the layer's coordinates, which don't move with the window: the offset is absolute,
+            // so a window held back at a screen edge doesn't drift from the pointer
+            property point from
+            onPressed: e => { root.pressed(); from = mapToItem(null, e.x, e.y); root.dragStarted(); }
+            onPositionChanged: e => {
+                if (!pressed) return;
+                const p = mapToItem(null, e.x, e.y);
+                root.dragBy(p.x - from.x, p.y - from.y);
+            }
         }
 
         Row {

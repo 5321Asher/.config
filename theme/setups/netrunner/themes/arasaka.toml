@@ -1,7 +1,7 @@
 # Arasaka: Corporate crimson on black lacquer, cold white data, a thread of gold.
 name = "Arasaka"
 appearance = "dark"
-wallpaper = "netrunner-arasaka-skyline.png"
+wallpaper = "netrunner-arasaka-city.mp4"
 
 [palette]
 bg          = "#0b0909"

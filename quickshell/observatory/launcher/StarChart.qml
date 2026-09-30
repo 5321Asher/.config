@@ -15,7 +15,13 @@ import "../theme"
 PanelWindow {
     id: root
 
-    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+    // Follows the focused monitor only while hidden: moving a shown window rebuilds its surface
+    // (it vanished for a few frames mid-fade on close, when the keyboard grab let go).
+    Binding on screen {
+        when: !root.visible
+        value: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+        restoreMode: Binding.RestoreNone
+    }
     visible: StarChartState.open || shown > 0.01
 
     anchors { top: true; bottom: true; left: true; right: true }

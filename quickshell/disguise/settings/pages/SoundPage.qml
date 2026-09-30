@@ -17,9 +17,12 @@ Column {
     readonly property PwNode sink: Pipewire.defaultAudioSink
     readonly property var sinks: Pipewire.nodes.values.filter(n => n.audio && n.isSink && !n.isStream)
     readonly property PwNode source: Pipewire.defaultAudioSource
-    readonly property var sources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream && n.properties?.["media.class"] === "Audio/Source")
-    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream && n.properties?.["media.class"] === "Stream/Output/Audio")
-    PwObjectTracker { objects: [root.sink, root.source].filter(n => n).concat(root.sinks, root.sources, root.streams) }
+    // Track every candidate, then filter: a node's properties (media.class) only arrive once it's tracked
+    readonly property var allSources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream)
+    readonly property var sources: allSources.filter(n => n.properties?.["media.class"] === "Audio/Source")
+    readonly property var allStreams: Pipewire.nodes.values.filter(n => n.audio && n.isStream)
+    readonly property var streams: allStreams.filter(n => n.properties?.["media.class"] === "Stream/Output/Audio")
+    PwObjectTracker { objects: [root.sink, root.source].filter(n => n).concat(root.sinks, root.allSources, root.allStreams) }
     function name(n) { return n?.nickname || n?.description || n?.name || ""; }
     readonly property var players: Mpris.players.values.filter(p => !p.dbusName.includes("playerctld"))
     readonly property var player: players.find(p => p.isPlaying) ?? players[0] ?? null

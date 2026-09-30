@@ -40,6 +40,21 @@ services/                 the logic, shared with the other setups (Net, Capture,
 colors.json               written by the theme tool on every theme switch (don't edit)
 ```
 
+## Passing for Windows (the details a Windows user reaches for first)
+
+| | where |
+|---|---|
+| Windows' shortcuts (Win alone = Start, Win + D/E/R/I/A/N/W/X/S/V/./Tab/1…9, Alt + Tab, Alt + F4, Ctrl + Shift + Esc, Print) | `~/.config/theme/setups/disguise/files/hypr/setup-binds.lua` (loaded last by `hypr/binds.lua`; only Disguise has one) |
+| Windows Terminal + Windows PowerShell (banner, `PS C:\…>` prompt, PSReadLine colours, `dir`/`ipconfig`/`cls`…, "not recognized") | setup `files/kitty/tab_bar.py`, `files/zsh/setup.zsh`, `files/zsh/ps/ps.py` (`~/.zshrc` calls `setup_banner` / `setup_shell`) |
+| Win + V / Win + . panel: Emoji, GIF, Kaomoji, Symbols, Clipboard | `flyouts/EmojiPanel.qml` (`qs ipc call emoji open <tab> <x> <y>`, `scripts/panel.sh`), emoji from `data/emoji.json` |
+| Run (Win + R) | `flyouts/RunDialog.qml` (`qs ipc call run toggle`) |
+| Alt + Tab | `utilities/AltTab.qml`, `AltTabState.qml` (`qs ipc call alttab next | prev | commit | cancel`) |
+| desktop icons + right-click menu | `desktop/Desktop.qml` (a Bottom layer: only bare desktop reaches it) |
+| Windows' app names (File Explorer, Terminal, Task Manager) | `flyouts/Apps.qml` → `nameOf()`, `winNames`, `winWords`, `hidden` |
+| the scripts' questions as a content dialog | `flyouts/PromptDialog.qml`, `PromptState.qml` (`[menus] prompt`) |
+| Win + 1…9, Win + D, Win + M, Win + Down | `taskbar/WinKeys.qml` (`qs ipc call taskbar activate <n> | minimize`, `desktop toggle | minimizeAll`) |
+| title bars (min / max / close) | hyprbars + `setups/disguise/hyprbars-windows.patch`, built into `~/.local/lib/hyprland/hyprbars.so` |
+
 ## How it maps onto the other setups
 
 | other setups | Disguise |
@@ -76,6 +91,8 @@ is for designing Windows apps. For a freely licensed look-alike, set `[fonts] sa
 qs ipc call start toggle            Start                 (SUPER + Space, via ~/.config/theme/menu root)
 qs ipc call search toggle | open q  Search                (SUPER + CTRL + Space, via ~/.config/theme/menu apps)
 qs ipc call flyout open <k>         quick | notif | widgets | tray  (and toggle, close)
+qs ipc call flyout page quick <p>    Quick Settings on a page: wifi | bluetooth | vpn | sound
+qs ipc call flyout current          what is open (for tests)
 qs ipc call winx open               Start's right-click menu
 qs ipc call settings open <page>    any Settings page (home system display sound notifications focus power
                                     storage performance about bluetooth network vpn personalization

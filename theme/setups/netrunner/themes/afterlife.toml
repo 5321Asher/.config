@@ -1,7 +1,7 @@
 # Afterlife: Neon magenta and ultraviolet, amber at the bar, smoke in the air.
 name = "Afterlife"
 appearance = "dark"
-wallpaper = "netrunner-afterlife-skyline.png"
+wallpaper = "netrunner-afterlife-city.mp4"
 
 [palette]
 bg          = "#0c0810"

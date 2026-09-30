@@ -18,7 +18,13 @@ PanelWindow {
     readonly property bool mine: Flyouts.isOpen && Flyouts.screen === modelData.name
     readonly property string kind: mine ? Flyouts.kind : ""
 
-    visible: mine
+    // Always mapped, taking no input while nothing is open: mapping a layer made Hyprland re-send the
+    // pointer to the taskbar under it, and the next click there (the one that should close the
+    // flyout again) was lost
+    visible: true
+    mask: mine ? null : noInput
+    Region { id: noInput; item: nothing }
+    Item { id: nothing; width: 0; height: 0 }
     anchors { top: true; bottom: true; left: true; right: true }
     exclusionMode: ExclusionMode.Normal
     color: "transparent"
@@ -108,6 +114,37 @@ PanelWindow {
             TrayOverflow { id: tray; anchors.fill: parent; screenName: root.modelData.name }
         }
 
+        Slide {
+            // the emoji panel / clipboard history (Win + . / Win + V), at the pointer like Windows puts
+            // it at the caret; kept on screen and above the taskbar
+            k: "emoji"
+            width: 360
+            height: Math.min(460, root.sh - 24)
+            x: Math.max(12, Math.min(root.sw - width - 12, (Flyouts.opts.x ?? root.sw - 380) - (root.modelData.x ?? 0) - 24))
+            y: Math.max(12, Math.min(root.sh - height - Theme.flyoutGap, (Flyouts.opts.y ?? root.sh) - (root.modelData.y ?? 0) + 18))
+            EmojiPanel { anchors.fill: parent; screenName: root.modelData.name; active: parent.active }
+        }
+
+        Slide {
+            // Run (Win + R): bottom left, where Windows puts it
+            k: "run"
+            width: Math.min(420, root.sw - 24)
+            height: 232
+            x: Theme.flyoutGap
+            y: root.sh - height - Theme.flyoutGap
+            RunDialog { anchors.fill: parent; screenName: root.modelData.name; active: parent.active }
+        }
+
+        Slide {
+            // the scripts' questions (web apps, keybinds): a content dialog in the middle of the screen
+            k: "prompt"
+            width: Math.min(480, root.sw - 24)
+            height: promptDialog.implicitHeight
+            x: Math.round((root.sw - width) / 2)
+            y: Math.round((root.sh - height) / 2.4)
+            PromptDialog { id: promptDialog; anchors.fill: parent; screenName: root.modelData.name; active: parent.active }
+        }
+
         // ------------------------------------------------------------ context menus, on top
         Repeater {
             id: menus
@@ -123,7 +160,7 @@ PanelWindow {
         }
     }
 
-    onVisibleChanged: if (visible) keys.forceActiveFocus()
+    onMineChanged: if (mine) keys.forceActiveFocus()
     Connections {
         target: Flyouts
         function onKindChanged() { if (root.mine) keys.forceActiveFocus(); }

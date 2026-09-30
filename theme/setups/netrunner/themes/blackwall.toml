@@ -1,7 +1,7 @@
 # Blackwall: Past the wall: one colour, red, on nothing.
 name = "Blackwall"
 appearance = "dark"
-wallpaper = "netrunner-blackwall-skyline.png"
+wallpaper = "netrunner-blackwall-city.mp4"
 
 [palette]
 bg          = "#080405"

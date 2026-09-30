@@ -29,7 +29,8 @@ Singleton {
     readonly property string elapsedText: Math.floor(elapsed / 60) + ":" + String(elapsed % 60).padStart(2, "0")
 
     // mode: "region" or "screen". Delay lets popouts close before capturing.
-    // The capture opens in Satty (~/.config/satty/config.toml) to annotate, copy or save.
+    // The capture opens in Satty (~/.config/satty/config.toml) to annotate, copy or save, dressed as
+    // Snipping Tool (its title here, its icon in Apps.iconFor, its look in the setup's style.py satty()).
     function screenshot(mode) {
         // Detached so a still-open Satty window doesn't block the next capture
         Quickshell.execDetached(["sh", "-c", `
@@ -43,7 +44,7 @@ Singleton {
             else
                 set -- -o "$output"
             fi
-            grim "$@" - | satty --filename -`,
+            grim "$@" - | satty --filename - --title "Snipping Tool"`,
             "sh", mode, Hyprland.focusedMonitor?.name ?? "", ...slurpArgs]);
     }
 

@@ -86,7 +86,7 @@ Item {
                 }
                 // icon column: a glyph, an app icon, or the check / radio mark
                 Glyph {
-                    visible: !row.modelData.sep && (row.modelData.glyph || row.modelData.check || row.modelData.radio) && !row.modelData.icon
+                    visible: !!(!row.modelData.sep && (row.modelData.glyph || row.modelData.check || row.modelData.radio) && !row.modelData.icon)
                     x: 8; width: 20
                     anchors.verticalCenter: parent.verticalCenter
                     g: row.modelData.check ? "" : row.modelData.radio ? "" : (row.modelData.glyph ?? "")

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Remove a web app made by webapp.sh: pick it by name in walker, delete its launcher and icon.
+# Remove a web app made by webapp.sh: pick it by name (the setup's prompt), delete its launcher and icon.
 set -u
 
 apps="$HOME/.local/share/applications"
@@ -13,7 +13,7 @@ fi
 # "Name  ·  url" per line, in the same order as the files
 choice=$(for f in "${files[@]}"; do
     printf '%s  ·  %s\n' "$(sed -n 's/^Name=//p' "$f")" "$(sed -n 's/^X-WebApp-URL=//p' "$f")"
-done | walker --dmenu --index --placeholder "Remove web app" 2>/dev/null)
+done | ~/.config/theme/prompt --index --placeholder "Remove web app")
 [ -z "$choice" ] && exit 0
 
 f=${files[$choice]}

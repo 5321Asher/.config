@@ -65,10 +65,40 @@ Item {
         onClicked: { root.forceActiveFocus(); root.open = !root.open; }
     }
 
+    // While open, the list lives on the top-most item of this surface: `z` only orders siblings, so
+    // anything laid out after the combo (the next group, a calendar, the OK button) drew over it.
+    readonly property Item host: {
+        let p = root;
+        while (p.parent) p = p.parent;
+        return p;
+    }
+    property point at: Qt.point(0, root.height)     // where the list goes, in host coordinates
+    onOpenChanged: if (open) {
+        const p = root.mapToItem(host, 0, 0);
+        const h = popup.height;
+        // below, unless it would run off the bottom and there's room above
+        const below = p.y + root.height + h <= host.height || p.y < h;
+        at = Qt.point(p.x, below ? p.y + root.height : p.y - h);
+    }
+
+    // a click anywhere else closes the list (and only closes it, as in 98)
+    MouseArea {
+        parent: root.open ? root.host : root
+        visible: root.open
+        anchors.fill: parent
+        z: 9998
+        acceptedButtons: Qt.AllButtons
+        onPressed: root.open = false
+    }
+
     // the list
     Rectangle {
+        id: popup
+        parent: root.open ? root.host : root
         visible: root.open
-        y: root.height
+        z: 9999
+        x: root.at.x
+        y: root.at.y
         width: root.width
         height: Math.min(root.maxRows, root.model.length) * (Theme.menuItem - 4) + 2
         color: Theme.window
@@ -101,7 +131,9 @@ Item {
                     anchors.fill: parent
                     hoverEnabled: true
                     onEntered: list.hot = index
-                    onClicked: { root.open = false; root.chosen(index); }
+                    // chosen() first: closing empties the list's model, which destroys this row
+                    // mid-handler (root.chosen then ran in a dead context and nothing was picked)
+                    onClicked: { const i = index; const c = root; c.chosen(i); c.open = false; }
                 }
             }
             onVisibleChanged: if (visible) positionViewAtIndex(Math.max(0, root.currentIndex), ListView.Center)

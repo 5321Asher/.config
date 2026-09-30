@@ -149,7 +149,7 @@ Item {
                         y: 54
                         width: parent.width - 8
                         horizontalAlignment: Text.AlignHCenter
-                        text: tile.modelData.name
+                        text: Apps.nameOf(tile.modelData)
                         size: Theme.caption
                     }
                     MouseArea {
@@ -274,7 +274,7 @@ Item {
                     const out = [];
                     let letter = "";
                     for (const e of Apps.all) {
-                        const c = /[a-z]/i.test(e.name[0]) ? e.name[0].toUpperCase() : "#";
+                        const c = /[a-z]/i.test(Apps.nameOf(e)[0]) ? Apps.nameOf(e)[0].toUpperCase() : "#";
                         if (c !== letter) { out.push({ header: c }); letter = c; }
                         out.push({ e: e });
                     }
@@ -295,7 +295,7 @@ Item {
                         color: appMouse.pressed ? Theme.subtle2 : appMouse.containsMouse ? Theme.subtle : "transparent"
                     }
                     AppIcon { visible: !!appRow.entry; x: 16; anchors.verticalCenter: parent.verticalCenter; size: 24; name: appRow.entry?.icon ?? "" }
-                    Txt { visible: !!appRow.entry; x: 56; width: parent.width - 64; height: parent.height; text: appRow.entry?.name ?? "" }
+                    Txt { visible: !!appRow.entry; x: 56; width: parent.width - 64; height: parent.height; text: Apps.nameOf(appRow.entry) }
                     MouseArea {
                         id: appMouse
                         enabled: !!appRow.entry

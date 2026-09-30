@@ -71,7 +71,7 @@ Singleton {
         history = history.slice(0, -1);
     }
     function close() { isOpen = false; }
-    Timer { id: raise; interval: 50; onTriggered: Hyprland.dispatch(`hl.dsp.focus({ window = "title:^Settings$" })`) }
+    Timer { id: raise; interval: 50; onTriggered: { Hyprland.dispatch(`hl.dsp.focus({ window = "title:^Settings$" })`); Hyprland.dispatch(`hl.dsp.window.alter_zorder({ mode = "top", window = "title:^Settings$" })`); } }
 
     // The shared deck's pages (every setup opens these by name) -> Settings pages
     readonly property var deckPages: ({

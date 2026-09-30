@@ -9,14 +9,17 @@ import "../dash"
 // Workspaces: "P1 ▪▪▪" (this screen, and how many windows are on it), then 01 02 03 … with the
 // one showing here in a red box. While the deck (special:deck) is open on this screen it reads
 // "SPC ▪▪▪ DECK" instead, like the reference. Click to go, scroll to step, right-click for the
-// subnet map (overview). The DECK chip toggles the deck.
+// subnet map (overview). The DECK chip toggles the deck. Any other special workspace (the
+// scratchpad) open on this screen puts a cyan bracket round the workspace it's over.
 Row {
     id: root
 
     required property HyprlandMonitor monitor
     required property int screenIndex
     readonly property int count: Math.max(5, ...Hyprland.workspaces.values.filter(w => w.id > 0).map(w => w.id))
-    readonly property bool deckOpen: (monitor?.lastIpcObject?.specialWorkspace?.name ?? "") === "special:deck"
+    readonly property string special: monitor?.lastIpcObject?.specialWorkspace?.name ?? ""
+    readonly property bool deckOpen: special === "special:deck"
+    readonly property bool scratchOpen: special !== "" && !deckOpen
     readonly property int here: monitor?.activeWorkspace?.id ?? 1
     readonly property int windows: (monitor?.activeWorkspace?.toplevels?.values?.length ?? 0)
 
@@ -87,6 +90,31 @@ Row {
                 anchors.bottom: parent.bottom
                 width: parent.width; height: 2
                 color: Theme.red
+            }
+            // the scratchpad is open over this workspace: cyan corner brackets + a small tag
+            Item {
+                id: scratch
+                anchors.centerIn: parent
+                width: 34; height: 28
+                visible: ws.active && root.scratchOpen
+                Repeater {
+                    model: 4
+                    Item {
+                        required property int index
+                        readonly property bool r: index % 2 === 1
+                        readonly property bool b: index >= 2
+                        x: r ? scratch.width - 7 : 0
+                        y: b ? scratch.height - 7 : 0
+                        width: 7; height: 7
+                        Rectangle { y: parent.b ? 5 : 0; width: 7; height: 2; color: Theme.cyan }
+                        Rectangle { x: parent.r ? 5 : 0; width: 2; height: 7; color: Theme.cyan }
+                    }
+                }
+                Rectangle {
+                    anchors { right: parent.right; top: parent.top; rightMargin: -2; topMargin: -2 }
+                    width: 5; height: 5
+                    color: Theme.cyan
+                }
             }
             Text {
                 anchors.centerIn: parent

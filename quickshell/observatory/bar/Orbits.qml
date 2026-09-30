@@ -9,6 +9,7 @@ import "../utilities"
 // star; the orbit turns so this monitor's active workspace always sits at the front, glowing brass.
 // Planets further back are smaller and dimmer. Each window on a workspace is a moon circling it.
 // Click a planet to go there (the orbit swings it round), scroll over the orbit to step through.
+// While the scratchpad is open on this monitor, a phosphor filter covers the front planet.
 // Beside the orbit: the focused window, as a small-caps class and a mono title.
 Item {
     id: root
@@ -30,6 +31,28 @@ Item {
         return out.sort((a, b) => a - b);
     }
 
+    // Name of the special workspace (scratchpad) open on this monitor, "" when none
+    property string special: ""
+    readonly property bool inSpecial: special !== ""
+    function syncSpecial() {
+        root.special = (root.monitor?.lastIpcObject?.specialWorkspace?.name ?? "").replace(/^special:/, "");
+    }
+    onMonitorChanged: syncSpecial()
+    Connections {
+        target: root.monitor
+        function onLastIpcObjectChanged() { root.syncSpecial(); }
+    }
+    Connections {
+        target: Hyprland
+        // activespecial>>special:NAME,MONITOR (name empty when the scratchpad closes)
+        function onRawEvent(event) {
+            if (event.name !== "activespecial") return;
+            const i = event.data.lastIndexOf(",");
+            if (event.data.slice(i + 1) !== root.monitor?.name) return;
+            root.special = event.data.slice(0, i).replace(/^special:/, "");
+        }
+    }
+
     function workspace(id) { return Hyprland.workspaces.values.find(w => w.id === id) ?? null; }
     function go(id) { Hyprland.dispatch(`hl.dsp.focus({ workspace = ${id} })`); }
 
@@ -48,7 +71,7 @@ Item {
     }
     onActiveIdChanged: aim()
     onIdsChanged: aim()
-    Component.onCompleted: { aim(); rot = target; }
+    Component.onCompleted: { aim(); rot = target; Hyprland.refreshMonitors(); }
     Behavior on rot { NumberAnimation { duration: Theme.slow; easing.type: Theme.easing } }
 
     // Moons: one slow phase shared by every planet
@@ -200,8 +223,22 @@ Item {
 
                 drawMoons(false);
 
+                // Scratchpad open over this workspace: a phosphor filter across the planet and its moons
+                const filtered = active && root.inSpecial;
+                if (filtered) {
+                    const fr = p.r + Theme.moonGap + Theme.moonRadius + 2;
+                    ctx.fillStyle = Theme.alpha(Theme.phosphor, 0.32);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, fr, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.lineWidth = 1.4;
+                    ctx.strokeStyle = Theme.phosphor;
+                    ctx.stroke();
+                }
+
                 // Numeral above, fading towards the back of the orbit
-                ctx.fillStyle = Theme.alpha(active ? Theme.brassBright : Theme.fg, active ? 1 : 0.2 + 0.5 * p.z);
+                ctx.fillStyle = filtered ? Theme.phosphor
+                              : Theme.alpha(active ? Theme.brassBright : Theme.fg, active ? 1 : 0.2 + 0.5 * p.z);
                 ctx.font = `${active ? 600 : 400} ${Theme.dataSizeSmall}px "${Theme.fontData}"`;
                 ctx.textAlign = "center";
                 ctx.fillText(String(id), p.x, p.y - p.r - 3);
@@ -257,6 +294,7 @@ Item {
                 function onActiveIdChanged() { canvas.requestPaint(); }
                 function onHoveredChanged() { canvas.requestPaint(); }
                 function onToplevelTickChanged() { canvas.requestPaint(); }
+                function onInSpecialChanged() { canvas.requestPaint(); }
             }
             Connections {
                 target: Theme

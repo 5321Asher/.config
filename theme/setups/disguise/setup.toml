@@ -31,11 +31,17 @@ theme = "Win11"
 # Windows 11 frames windows in a hairline grey, not the accent: the palette's activeBorder / inactiveBorder
 [hyprland]
 border = "palette"
+# Windows 11 title bars on every window (hyprbars + Disguise's patch; files/hypr/setup-binds.lua)
+titlebars = true
 
 # What SUPER + Space and SUPER + CTRL + Space open here (~/.config/theme/menu). Other setups: Walker.
 [menus]
 root = "qs ipc call start toggle"
 apps = "qs ipc call search toggle"
+clipboard = "~/.config/quickshell/disguise/scripts/panel.sh clipboard"
+emoji = "~/.config/quickshell/disguise/scripts/panel.sh emoji"
+run = "qs ipc call run toggle"
+prompt = "qs ipc call prompt ask"
 
 # How switching to this setup, or between its themes, is revealed: fade | wipe | iris | dissolve | glitch
 # (Windows 11 fades between everything)

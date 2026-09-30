@@ -33,9 +33,20 @@ PanelWindow {
         // the screen's size, not the layer's (which is 0 until it's first mapped)
         const W = modelData.width, H = modelData.height - Theme.taskbarHeight;
         const n = mine.indexOf(id);
-        const x = w.x >= 0 ? w.x : Math.round((W - w.w) / 2 + (n % 5) * 26 - 52);
-        const y = w.y >= 0 ? w.y : Math.round((H - w.h) / 2 + (n % 5) * 26 - 52);
-        return { x: Math.max(0, x), y: Math.max(0, Math.min(y, H - 40)), w: w.w, h: w.h };
+        // x / y are null until the window is first shown (then pinned where it appeared)
+        const x = w.x ?? Math.round((W - w.w) / 2 + (n % 5) * 26 - 52);
+        const y = w.y ?? Math.round((H - w.h) / 2 + (n % 5) * 26 - 52);
+        const p = clampPos(x, y, w.w);
+        return { x: p.x, y: p.y, w: w.w, h: w.h };
+    }
+    // The one rule for where a window may be (placing and dragging both use it): at least 80 px of
+    // it stays on screen sideways, and its caption stays between the top edge and the taskbar
+    function clampPos(x, y, w) {
+        const W = modelData.width, H = modelData.height - Theme.taskbarHeight;
+        return {
+            x: Math.round(Math.max(80 - w, Math.min(W - 80, x))),
+            y: Math.round(Math.max(0, Math.min(H - Theme.titleHeight - 8, y)))
+        };
     }
 
     mask: Region { regions: regionList.instances }
@@ -57,6 +68,7 @@ PanelWindow {
             id: slot
             required property var modelData
             readonly property string wid: modelData
+            property point dragFrom         // where the window was when its caption was pressed
             readonly property var g: root.place(wid)
             x: g.x
             y: g.y
@@ -64,7 +76,7 @@ PanelWindow {
             width: g.w
             height: g.h
             // pin the centred spot on first showing, so a window that grows (Run) grows downwards
-            Component.onCompleted: if ((Desk.wins[wid]?.x ?? 0) < 0) Qt.callLater(() => Desk.moveTo(wid, g.x, g.y))
+            Component.onCompleted: if ((Desk.wins[wid]?.x ?? null) === null) Qt.callLater(() => Desk.moveTo(wid, g.x, g.y))
 
             Loader {
                 id: loader
@@ -83,10 +95,10 @@ PanelWindow {
                 ignoreUnknownSignals: true
                 function onCloseRequested() { Desk.close(slot.wid); }
                 function onPressed() { Desk.raise(slot.wid); }
+                function onDragStarted() { slot.dragFrom = Qt.point(slot.x, slot.y); }
                 function onDragBy(dx, dy) {
-                    const x = Math.max(-slot.width + 80, Math.min(root.width - 80, slot.x + dx));
-                    const y = Math.max(0, Math.min(root.height - Theme.titleHeight - 8, slot.y + dy));
-                    Desk.moveTo(slot.wid, x, y);
+                    const p = root.clampPos(slot.dragFrom.x + dx, slot.dragFrom.y + dy, slot.width);
+                    Desk.moveTo(slot.wid, p.x, p.y);
                 }
             }
             Connections {
@@ -99,7 +111,7 @@ PanelWindow {
     // Window ids -> their components (as types, so live reload sees edits)
     readonly property var windows: ({
         control: controlWin, run: runWin, shutdown: shutdownWin, logoff: logoffWin, help: helpWin,
-        messages: messagesWin, media: mediaWin, volume: volumeWin,
+        messages: messagesWin, media: mediaWin, volume: volumeWin, monitorkeep: monitorKeepWin,
     })
     readonly property var applets: ({
         datetime: datetimeApplet, display: displayApplet, multimedia: multimediaApplet, network: networkApplet,
@@ -113,6 +125,7 @@ PanelWindow {
     Component { id: messagesWin; Messages {} }
     Component { id: mediaWin; MediaPlayer {} }
     Component { id: volumeWin; VolumeControl {} }
+    Component { id: monitorKeepWin; MonitorKeep {} }
     Component { id: datetimeApplet; DateTime {} }
     Component { id: displayApplet; Display {} }
     Component { id: multimediaApplet; Multimedia {} }

@@ -28,8 +28,10 @@ Item {
     readonly property var adapter: Bluetooth.defaultAdapter
     readonly property PwNode sink: Pipewire.defaultAudioSink
     readonly property var sinks: Pipewire.nodes.values.filter(n => n.audio && n.isSink && !n.isStream)
-    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream && n.properties?.["media.class"] === "Stream/Output/Audio")
-    PwObjectTracker { objects: [root.sink].filter(n => n).concat(root.sinks, root.streams) }
+    // Track every stream, then filter: a node's properties (media.class) only arrive once it's tracked
+    readonly property var allStreams: Pipewire.nodes.values.filter(n => n.audio && n.isStream)
+    readonly property var streams: allStreams.filter(n => n.properties?.["media.class"] === "Stream/Output/Audio")
+    PwObjectTracker { objects: [root.sink].filter(n => n).concat(root.sinks, root.allStreams) }
     readonly property var players: Mpris.players.values.filter(p => !p.dbusName.includes("playerctld"))
     readonly property var player: players.find(p => p.isPlaying) ?? players[0] ?? null
     readonly property var battery: UPower.displayDevice
@@ -249,7 +251,9 @@ Item {
                     }
                 }
 
-                // VPN: Tailscale's exit nodes (None = straight out)
+                // VPN: the Tailscale connection, its exit nodes (None = straight out; offline ones
+                // greyed), local network access while one is in use, and your devices (select one to
+                // copy its address)
                 Column {
                     visible: root.page === "vpn"
                     width: parent.width
@@ -257,22 +261,55 @@ Item {
                     Txt { visible: !Net.tsAvailable; x: 12; height: 40; text: "Tailscale isn't installed"; level: 2 }
                     PageRow {
                         visible: Net.tsAvailable
-                        glyph: ""
+                        glyph: "\ue705"
                         title: "Tailscale"
-                        sub: Net.tsBusy ? Net.tsBusy + "…" : Net.tsRunning ? "Connected · " + Net.tsIp : "Disconnected"
+                        sub: Net.tsBusy ? Net.tsBusy + "…" : Net.tsRunning ? "Connected · " + (Net.tsName ? Net.tsName + " · " : "") + Net.tsIp : "Not connected · select to connect"
                         lit: Net.tsRunning
                         onClicked: Net.toggleTailscale()
                     }
-                    Txt { visible: Net.tsRunning && Net.tsExitNodes.length > 0; x: 12; height: 36; text: "Exit node"; strong: true; size: Theme.caption }
+                    Txt { visible: Net.tsError !== ""; x: 12; width: parent.width - 24; wrapMode: Text.Wrap; color: Theme.danger; text: Net.tsError; size: Theme.caption }
+
+                    Txt { visible: Net.tsRunning; x: 12; height: 36; verticalAlignment: Text.AlignBottom; text: "Exit node"; strong: true; size: Theme.caption }
                     Repeater {
-                        model: Net.tsRunning ? [{ name: "None", ip: "", online: true }].concat(Net.tsExitNodes.filter(n => n.online && !n.mullvad)) : []
+                        model: Net.tsRunning ? [{ name: "None", ip: "", online: true, city: "" }].concat(Net.tsExitNodes.filter(n => !n.mullvad || n.ip === Net.tsExitNode)) : []
                         PageRow {
                             required property var modelData
-                            glyph: modelData.ip === "" ? "" : ""
+                            glyph: modelData.ip === "" ? "\ue774" : "\ue909"
                             title: modelData.name
-                            sub: modelData.ip === Net.tsExitNode ? "In use" : ""
+                            sub: modelData.ip === Net.tsExitNode ? (modelData.ip === "" ? "In use · straight to the internet" : "In use · traffic goes through " + (modelData.host ?? modelData.name))
+                                : !modelData.online ? "Offline"
+                                : modelData.ip === "" ? "Straight to the internet" : modelData.ip
                             lit: modelData.ip === Net.tsExitNode
-                            onClicked: Net.setExitNode(modelData.ip)
+                            opacity: modelData.online ? 1 : 0.5
+                            onClicked: if (modelData.online && modelData.ip !== Net.tsExitNode) Net.setExitNode(modelData.ip)
+                        }
+                    }
+                    Txt {
+                        visible: Net.tsRunning && Net.tsExitNodes.length === 0
+                        x: 44; width: parent.width - 56; wrapMode: Text.Wrap; level: 2; size: Theme.caption
+                        text: "No device on your tailnet offers itself as an exit node"
+                    }
+                    PageRow {
+                        visible: Net.tsRunning && Net.tsExitNode !== ""
+                        glyph: "\ue839"
+                        title: "Allow local network access"
+                        sub: Net.tsAllowLan ? "On · printers and other devices here stay reachable" : "Off"
+                        lit: Net.tsAllowLan
+                        onClicked: Net.setAllowLan(!Net.tsAllowLan)
+                    }
+
+                    Txt { visible: Net.tsRunning && Net.tsDevices.length > 0; x: 12; height: 36; verticalAlignment: Text.AlignBottom; text: "Devices · " + Net.tsPeersOnline + " online"; strong: true; size: Theme.caption }
+                    Repeater {
+                        model: Net.tsRunning ? Net.tsDevices : []
+                        PageRow {
+                            required property var modelData
+                            glyph: modelData.os === "windows" ? "\ue7f8" : modelData.os === "android" || modelData.os === "iOS" ? "\ue8ea" : "\ue977"
+                            title: modelData.name
+                            sub: copied ? "Address copied" : (modelData.online ? "Online · " : "Offline · ") + modelData.ip
+                            opacity: modelData.online ? 1 : 0.6
+                            property bool copied: false
+                            Timer { id: copiedTimer; interval: 1500; onTriggered: parent.copied = false }
+                            onClicked: { Quickshell.execDetached(["wl-copy", modelData.ip]); copied = true; copiedTimer.restart(); }
                         }
                     }
                 }

@@ -58,9 +58,17 @@ Row {
         else Apps.focusWin(next);
     }
 
+    // Win + 1…9 (taskbar/WinKeys.qml): the n-th button on the focused screen's taskbar
+    Connections {
+        target: WinKeys
+        function onActivate(n, screenName) {
+            if (screenName === root.screenName && n >= 1 && n <= root.groups.length) root.click(root.groups[n - 1]);
+        }
+    }
+
     function jumpList(g, item) {
         const e = g.entry;
-        const name = e?.name ?? (g.wins[0]?.title ?? "App");
+        const name = e ? Apps.nameOf(e) : (g.wins[0]?.title ?? "App");
         const items = [];
         for (const a of (e?.actions ?? [])) items.push({ text: a.name, glyph: "", run: () => a.execute() });
         if (items.length) items.push({ sep: true });
@@ -140,13 +148,16 @@ Row {
             }
             Timer { id: hover; interval: 450; onTriggered: if (!Flyouts.isOpen) preview.shown = true }
             Timer { id: leave; interval: 250; onTriggered: if (!preview.inside) preview.shown = false }
-            Tip { target: btn; hovered: mouse.containsMouse && !btn.running; text: btn.g.entry?.name ?? "" }
+            Tip { target: btn; hovered: mouse.containsMouse && !btn.running; text: Apps.nameOf(btn.g.entry) }
 
             // ------------------------------------------------ the thumbnails
             PopupWindow {
                 id: preview
                 property bool shown: false
-                property bool inside: previewMouse.containsMouse
+                // a HoverHandler on the item holding the thumbnails: it sees the pointer over any of them
+                // (a MouseArea behind them didn't: each thumbnail's own MouseArea took the hover, and the
+                // preview closed as soon as the pointer reached it)
+                property bool inside: previewHover.hovered
                 onInsideChanged: if (!inside && !mouse.containsMouse) leave.restart()
                 visible: shown && btn.running
                 anchor.item: btn
@@ -158,7 +169,9 @@ Row {
                 color: "transparent"
 
                 Acrylic { anchors.fill: parent; shadow: false; tintAlpha: 0.97 }
-                MouseArea { id: previewMouse; anchors.fill: parent; hoverEnabled: true }
+                Item {
+                    anchors.fill: parent
+                    HoverHandler { id: previewHover }
                 Row {
                     x: 8; y: 8
                     spacing: 8
@@ -209,6 +222,7 @@ Row {
                             }
                         }
                     }
+                }
                 }
             }
         }

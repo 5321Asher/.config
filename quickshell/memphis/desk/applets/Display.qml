@@ -11,7 +11,8 @@ import ".."
 //   Appearance   the colour scheme (Memphis's themes) with 98's preview of windows and a message box,
 //                and the desktop setup
 //   Settings     screens: arrangement (drag them), resolution ("Screen area"), refresh, scale,
-//                rotation; Apply asks you to keep them, and puts them back after 15 s if you don't
+//                rotation; Apply / OK ask you to keep them (desk/windows/MonitorKeep.qml), and put
+//                them back after 15 s if you don't
 //   Brightness   each monitor's brightness (DDC/CI)
 Props {
     id: root
@@ -239,6 +240,25 @@ Props {
         property string selected: Displays.draft.find(m => m.focused)?.name ?? Displays.draft[0]?.name ?? ""
         readonly property var mon: Displays.draft.find(m => m.name === selected) ?? Displays.draft[0] ?? null
         readonly property var enabledMonitors: Displays.draft.filter(m => m.enabled)
+        // Change the selected screen's mode / scale / rotation. When its size on the desktop changes,
+        // the screens to its right and below move by the same amount so they still touch it (else a
+        // smaller mode left a gap, and the pointer couldn't cross between the screens).
+        function change(changes) {
+            const m = mon;
+            if (!m) return;
+            const before = Displays.logical(m), after = Displays.logical(Object.assign({}, m, changes));
+            const dw = after.w - before.w, dh = after.h - before.h;
+            const shifts = [];
+            for (const o of Displays.draft) {
+                if (o.name === m.name || !o.enabled) continue;
+                const s = {};
+                if (dw && o.x >= m.x + before.w - 1) s.x = Math.round(o.x + dw);
+                if (dh && o.y >= m.y + before.h - 1) s.y = Math.round(o.y + dh);
+                if (Object.keys(s).length) shifts.push([o.name, s]);
+            }
+            Displays.update(m.name, changes);
+            for (const [n, s] of shifts) Displays.update(n, s);
+        }
         readonly property var resolutions: {
             const seen = new Set();
             return (mon?.modes ?? []).filter(m => { const k = m.width + "x" + m.height; if (seen.has(k)) return false; seen.add(k); return true; })
@@ -252,7 +272,10 @@ Props {
             const near = s => ok.reduce((a, b) => Math.abs(b - s) < Math.abs(a - s) ? b : a, 1);
             const out = [];
             for (const want of [0.75, 1, 1.25, 1.5, 1.75, 2]) { const s = near(want); if (!out.some(x => Math.abs(x - s) < 0.001)) out.push(s); }
-            return out;
+            // the screen's own scale is always offered (else the list shows blank, e.g. 83%)
+            const cur = mon?.scale ?? 1;
+            if (!out.some(x => Math.abs(x - cur) < 0.005)) out.push(cur);
+            return out.sort((a, b) => a - b);
         }
 
         // the arrangement: each screen a numbered monitor; drag to move (snaps to edges)
@@ -290,7 +313,7 @@ Props {
                     Component.onCompleted: place()
                     width: size.w * arrange.k
                     height: size.h * arrange.k
-                    z: drag.drag.active ? 10 : 1
+                    z: grab.drag.active ? 10 : 1
                     Bevel { anchors.fill: parent; kind: "button"; fill: Theme.face }
                     Rectangle {
                         anchors.fill: parent
@@ -307,28 +330,38 @@ Props {
                         }
                     }
                     MouseArea {
-                        id: drag
+                        id: grab
                         anchors.fill: parent
                         drag.target: box
                         drag.threshold: 4
+                        // inside the arrangement area
+                        drag.minimumX: 0
+                        drag.maximumX: arrange.width - box.width
+                        drag.minimumY: 0
+                        drag.maximumY: arrange.height - box.height
                         onPressed: settings.selected = box.modelData.name
-                        onReleased: {
-                            if (!drag.active) return;
-                            let nx = arrange.bounds.x + (box.x - arrange.ox) / arrange.k;
-                            let ny = arrange.bounds.y + (box.y - arrange.oy) / arrange.k;
-                            const snap = 20 / arrange.k, me = box.size;
-                            let bx = null, by = null;
-                            for (const o of settings.enabledMonitors) {
-                                if (o.name === box.modelData.name || o.mirror) continue;
-                                const s = Displays.logical(o);
-                                for (const c of [o.x + s.w, o.x - me.w, o.x, o.x + s.w - me.w])
-                                    if (Math.abs(nx - c) < snap && (bx === null || Math.abs(nx - c) < Math.abs(nx - bx))) bx = c;
-                                for (const c of [o.y, o.y + s.h, o.y - me.h, o.y + s.h - me.h])
-                                    if (Math.abs(ny - c) < snap && (by === null || Math.abs(ny - c) < Math.abs(ny - by))) by = c;
-                            }
-                            Displays.update(box.modelData.name, { x: Math.round(bx ?? nx), y: Math.round(by ?? ny) });
-                            box.place();
+                        // Commit when the drag ends: by `released`, drag.active is already false, so
+                        // checking it there skipped every move (the box stayed put, Apply stayed grey)
+                        drag.onActiveChanged: if (!drag.active) box.commit()
+                    }
+                    function commit() {
+                        let nx = arrange.bounds.x + (box.x - arrange.ox) / arrange.k;
+                        let ny = arrange.bounds.y + (box.y - arrange.oy) / arrange.k;
+                        const snap = 20 / arrange.k, me = box.size;
+                        let bx = null, by = null;
+                        for (const o of settings.enabledMonitors) {
+                            if (o.name === box.modelData.name || o.mirror) continue;
+                            const s = Displays.logical(o);
+                            for (const c of [o.x + s.w, o.x - me.w, o.x, o.x + s.w - me.w])
+                                if (Math.abs(nx - c) < snap && (bx === null || Math.abs(nx - c) < Math.abs(nx - bx))) bx = c;
+                            for (const c of [o.y, o.y + s.h, o.y - me.h, o.y + s.h - me.h])
+                                if (Math.abs(ny - c) < snap && (by === null || Math.abs(ny - c) < Math.abs(ny - by))) by = c;
                         }
+                        const x = Math.round(bx ?? nx), y = Math.round(by ?? ny);
+                        // unchanged: put the box back. Changed: the update rebuilds the boxes (this one
+                        // included, so don't touch it after), and the new one is placed from the draft
+                        if (x === box.modelData.x && y === box.modelData.y) box.place();
+                        else Displays.update(box.modelData.name, { x: x, y: y });
                     }
                 }
             }
@@ -344,7 +377,8 @@ Props {
                 Combo {
                     width: parent.parent.width - 98
                     model: Displays.draft
-                    textOf: m => (Displays.draft.indexOf(m) + 1) + ". " + m.name + (m.model ? " on " + m.model : "")
+                    // by name: the list hands textOf copies, so indexOf(m) was always -1 ("0.")
+                    textOf: m => (Displays.draft.findIndex(x => x.name === m.name) + 1) + ". " + m.name + (m.model ? " on " + m.model : "")
                     currentIndex: Displays.draft.findIndex(m => m.name === settings.selected)
                     onChosen: i => settings.selected = Displays.draft[i].name
                 }
@@ -379,7 +413,7 @@ Props {
                             const m = settings.resolutions[Math.round(v * (settings.resolutions.length - 1))];
                             if (!m) return;
                             const rates = settings.mon.modes.filter(x => x.width === m.width && x.height === m.height).map(x => x.refresh);
-                            Displays.update(settings.mon.name, { width: m.width, height: m.height, refresh: Math.max(...rates) });
+                            settings.change({ width: m.width, height: m.height, refresh: Math.max(...rates) });
                         }
                     }
                     Item {
@@ -409,7 +443,7 @@ Props {
                                 model: settings.scales
                                 textOf: s => Math.round(s * 100) + "%"
                                 currentIndex: settings.scales.findIndex(s => Math.abs(s - (settings.mon?.scale ?? 1)) < 0.005)
-                                onChosen: i => Displays.update(settings.mon.name, { scale: settings.scales[i] })
+                                onChosen: i => settings.change({ scale: settings.scales[i] })
                             }
                         }
                         Column {
@@ -419,7 +453,7 @@ Props {
                                 width: 92
                                 model: ["Normal", "90°", "180°", "270°"]
                                 currentIndex: settings.mon?.transform ?? 0
-                                onChosen: i => Displays.update(settings.mon.name, { transform: i })
+                                onChosen: i => settings.change({ transform: i })
                             }
                         }
                     }
@@ -428,36 +462,6 @@ Props {
             Txt { visible: Displays.error !== ""; width: parent.width; wrapMode: Text.Wrap; color: Theme.danger; text: Displays.error }
         }
 
-        // "Monitor Settings": keep the new ones? (after Apply; puts the old ones back after 15 s)
-        Rectangle {
-            anchors.fill: parent
-            visible: Displays.confirming
-            color: Theme.alpha(Theme.face, 0.6)
-            MouseArea { anchors.fill: parent }
-            Win {
-                anchors.centerIn: parent
-                width: 400
-                height: 170
-                title: "Monitor Settings"
-                closable: false
-                Icon { x: 12; y: 12; name: "dialog-question"; size: 40 }
-                Txt {
-                    x: 66; y: 10
-                    width: parent.width - 80
-                    wrapMode: Text.Wrap
-                    verticalAlignment: Text.AlignTop
-                    text: "Your desktop has been reconfigured. Do you want to keep these settings?\n\nReverting in " + Displays.countdown + " seconds."
-                }
-                Row {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 8
-                    spacing: 8
-                    Btn { text: "Yes"; isDefault: true; onClicked: Displays.keep() }
-                    Btn { text: "No"; onClicked: Displays.revert() }
-                }
-            }
-        }
     }
 
     // ---------------------------------------------------------------- Brightness

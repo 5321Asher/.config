@@ -10,13 +10,26 @@ import "osd"
 import "lock"
 import "utilities"
 import "services"
+import "desktop"
 
 // Disguise: Windows 11, on Hyprland. Structure and tweaking notes: README.md
 ShellRoot {
     // Singletons that answer IPC (or run the notification server) exist only once touched: touch them
     Component.onCompleted: {
         Flyouts.kind; TrayMenus.openers; WinX; SettingsApp.page; TaskView.open; LockState.locked;
-        Capture.recording; Voxtype.status; Updates.count; Notifs.dnd; Backlight.value;
+        Capture.recording; Voxtype.status; Updates.count; Notifs.dnd; Backlight.value; WinKeys.toString(); AltTabState.active; PromptState.open;
+    }
+
+    // The desktop: the Recycle Bin and ~/Desktop's icons, the right-click menu (under the windows)
+    Variants {
+        model: Quickshell.screens
+        Desktop {}
+    }
+
+    // Alt + Tab's switcher (utilities/AltTabState: qs ipc call alttab next | prev | commit | cancel)
+    Variants {
+        model: Quickshell.screens
+        AltTab {}
     }
 
     // The taskbar, and the flyouts that rise from it, per screen

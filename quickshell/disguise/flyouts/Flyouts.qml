@@ -12,6 +12,8 @@ import Quickshell.Io
 //   notif     the notification centre + calendar (the clock)
 //   widgets   Widgets                            (the weather at the left of the taskbar)
 //   tray      the hidden tray icons              (the ^ chevron)
+//   run       Run… (Win + R)
+//   emoji     the emoji panel / clipboard history (Win + . / Win + V)
 //   menu      a context menu (right-click on the taskbar, a tray app's menu, Start's power button…)
 // FlyoutLayer draws them; close() lets the open one slide away first.
 Singleton {
@@ -131,11 +133,29 @@ Singleton {
         function toggle(): void { root.toggle("search"); }
         function open(text: string): void { root.show("search", null, { text: text }); }
     }
-    // qs ipc call flyout open quick | notif | widgets | tray  (and close)
+    // the emoji panel on a tab (emoji | gif | kaomoji | symbols | clipboard), at global (x, y):
+    //   qs ipc call emoji open clipboard 1200 600     (scripts/panel.sh passes the pointer)
+    IpcHandler {
+        target: "emoji"
+        function open(tab: string, x: int, y: int): void {
+            if (root.kind === "emoji" && (root.opts.tab ?? "") === tab) { root.close(); return; }
+            root.show("emoji", null, { tab: tab, x: x, y: y });
+        }
+        function close(): void { root.close(); }
+    }
+    IpcHandler {
+        target: "run"
+        function toggle(): void { root.toggle("run"); }
+        function open(): void { root.show("run"); }
+    }
+    // qs ipc call flyout open quick | notif | widgets | tray  (and close); page quick wifi|bluetooth|vpn|sound;
+    // current (what is open: for tests)
     IpcHandler {
         target: "flyout"
         function open(k: string): void { root.show(k); }
+        function page(k: string, page: string): void { root.show(k, null, { page: page }); }
         function toggle(k: string): void { root.toggle(k); }
+        function current(): string { return root.closing ? "" : root.kind; }
         function close(): void { root.close(); }
     }
 }

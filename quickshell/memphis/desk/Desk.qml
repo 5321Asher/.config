@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import "../services"
 
 // The shell's own windows (Control Panel, Properties sheets, Run, Shut Down, Help, the Media Player,
 // the Notifications inbox…): which are open, on which screen, where, and in what order.
@@ -11,6 +12,7 @@ import Quickshell.Io
 //   control   Control Panel            run        Run…               shutdown   Shut Down Windows
 //   logoff    Log Off                  help       Windows Help       messages   Notifications inbox
 //   media     Media Player             volume     Volume Control     applet:<name>  a Properties sheet
+//   monitorkeep  Monitor Settings (keep the new screen layout?), open while Displays.confirming
 // Applets: datetime display multimedia network system lighting timer claude power
 //
 // The shared IPC contract, `qs ipc call deck open <page>`, lands here: the other setups' deck pages
@@ -36,7 +38,7 @@ Singleton {
         return ({
             control: { w: 860, h: 580 }, run: { w: 480, h: 250 }, shutdown: { w: 440, h: 330 },
             logoff: { w: 380, h: 170 }, help: { w: 640, h: 560 }, messages: { w: 760, h: 520 },
-            media: { w: 460, h: 400 }, volume: { w: 620, h: 420 },
+            media: { w: 460, h: 400 }, volume: { w: 620, h: 420 }, monitorkeep: { w: 420, h: 180 },
         })[id] ?? { w: 480, h: 360 };
     }
 
@@ -46,7 +48,7 @@ Singleton {
         const w = Object.assign({}, root.wins);
         const cur = w[id];
         const s = size(id);
-        w[id] = Object.assign({ screen: focusedScreen(), x: -1, y: -1, w: s.w, h: s.h, tab: "" }, cur ?? {}, extra ?? {},
+        w[id] = Object.assign({ screen: focusedScreen(), x: null, y: null, w: s.w, h: s.h, tab: "" }, cur ?? {}, extra ?? {},
                               { z: ++topZ });
         wins = w;
     }
@@ -97,6 +99,16 @@ Singleton {
         show(p[0], p[1] ? { tab: p[1] } : {});
     }
 
+    // The "keep these settings?" question is its own window, so closing Display Properties with OK
+    // doesn't hide it (it used to, and the new layout quietly reverted 15 s later)
+    Connections {
+        target: Displays
+        function onConfirmingChanged() {
+            if (Displays.confirming) root.show("monitorkeep");
+            else root.close("monitorkeep");
+        }
+    }
+
     IpcHandler {
         target: "deck"
         function toggle(): void { root.toggle("control"); }
@@ -113,6 +125,8 @@ Singleton {
         target: "desk"
         // open any window by id (for testing): qs ipc call desk open applet:display
         function open(id: string): void { root.show(id); }
+        // …on one of its tabs: qs ipc call desk tab applet:multimedia Programs
+        function tab(id: string, name: string): void { root.show(id, { tab: name }); }
         function close(id: string): void { root.close(id); }
         function list(): string { return root.ids.join(" "); }
     }

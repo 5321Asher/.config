@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Services.Pipewire
+import Quickshell.Services.SystemTray
 import Quickshell.Services.UPower
 import Quickshell.Wayland
 import "../theme"
@@ -141,9 +142,10 @@ PanelWindow {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2
 
-        // ^ hidden icons
+        // ^ hidden icons (only while some app has a tray icon, as on Windows)
         TaskItem {
             id: chevron
+            visible: SystemTray.items.values.length > 0
             width: 28
             lit: root.open("tray")
             onClicked: root.flyout("tray", { x: root.xOf(chevron) })

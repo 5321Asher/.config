@@ -1,7 +1,7 @@
 # NetWatch: Agency blue and white-hot cyan: the ones watching the watchers.
 name = "NetWatch"
 appearance = "dark"
-wallpaper = "netrunner-netwatch-skyline.png"
+wallpaper = "netrunner-netwatch-city.mp4"
 
 [palette]
 bg          = "#070a12"

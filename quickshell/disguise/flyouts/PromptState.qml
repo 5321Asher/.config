@@ -1,0 +1,58 @@
+pragma Singleton
+
+import QtQuick
+import Quickshell
+import Quickshell.Io
+
+// Questions from ~/.config/theme/prompt (the web-app and keybind scripts), asked in a Windows content
+// dialog (flyouts/PromptDialog.qml, the flyout kind "prompt"). The script leaves a
+// request directory with request.json and a FIFO named reply, then waits on the FIFO:
+//   qs ipc call prompt ask <dir>
+// answer(text) writes the reply; cancel() writes nothing, which the scripts read as "cancelled".
+Singleton {
+    id: root
+
+    property string dir: ""
+    property var request: ({ placeholder: "", options: [], index: false, input: true })
+    readonly property bool open: dir !== ""
+
+    function answer(text) {
+        if (dir === "") return;
+        Quickshell.execDetached(["sh", "-c", 'printf "%s" "$1" > "$2"', "sh", text, dir + "/reply"]);
+        dir = "";
+        if (Flyouts.kind === "prompt") Flyouts.close();
+    }
+    // clicking away closes the dialog: that's a cancel
+    Connections {
+        target: Flyouts
+        function onKindChanged() { if (root.dir !== "" && Flyouts.kind !== "prompt") root.cancel(); }
+    }
+    function cancel() { answer(""); }
+
+    FileView {
+        id: file
+        printErrors: false
+        onLoaded: {
+            try {
+                root.request = JSON.parse(text());
+            } catch (e) {
+                console.warn("prompt request:", e);
+                root.cancel();
+            }
+        }
+        onLoadFailed: root.cancel()
+    }
+
+    IpcHandler {
+        target: "prompt"
+
+        function ask(dir: string): void {
+            root.cancel();      // a newer question replaces one still open
+            root.dir = dir;
+            file.path = "";
+            file.path = dir + "/request.json";
+            Flyouts.show("prompt");
+        }
+        function cancel(): void { root.cancel(); }
+    }
+}

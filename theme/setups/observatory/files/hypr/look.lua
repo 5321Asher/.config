@@ -94,7 +94,7 @@ hl.layer_rule({
 -- would smear the star chart into haze behind it). The rule follows title changes.
 hl.window_rule({
   name    = "observatory-brave-newtab-clear",
-  match   = { class = "^brave-browser$", title = "^New (Private )?Tab - Brave$" },
+  match   = { class = "^brave-origin-nightly$", title = "^New (Private )?Tab - Brave Origin$" },
   no_blur = true,
   opacity = "0.2 override 0.2 override",
 })

@@ -79,7 +79,7 @@ hl.animation({ leaf = "zoomFactor", enabled = true, speed = 2, bezier = "fluentI
 -- Quickshell animates them itself (they slide up from the taskbar the way Windows' flyouts do)
 hl.layer_rule({
   name         = "disguise-blur",
-  match        = { namespace = "^disguise-(taskbar|flyout|toast|osd|uac|taskview|voice|snip|menu)$" },
+  match        = { namespace = "^disguise-(taskbar|flyout|toast|osd|uac|taskview|voice|snip|menu|alttab)$" },
   blur         = true,
   ignore_alpha = 0.2,
 })
@@ -89,7 +89,9 @@ hl.layer_rule({
   no_anim = true,
 })
 
--- Settings (Quickshell's own window) floats at its own size, with Mica: the desktop blurred through it
+-- Settings (Quickshell's own window) floats at its own size, with Mica: the desktop blurred through it,
+-- and draws its own Windows title bar (back, minimise, maximise, close): setup-binds.lua keeps hyprbars
+-- off it (that rule only exists while the plugin is loaded)
 hl.window_rule({
   name  = "disguise-settings",
   match = { class = "^org.quickshell$", title = "^Settings$" },
@@ -101,6 +103,6 @@ hl.window_rule({
 -- Brave's New Tab lets the Bloom show through a little, blurred, like a Mica page
 hl.window_rule({
   name    = "disguise-brave-newtab",
-  match   = { class = "^brave-browser$", title = "^New (Private )?Tab - Brave$" },
+  match   = { class = "^brave-origin-nightly$", title = "^New (Private )?Tab - Brave Origin$" },
   opacity = "0.9 override 0.9 override",
 })

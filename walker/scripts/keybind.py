@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add or remove Hyprland keybinds through Walker prompts.
+"""Add or remove Hyprland keybinds through prompts (the setup's own, see theme/prompt; else Walker).
 
   keybind.py add      pick keys + an action, append to ~/.config/hypr/binds.lua, reload
   keybind.py remove   pick a bind from binds.lua and delete it
@@ -29,16 +29,19 @@ KEY_NAMES = {"enter": "Return", "return": "Return", "space": "Space", "tab": "Ta
              "lmb": "mouse:272", "rmb": "mouse:273", "scrollup": "mouse_up", "scrolldown": "mouse_down"}
 
 
-# ---------- walker prompts ----------
+# ---------- prompts ----------
+
+PROMPT = f"{HOME}/.config/theme/prompt"
+
 
 def ask(placeholder):
-    r = subprocess.run(["walker", "--dmenu", "--inputonly", "--placeholder", placeholder],
+    r = subprocess.run([PROMPT, "--input", "--placeholder", placeholder],
                        capture_output=True, text=True)
     return r.stdout.strip()
 
 
 def pick(placeholder, options, index=False):
-    cmd = ["walker", "--dmenu", "--placeholder", placeholder] + (["--index"] if index else [])
+    cmd = [PROMPT, "--placeholder", placeholder] + (["--index"] if index else [])
     r = subprocess.run(cmd, input="\n".join(options), capture_output=True, text=True)
     out = r.stdout.strip()
     if index:
@@ -171,14 +174,14 @@ def choose_action():
         "Move window to scratchpad",
         "Move window with mouse drag",
         "Resize window with mouse drag",
-        "Walker menu",
-        "Walker app launcher",
+        "Menu (setup's)",
+        "App launcher (setup's)",
         "Workspace overview (Quickshell)",
         "Screen recording on/off (Quickshell)",
         "Screenshot region (Quickshell)",
         "Screenshot screen (Quickshell)",
         "Copy text from region / OCR (Quickshell)",
-        "Clipboard history (Walker)",
+        "Clipboard history (setup's)",
         "Dictation start / stop (voxtype)",
         "Cancel dictation (voxtype)",
         "Volume up",
@@ -234,7 +237,7 @@ def choose_action():
         "Screenshot region (Quickshell)": (exec_cmd("qs ipc call capture screenshot region"), ""),
         "Screenshot screen (Quickshell)": (exec_cmd("qs ipc call capture screenshot screen"), ""),
         "Copy text from region / OCR (Quickshell)": (exec_cmd("qs ipc call capture ocr"), ""),
-        "Clipboard history (Walker)": (exec_cmd("walker -m clipboard"), ""),
+        "Clipboard history (setup's)": (exec_cmd("~/.config/theme/menu clipboard"), ""),
         "Dictation start / stop (voxtype)": (exec_cmd("voxtype record toggle"), ""),
         "Cancel dictation (voxtype)": (exec_cmd("voxtype record cancel"), ""),
         "Volume up": (exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), "{ locked = true, repeating = true }"),
@@ -246,7 +249,7 @@ def choose_action():
         "Exit Hyprland": ("hl.dsp.exit()", ""),
     }
     expr, opts = simple[a]
-    return expr, opts, a.replace(" (Quickshell)", ""), None
+    return expr, opts, re.sub(r" \((Quickshell|setup's)\)$", "", a), None
 
 
 def add():

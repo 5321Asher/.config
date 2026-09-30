@@ -24,10 +24,13 @@ size  = 24
 [hyprland]
 border = "accent"   # one brass line, no gradient
 
-# What SUPER + Space and SUPER + CTRL + Space open here (~/.config/theme/menu). Other setups: Walker.
+# What SUPER + Space, SUPER + CTRL + Space and SUPER + V open here (~/.config/theme/menu), and what
+# asks the web-app / keybind questions (~/.config/theme/prompt). Left out: Walker.
 [menus]
 root = "qs ipc call console toggle"
 apps = "qs ipc call starchart toggle"
+clipboard = "qs ipc call clipboard toggle"
+prompt = "qs ipc call prompt ask"
 
 # How switching to this setup, or between its themes, is revealed: fade | wipe | iris (ms)
 # (a circle opening from the centre, edged with a ring in the new accent (the dome shutter))

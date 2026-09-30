@@ -92,7 +92,7 @@ hl.workspace_rule({ workspace = "special:deck", gaps_out = { top = 12, right = 4
 -- Brave's New Tab goes glassy (the skyline shows through, blurred)
 hl.window_rule({
   name    = "netrunner-brave-newtab-glass",
-  match   = { class = "^brave-browser$", title = "^New (Private )?Tab - Brave$" },
+  match   = { class = "^brave-origin-nightly$", title = "^New (Private )?Tab - Brave Origin$" },
   opacity = "0.55 override 0.55 override",
 })
 

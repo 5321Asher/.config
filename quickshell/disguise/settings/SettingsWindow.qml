@@ -13,13 +13,18 @@ FloatingWindow {
 
     visible: SettingsApp.isOpen
     title: "Settings"
-    color: Qt.alpha(Theme.mica, Theme.dark ? 0.92 : 0.9)
+    // opaque, like every other window (a see-through Settings showed the windows behind it)
+    color: Theme.mica
     implicitWidth: 1100
     implicitHeight: 740
     minimumSize: Qt.size(640, 480)
     onVisibleChanged: if (!visible) SettingsApp.isOpen = false
 
     readonly property bool compact: width < 860
+
+    // the caption buttons do exactly what every other window's do (hyprbars runs the same script on the
+    // window under the pointer): maximise on top of everything / restore down, minimise to the taskbar
+    function caption(cmd) { Quickshell.execDetached([Quickshell.shellDir + "/scripts/caption.sh", cmd]); }
     readonly property string section: SettingsApp.section(SettingsApp.page)
 
     // ---------------------------------------------------------------- title bar
@@ -30,7 +35,7 @@ FloatingWindow {
         MouseArea {
             anchors.fill: parent
             onPressed: win.startSystemMove()
-            onDoubleClicked: Hyprland.dispatch(`hl.dsp.window.float({ action = "toggle" })`)
+            onDoubleClicked: win.caption("max")
         }
         Btn {
             visible: SettingsApp.history.length > 0
@@ -47,8 +52,8 @@ FloatingWindow {
         }
         Row {
             anchors.right: parent.right
-            WinButton { g: ""; onClicked: Hyprland.dispatch(`hl.dsp.window.move({ workspace = "special:minimized", window = "title:^Settings$", follow = false })`) }
-            WinButton { g: ""; onClicked: Hyprland.dispatch(`hl.dsp.window.float({ action = "toggle" })`) }
+            WinButton { g: ""; onClicked: win.caption("min") }
+            WinButton { g: ""; onClicked: win.caption("max") }
             WinButton { g: ""; close: true; onClicked: SettingsApp.close() }
         }
     }

@@ -46,11 +46,33 @@ for i = 1, 10 do hl.bind("SUPER + SHIFT + " .. (i % 10), hl.dsp.window.move({ wo
 for i = 1, 10 do hl.bind("SUPER + ALT + " .. (i % 10), hl.dsp.window.move({ workspace = i, follow = false })) end -- Send window to workspace (stay here)
 hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true }) -- Move window with mouse drag
 hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true }) -- Resize window with mouse drag
-hl.bind("SUPER + D", hl.dsp.workspace.toggle_special("magic")) -- Toggle scratchpad
+-- Hiding the scratchpad leaves keyboard focus on the window just hidden (when the workspace under
+-- it is empty). A click on any shell menu (an exclusive layer) makes Hyprland refocus that window,
+-- which brings the scratchpad back. So after hiding it, take focus off it: hop to another monitor
+-- and back (no pointer warp), or with one monitor, through an empty workspace and back.
+local function toggle_scratchpad()
+  hl.dispatch(hl.dsp.workspace.toggle_special("magic"))
+  local mon = hl.get_active_monitor()
+  local win = hl.get_active_window()
+  if not mon or mon.active_special_workspace or not (win and win.workspace and win.workspace.special) then return end
+  for _, m in ipairs(hl.get_monitors()) do
+    if m.id ~= mon.id then
+      hl.dispatch(hl.dsp.focus({ monitor = m.name }))
+      hl.dispatch(hl.dsp.focus({ monitor = mon.name }))
+      return
+    end
+  end
+  local ws = mon.active_workspace and mon.active_workspace.id
+  if ws then
+    hl.dispatch(hl.dsp.focus({ workspace = "empty" }))
+    hl.dispatch(hl.dsp.focus({ workspace = ws }))
+  end
+end
+hl.bind("SUPER + D", toggle_scratchpad) -- Toggle scratchpad
 hl.bind("SUPER + SHIFT + D", hl.dsp.window.move({ workspace = "special:magic" })) -- Move window to scratchpad
 hl.bind("SUPER + CTRL + Space", hl.dsp.exec_cmd("~/.config/theme/menu apps")) -- App launcher (the setup's: Walker, or its own)
 hl.bind("SUPER + Return", hl.dsp.exec_cmd("gtk-launch kitty")) -- kitty
-hl.bind("SUPER + B", hl.dsp.exec_cmd("gtk-launch brave-browser")) -- Brave
+hl.bind("SUPER + B", hl.dsp.exec_cmd("gtk-launch brave-origin-nightly")) -- Brave Origin Nightly
 hl.bind("SUPER + N", hl.dsp.exec_cmd("gtk-launch obsidian")) -- Obsidian
 hl.bind("SUPER + E", hl.dsp.exec_cmd("thunar")) -- File manager (Thunar)
 hl.bind("SUPER + X", hl.dsp.window.float({ action = "toggle" })) -- Toggle floating
@@ -59,9 +81,21 @@ hl.bind("SUPER + K", hl.dsp.exec_cmd("gtk-launch skwd-wall-v2")) -- Wallpaper pi
 hl.bind("SUPER + SHIFT + S", hl.dsp.exec_cmd("qs ipc call capture screenshot region")) -- Screenshot region
 hl.bind("SUPER + SHIFT + T", hl.dsp.exec_cmd("qs ipc call capture ocr")) -- Copy text from region (OCR)
 hl.bind("SUPER + SHIFT + P", hl.dsp.exec_cmd("hyprpicker -a")) -- Colour picker (copies hex)
-hl.bind("SUPER + V", hl.dsp.exec_cmd("walker -m clipboard")) -- Clipboard history
+hl.bind("SUPER + V", hl.dsp.exec_cmd("~/.config/theme/menu clipboard")) -- Clipboard history (the setup's, else Walker)
 hl.bind("SUPER + Z", hl.dsp.exec_cmd("voxtype record toggle")) -- Dictation start / stop (voxtype)
 hl.bind("SUPER + SHIFT + Z", hl.dsp.exec_cmd("voxtype record cancel")) -- Cancel dictation
 hl.bind("SUPER + L", hl.dsp.exec_cmd("loginctl lock-session")) -- Lock screen
 hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload")) -- Reload Hyprland
 hl.bind("SUPER + SHIFT + Escape", hl.dsp.exec_cmd("kitty --class btop -e btop")) -- System monitor (btop)
+
+-- hyprbars (Disguise's Windows title bars) stays loaded across setup switches: off here, and the setup
+-- that wants it (Disguise's setup-binds.lua, below) turns it back on. Only touched while it's loaded.
+for _, p in ipairs(hl.get_loaded_plugins and hl.get_loaded_plugins() or {}) do
+  if tostring(p.name or ""):lower():find("hyprbars") then
+    pcall(hl.config, { plugin = { hyprbars = { enabled = false } } })
+  end
+end
+
+-- The active setup's own shortcuts, if it has any (setups/<setup>/files/hypr/setup-binds.lua, linked in
+-- by `theme setup`), last so they win. Only Disguise has one: Windows 11's keys.
+pcall(require, "setup-binds")

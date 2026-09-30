@@ -24,9 +24,12 @@ Column {
     readonly property PwNode sink: Pipewire.defaultAudioSink
     readonly property var sinks: Pipewire.nodes.values.filter(n => n.audio && n.isSink && !n.isStream)
     readonly property PwNode source: Pipewire.defaultAudioSource
-    readonly property var sources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream && n.properties?.["media.class"] === "Audio/Source")
-    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream && n.properties?.["media.class"] === "Stream/Output/Audio")
-    PwObjectTracker { objects: [root.sink, root.source].filter(n => n).concat(root.sinks, root.sources, root.streams) }
+    // Track every candidate, then filter: a node's properties (media.class) only arrive once it's tracked
+    readonly property var allSources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream)
+    readonly property var sources: allSources.filter(n => n.properties?.["media.class"] === "Audio/Source")
+    readonly property var allStreams: Pipewire.nodes.values.filter(n => n.audio && n.isStream)
+    readonly property var streams: allStreams.filter(n => n.properties?.["media.class"] === "Stream/Output/Audio")
+    PwObjectTracker { objects: [root.sink, root.source].filter(n => n).concat(root.sinks, root.allSources, root.allStreams) }
     function name(n) { return n?.nickname || n?.description || n?.name || ""; }
 
     Section {
@@ -77,12 +80,18 @@ Column {
             Label { y: 10; text: root.fmt(root.player?.position ?? 0) }
             Label { y: 10; anchors.right: parent.right; text: root.fmt(root.player?.length ?? 0) }
         }
-        Row {
-            visible: Radio.active
-            spacing: 2
-            Repeater { model: Radio.count
-                Rectangle { required property int index; anchors.bottom: parent.bottom; width: (root.width - (Radio.count - 1) * 2) / Radio.count
-                            height: Math.max(1, (Radio.bars[index] ?? 0) * Radio.gain * 40); color: Theme.cyan } }
+        // A fixed 40 px strip: a Row as tall as its tallest bar resized every frame and bounced the
+        // page below it (and appearing / vanishing with playback shifted it too)
+        Item {
+            width: root.width
+            height: 40
+            Row {
+                anchors.bottom: parent.bottom
+                spacing: 2
+                Repeater { model: Radio.count
+                    Rectangle { required property int index; anchors.bottom: parent.bottom; width: (root.width - (Radio.count - 1) * 2) / Radio.count
+                                height: Math.max(1, (Radio.bars[index] ?? 0) * Radio.gain * 40); color: Theme.cyan } }
+            }
         }
     }
 

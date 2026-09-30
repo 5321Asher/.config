@@ -17,7 +17,13 @@ import "../theme"
 PanelWindow {
     id: root
 
-    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+    // Follows the focused monitor only while hidden: moving a shown window rebuilds its surface
+    // (it vanished for a few frames mid-fade on close, when the keyboard grab let go).
+    Binding on screen {
+        when: !root.visible
+        value: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+        restoreMode: Binding.RestoreNone
+    }
     visible: ConsoleState.open || shown > 0.01
 
     anchors { top: true; bottom: true; left: true; right: true }
@@ -35,6 +41,9 @@ PanelWindow {
     property var items: []          // elephant items of the current menu
     property string query: ""
     property int sel: 0
+    // Where the pointer last really moved (screen coords): ledger rows that scroll under a still
+    // cursor mustn't take the selection, or stepping up past the top of the view jumps back down
+    property point pointer: Qt.point(-1, -1)
     property real arrive: 1         // 0 -> 1 each time a menu is shown
     NumberAnimation on arrive { id: arriving; from: 0; to: 1; duration: Theme.slow; easing.type: Theme.easing; running: false }
 
@@ -371,7 +380,7 @@ PanelWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onEntered: root.sel = row.index
+                        onPositionChanged: mouse => { const p = mapToGlobal(mouse.x, mouse.y); if (p.x !== root.pointer.x || p.y !== root.pointer.y) { root.pointer = p; root.sel = row.index; } }
                         onClicked: mouse => mouse.button === Qt.RightButton ? root.back() : root.activate(row.modelData)
                     }
                 }

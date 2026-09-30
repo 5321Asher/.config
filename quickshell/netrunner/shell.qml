@@ -37,8 +37,17 @@ ShellRoot {
     // the rig: qs ipc call deck open <page>
     Rig {}
 
+    // BREACH PROTOCOL, the root menu (SUPER + Space): qs ipc call hub toggle
+    Breach {}
+
     // EXEC, the app launcher (SUPER + CTRL + Space): qs ipc call exec toggle
     Exec {}
+
+    // DATA SHARDS, clipboard history (SUPER + V): qs ipc call clipboard toggle
+    Shards {}
+
+    // INPUT REQUIRED, the web-app / keybind scripts' questions: qs ipc call prompt ask <dir>
+    Prompt {}
 
     // messages, top right under the bar
     MessageStack {}

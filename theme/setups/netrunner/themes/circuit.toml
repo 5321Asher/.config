@@ -1,7 +1,7 @@
 # Circuit: The reference: signal red and ice cyan over near-black glass.
 name = "Circuit"
 appearance = "dark"
-wallpaper = "netrunner-nightcity.png"
+wallpaper = "netrunner-circuit-city.mp4"
 
 [palette]
 bg          = "#0a0d10"

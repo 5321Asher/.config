@@ -1,7 +1,7 @@
 # Kiroshi: Optics-HUD yellow and electric cyan, the colours of the city's ads.
 name = "Kiroshi"
 appearance = "dark"
-wallpaper = "netrunner-kiroshi-skyline.png"
+wallpaper = "netrunner-kiroshi-city.mp4"
 
 [palette]
 bg          = "#0b0b08"

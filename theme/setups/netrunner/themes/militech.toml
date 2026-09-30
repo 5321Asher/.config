@@ -1,7 +1,7 @@
 # Militech: Field kit: hazard orange, olive drab readouts, gunmetal.
 name = "Militech"
 appearance = "dark"
-wallpaper = "netrunner-militech-skyline.png"
+wallpaper = "netrunner-militech-city.mp4"
 
 [palette]
 bg          = "#0c0c09"

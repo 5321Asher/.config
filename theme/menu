@@ -4,6 +4,9 @@
 #
 #   menu root    the root menu (SUPER + Space)
 #   menu apps    the app launcher (SUPER + CTRL + Space)
+#   menu clipboard   clipboard history (SUPER + V)
+#   menu emoji       emoji / symbols (Disguise: Win + .)
+#   menu run         a Run… box (Disguise: Win + R)
 #
 # [menus] values are shell commands in double quotes, e.g.  root = "qs ipc call console toggle"
 
@@ -18,6 +21,9 @@ if [ -z "$cmd" ]; then
     case $what in
         root) cmd="walker -m menus:start" ;;
         apps) cmd="walker -m desktopapplications" ;;
+        clipboard) cmd="walker -m clipboard" ;;
+        emoji) cmd="walker -m symbols" ;;
+        run) cmd="walker -m runner" ;;
         *) echo "menu: unknown menu '$what'" >&2; exit 2 ;;
     esac
 fi

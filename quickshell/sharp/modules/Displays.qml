@@ -68,10 +68,13 @@ Singleton {
                 `mode = "${m.width}x${m.height}@${m.refresh}"`,
                 `position = "${Math.round(m.x)}x${Math.round(m.y)}"`,
                 `scale = "${m.scale}"`,
-                `transform = ${m.transform}`
+                `transform = ${m.transform}`,
+                // explicit: a rule without it doesn't turn a disabled screen back on (so "Use this
+                // screen" -> off -> revert left the screen dark)
+                `disabled = false`
             ];
-            if (m.mirror)
-                parts.push(`mirror = "${m.mirror}"`);
+            // always stated: without it a rule doesn't end mirroring (a reverted mirror stayed on)
+            parts.push(`mirror = "${m.mirror ?? ""}"`);
             return `hl.monitor({ ${parts.join(", ")} })`;
         }).join("\n");
     }

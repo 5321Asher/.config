@@ -28,6 +28,7 @@ then reloads kitty, Hyprland's borders and the Walker service, and sets OpenRGB 
 import colorsys
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -1099,6 +1100,8 @@ def fastfetch_logo(tid, settings, cell_ratio):
     box (a desktop wallpaper), a centre-cropped copy in the box's shape. The original is never touched;
     crops live in ~/.cache/theme/fastfetch/ and are only rebuilt when the image or box changes."""
     path, _ = theme_image(tid, "fastfetch")
+    if path and animated(path):
+        return path     # shown whole and played by kitty (write_fastfetch switches to kitty-icat)
     if not path or not settings.get("crop", True):
         return path
     size = image_size(path)
@@ -1109,6 +1112,8 @@ def fastfetch_logo(tid, settings, cell_ratio):
     box_aspect = settings.get("max_width", 65) / (settings.get("max_height", 30) * cell_ratio)
     if w / h <= box_aspect * 1.02:
         return path  # already portrait enough: shown whole
+    if w / h < 1.5:
+        return path  # a logo, not a wallpaper (Memphis's 440x300 flag): cropping cut its sides off
     crop_w = round(h * box_aspect)
     st = os.stat(path)
     out = f"{HOME}/.cache/theme/fastfetch/{tid}-{st.st_ino}-{int(st.st_mtime)}-{crop_w}x{h}.png"
@@ -1128,6 +1133,16 @@ def fastfetch_logo(tid, settings, cell_ratio):
     return out
 
 
+def animated(path):
+    """True for an image with more than one frame (a GIF / WebP / APNG logo)."""
+    try:
+        out = subprocess.run(["magick", "identify", "-format", "x", path],
+                             capture_output=True, text=True, timeout=60).stdout
+        return len(out) > 1
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
 def write_fastfetch(tid, p, ansi, settings, cell_ratio):
     try:
         with open(f"{SETUP_DIR}/templates/fastfetch.jsonc") as f:
@@ -1144,6 +1159,10 @@ def write_fastfetch(tid, p, ansi, settings, cell_ratio):
     text = text.split("\n", 4)[4] if text.startswith("// Template") else text
     for key, val in values.items():
         text = text.replace("{{%s}}" % key, val)
+    if path and animated(path):
+        # fastfetch's own kitty logo is a still; kitty-icat hands the file to `kitten icat`, which plays
+        # it (a theme's fastfetch.gif, e.g. Observatory's fetchlogo.py), fitted without stretching
+        text = re.sub(r'("type"\s*:\s*)"kitty(-direct)?"', r'\1"kitty-icat", "preserveAspectRatio": true', text, count=1)
     write(f"{HOME}/.config/fastfetch/config.jsonc",
           f"// {HEAD}; edit {SETUP_DIR.replace(HOME, '~')}/templates/fastfetch.jsonc\n" + text)
 
@@ -1238,9 +1257,19 @@ inactive_tab_background {tp["bgDark"]}
 """
     env = (f'hl.env("XCURSOR_THEME", "{cursor["theme"]}")\nhl.env("XCURSOR_SIZE", "{cursor["size"]}")\n'
            f'hl.env("HYPRCURSOR_THEME", "{cursor["theme"]}")\nhl.env("HYPRCURSOR_SIZE", "{cursor["size"]}")\n')
-    write(f"{HOME}/.config/hypr/colors.lua", f"-- {HEAD}\n" + lua + env)
-    # (hyprctl would read a leading "--" comment as a flag, so eval the code alone)
-    run("hyprctl", "eval", lua)
+    # the whole palette, for a setup's own Lua (Disguise's title bars read it in setup-binds.lua)
+    pal = "THEME_PALETTE = {\n" + "".join(f'  {k} = "{v}",\n' for k, v in sorted(p.items())
+                                           if isinstance(v, str) and v.startswith("#")) \
+          + f'  appearance = "{theme.get("appearance", "dark")}",\n}}\n'
+    write(f"{HOME}/.config/hypr/colors.lua", f"-- {HEAD}\n" + lua + env + pal)
+    if SETUP.get("hyprland", {}).get("titlebars"):
+        # title bars (hyprbars) take their colours when the config loads: reload it all (and load the
+        # plugin first if it isn't yet: theme/titlebars.sh, never from inside the config)
+        run("hyprctl", "reload", "config-only")
+        run(f"{HOME}/.config/theme/titlebars.sh")
+    else:
+        # (hyprctl would read a leading "--" comment as a flag, so eval the code alone)
+        run("hyprctl", "eval", lua)
     run("hyprctl", "setcursor", cursor["theme"], str(cursor["size"]))
 
     # Hyprlock: sourced by hyprlock.conf, read fresh on every lock

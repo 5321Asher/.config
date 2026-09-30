@@ -11,8 +11,23 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property var all: DesktopEntries.applications.values.filter(a => !a.noDisplay && a.name)
-        .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }))
+    readonly property var all: DesktopEntries.applications.values.filter(a => !a.noDisplay && a.name && !hidden.test(a.name))
+        .sort((a, b) => nameOf(a).localeCompare(nameOf(b), undefined, { sensitivity: "base" }))
+
+    // Windows' names for what's behind them (Start, Search, the taskbar's tooltips and jump lists),
+    // and the words a Windows user would search for them by
+    readonly property var winNames: ({
+        "thunar": "File Explorer", "org.gnome.Nautilus": "File Explorer", "org.kde.dolphin": "File Explorer",
+        "kitty": "Terminal", "btop": "Task Manager", "org.gnome.TextEditor": "Notepad", "mousepad": "Notepad",
+        "org.gnome.Calculator": "Calculator", "gnome-calculator": "Calculator", "org.gnome.Loupe": "Photos",
+    })
+    readonly property var winWords: ({
+        "thunar": "explorer files folders this pc", "kitty": "powershell cmd command prompt windows terminal wt console",
+        "btop": "task manager processes performance",
+    })
+    function nameOf(e) { return e ? (winNames[e.id] ?? e.name) : ""; }
+    // Linux plumbing Windows doesn't have: kept out of Start's list and Search
+    readonly property var hidden: /^(avahi|about xfce|bulk rename|thunar preferences|qdbus|qv4l2|qvidcap|xgps|xgpsspeed|hardware locality|lstopo|cmake|qt [0-9]|assistant|designer|linguist)/i
 
     function entry(id) {
         if (!id) return null;
@@ -29,8 +44,8 @@ Singleton {
     }
 
     // ---------------------------------------------------------------- pins
-    readonly property var defaultTaskbar: ["thunar", "brave-browser", "kitty", "obsidian"]
-    readonly property var defaultStart: ["brave-browser", "kitty", "thunar", "obsidian", "dev.zed.Zed", "webapp-claude",
+    readonly property var defaultTaskbar: ["thunar", "brave-origin-nightly", "kitty", "obsidian"]
+    readonly property var defaultStart: ["brave-origin-nightly", "kitty", "thunar", "obsidian", "dev.zed.Zed", "webapp-claude",
         "webapp-gmail", "webapp-youtube", "webapp-discord", "webapp-github", "webapp-deezer", "steam",
         "notepadqq", "org.gnome.gThumb", "org.qbittorrent.qBittorrent", "org.openrgb.OpenRGB", "btop", "virtualbox"]
     // not worth a tile when Start tops itself up
@@ -119,12 +134,12 @@ Singleton {
     // ---------------------------------------------------------------- search
     // A simple Windows-like ranking: name starts with > a word starts with > contains > keywords
     function score(e, q) {
-        const n = e.name.toLowerCase();
+        const n = nameOf(e).toLowerCase();
         if (n === q) return 100;
         if (n.startsWith(q)) return 80;
         if (n.split(/[\s\-_.]+/).some(w => w.startsWith(q))) return 60;
         if (n.includes(q)) return 40;
-        const extra = [e.genericName ?? "", e.comment ?? "", (e.keywords ?? []).join(" "), e.id].join(" ").toLowerCase();
+        const extra = [e.name, winWords[e.id] ?? "", e.genericName ?? "", e.comment ?? "", (e.keywords ?? []).join(" "), e.id].join(" ").toLowerCase();
         if (extra.includes(q)) return 20;
         return 0;
     }
@@ -145,10 +160,16 @@ Singleton {
     readonly property string minimized: "special:minimized"
     function appId(t) { return t?.wayland?.appId || t?.lastIpcObject?.class || ""; }
     function entryFor(t) { return entry(appId(t)); }
-    function iconFor(t) { return entryFor(t)?.icon || appId(t) || "application-x-executable"; }
+    // windows with no desktop entry that stand in for a Windows app (Satty is Snipping Tool)
+    readonly property var winIcons: ({ "com.gabm.satty": "ksnip" })
+    function iconFor(t) { return winIcons[appId(t)] ?? (entryFor(t)?.icon || appId(t) || "application-x-executable"); }
     function addr(t) { return t.address.startsWith("0x") ? t.address : "0x" + t.address; }
     function isMin(t) { return t.workspace?.name === minimized; }
-    function focusWin(t) { Hyprland.dispatch(`hl.dsp.focus({ window = "address:${addr(t)}" })`); }
+    // focus it and bring it in front (windows float, and focusing one doesn't raise it by itself)
+    function focusWin(t) {
+        Hyprland.dispatch(`hl.dsp.focus({ window = "address:${addr(t)}" })`);
+        Hyprland.dispatch(`hl.dsp.window.alter_zorder({ mode = "top", window = "address:${addr(t)}" })`);
+    }
     function minimize(t) {
         Hyprland.dispatch(`hl.dsp.window.move({ workspace = "${minimized}", window = "address:${addr(t)}", follow = false })`);
     }

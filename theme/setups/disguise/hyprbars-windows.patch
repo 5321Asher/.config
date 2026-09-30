@@ -1,0 +1,346 @@
+diff --git a/hyprbars/barDeco.cpp b/hyprbars/barDeco.cpp
+index c27653d..8a36bc5 100644
+--- a/hyprbars/barDeco.cpp
++++ b/hyprbars/barDeco.cpp
+@@ -1,4 +1,7 @@
+ #include "barDeco.hpp"
++#include <fstream>
++#include <format>
++#include <hyprland/src/managers/fullscreen/FullscreenController.hpp>
+ 
+ #include <hyprland/src/Compositor.hpp>
+ #include <hyprland/src/desktop/state/FocusState.hpp>
+@@ -150,9 +153,9 @@ void CHyprBar::onTouchUp(Event::SCallbackInfo& info, ITouch::SUpEvent e) {
+ }
+ 
+ void CHyprBar::onMouseMove(Vector2D coords) {
+-    // ensure proper redraws of button icons on hover when using hardware cursors
+-    if (g_pGlobalState->config.iconOnHover->value())
+-        damageOnButtonHover();
++    // Disguise: always repaint when the pointer enters or leaves a caption button (the hover colours
++    // waited for some unrelated repaint otherwise, and felt slow)
++    damageOnButtonHover();
+ 
+     if (!m_bDragPending || m_bTouchEv || !validMapped(m_pWindow) || m_touchId != 0)
+         return;
+@@ -233,6 +236,19 @@ void CHyprBar::handleDownEvent(Event::SCallbackInfo& info, std::optional<ITouch:
+     info.cancelled   = true;
+     m_bCancelledDown = true;
+ 
++    if (m_tabColor) {
++        // Disguise: the tab's close is the window's close (the caption close button's command); + asks
++        // the terminal for a new tab (Windows Terminal's Ctrl + Shift + T, kitty's too)
++        if (VECINRECT(COORDS, m_tabCloseBox.x, m_tabCloseBox.y, m_tabCloseBox.x + m_tabCloseBox.w, m_tabCloseBox.y + m_tabCloseBox.h) && !g_pGlobalState->buttons.empty()) {
++            g_pKeybindManager->m_dispatchers["exec"](g_pGlobalState->buttons.front().cmd);
++            return;
++        }
++        if (VECINRECT(COORDS, m_tabPlusBox.x, m_tabPlusBox.y, m_tabPlusBox.x + m_tabPlusBox.w, m_tabPlusBox.y + m_tabPlusBox.h)) {
++            g_pKeybindManager->m_dispatchers["exec"]("wtype -M ctrl -M shift t -m shift -m ctrl");
++            return;
++        }
++    }
++
+     if (doButtonPress(BARPADDING, BARBUTTONPADDING, HEIGHT, COORDS, BUTTONSRIGHT))
+         return;
+ 
+@@ -262,6 +278,24 @@ void CHyprBar::handleUpEvent(Event::SCallbackInfo& info) {
+             (void)Config::Actions::floatWindow(Config::Actions::eTogglableAction::TOGGLE_ACTION_DISABLE);
+ 
+         Log::logger->log(Log::DEBUG, "[hyprbars] Dragging ended on {:x}", (uintptr_t)m_pWindow.lock().get());
++
++        // Disguise: Aero Snap. Dropped at the top of the screen: maximise; at the left / right edge: that
++        // half. (scripts/caption.sh does the work, on the window under the pointer.)
++        const auto PWINDOW = m_pWindow.lock();
++        const auto MON     = PWINDOW ? PWINDOW->m_monitor.lock() : nullptr;
++        if (MON) {
++            const auto P    = g_pInputManager->getMouseCoordsInternal();
++            const auto edge = 4.0;
++            std::string where;
++            if (P.y <= MON->m_position.y + edge)
++                where = "snap top";
++            else if (P.x <= MON->m_position.x + edge)
++                where = "snap left";
++            else if (P.x >= MON->m_position.x + MON->m_size.x - edge)
++                where = "snap right";
++            if (!where.empty())
++                g_pKeybindManager->m_dispatchers["exec"]("~/.config/quickshell/disguise/scripts/caption.sh " + where);
++        }
+     }
+ 
+     m_bDragPending = false;
+@@ -270,6 +304,33 @@ void CHyprBar::handleUpEvent(Event::SCallbackInfo& info) {
+ }
+ 
+ void CHyprBar::handleMovement() {
++    // Disguise: dragging a maximised window's title bar restores it first (Windows): out of maximised
++    // (Hyprland's, or Disguise's own: a floating window tagged disguise-max by caption.sh), floating at
++    // the size it had before (caption.sh remembers it) or 70 % of the screen, with the pointer where it
++    // grabbed across the title bar
++    const auto PWINDOW = m_pWindow.lock();
++    const bool TAGGED  = PWINDOW && PWINDOW->m_ruleApplicator->m_tagKeeper.isTagged("disguise-max", true);
++    if (PWINDOW && (TAGGED || Fullscreen::controller()->isFullscreen(PWINDOW))) {
++        const auto MON = PWINDOW->m_monitor.lock();
++        const auto P   = g_pInputManager->getMouseCoordsInternal();
++        const auto SHARE = MON && MON->m_size.x > 0 ? (P.x - MON->m_position.x) / MON->m_size.x : 0.5;
++        const auto ADDR  = std::format("0x{:x}", (uintptr_t)PWINDOW.get());
++        if (TAGGED)
++            g_pKeybindManager->m_dispatchers["exec"](std::format("hyprctl dispatch 'hl.dsp.window.tag({{ tag = \"-disguise-max\", window = \"address:{}\" }})'", ADDR));
++        else
++            (void)Config::Actions::fullscreenWindow(Fullscreen::FSMODE_NONE, false, PWINDOW);
++        (void)Config::Actions::floatWindow(Config::Actions::eTogglableAction::TOGGLE_ACTION_ENABLE, PWINDOW);
++        if (MON) {
++            Vector2D SIZE = {std::floor(MON->m_size.x * 0.7), std::floor(MON->m_size.y * 0.7)};
++            const char* RUNTIME = getenv("XDG_RUNTIME_DIR");
++            std::ifstream saved(std::string(RUNTIME ? RUNTIME : "/tmp") + "/disguise-caption/" + ADDR);
++            double sx = 0, sy = 0, sw = 0, sh = 0;
++            if (saved >> sx >> sy >> sw >> sh && sw > 100 && sh > 100)
++                SIZE = {sw, sh};
++            (void)Config::Actions::resize(SIZE, false, PWINDOW);
++            (void)Config::Actions::move({std::floor(P.x - SIZE.x * SHARE), std::floor(P.y - 16)}, false, PWINDOW);
++        }
++    }
+     g_pKeybindManager->changeMouseBindMode(MBIND_MOVE);
+     m_bDraggingThis = true;
+     Log::logger->log(Log::DEBUG, "[hyprbars] Dragging initiated on {:x}", (uintptr_t)m_pWindow.lock().get());
+@@ -284,7 +345,8 @@ bool CHyprBar::doButtonPress(Config::INTEGER barPadding, Config::INTEGER barButt
+         const auto BARBUF     = Vector2D{(int)assignedBoxGlobal().w, barHeight};
+         Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - barButtonPadding - b.size - offset : offset), (BARBUF.y - b.size) / 2.0}.floor();
+ 
+-        if (VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + b.size + barButtonPadding, currentPos.y + b.size)) {
++        // Disguise: Windows' caption buttons fill the bar's height
++        if (VECINRECT(COORDS, currentPos.x, 0, currentPos.x + b.size + barButtonPadding, barHeight)) {
+             // hit on close
+             g_pKeybindManager->m_dispatchers["exec"](b.cmd);
+             return true;
+@@ -356,21 +418,29 @@ void CHyprBar::renderBarButtons(CBox* barBox, const float scale, const float a)
+         const auto scaledButtonSize = button.size * scale;
+         const auto scaledButtonsPad = BARBUTTONPADDING * scale;
+ 
+-        auto       color = button.bgcol;
+-
+-        if (INACTIVECOLOR > 0) {
+-            color = m_bWindowHasFocus ? color : configColor(INACTIVECOLOR);
+-            if (INVALIDATEICONS && button.userfg && button.iconTex)
+-                button.iconTex = nullptr;
++        // Disguise (Windows 11 caption buttons): transparent until hovered, then bgcol, full height, square.
++        // Hover from the pointer now (the icon pass's hover bit is a frame late, and on a still screen
++        // no next frame came: the close button's red never showed)
++        const auto COORDS     = cursorRelativeToBar();
++        const auto HEIGHTNOW  = g_pGlobalState->config.barHeight->value();
++        const auto BARW       = assignedBoxGlobal().w;
++        const auto noScaleOff = BARPADDING + i * (BARBUTTONPADDING + button.size);
++        const auto bx         = BUTTONSRIGHT ? BARW - BARBUTTONPADDING - button.size - noScaleOff : noScaleOff;
++        const bool hovering   = VECINRECT(COORDS, bx, 0, bx + button.size + BARBUTTONPADDING, HEIGHTNOW);
++        auto       color    = hovering ? button.bgcol : CHyprColor(0, 0, 0, 0);
++        (void)INACTIVECOLOR;
++        if (INVALIDATEICONS) {
++            button.iconTex      = nullptr;
++            button.iconTexHover = nullptr;
+         }
+ 
+         color.a *= a;
+ 
+-        CBox buttonBox = {barBox->x + (BUTTONSRIGHT ? barBox->w - offset - scaledButtonSize : offset), barBox->y + (barBox->h - scaledButtonSize) / 2.0, scaledButtonSize,
+-                          scaledButtonSize};
++        CBox buttonBox = {barBox->x + (BUTTONSRIGHT ? barBox->w - offset - scaledButtonSize : offset), barBox->y, scaledButtonSize, barBox->h};
+         buttonBox.round();
+ 
+-        g_pHyprOpenGL->renderRect(buttonBox, color, {.round = static_cast<int>(std::round(scaledButtonSize / 2.0)), .roundingPower = 2.F});
++        if (color.a > 0)
++            g_pHyprOpenGL->renderRect(buttonBox, color, {.round = 0});
+ 
+         offset += scaledButtonsPad + scaledButtonSize;
+     }
+@@ -398,25 +468,29 @@ void CHyprBar::renderBarButtonsText(CBox* barBox, const float scale, const float
+         // check if hovering here
+         const auto BARBUF     = Vector2D{(int)assignedBoxGlobal().w, HEIGHT};
+         Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - BARBUTTONPADDING - button.size - noScaleOffset : noScaleOffset), (BARBUF.y - button.size) / 2.0}.floor();
+-        bool       hovering   = VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + button.size + BARBUTTONPADDING, currentPos.y + button.size);
++        bool       hovering   = VECINRECT(COORDS, currentPos.x, 0, currentPos.x + button.size + BARBUTTONPADDING, HEIGHT);
+         noScaleOffset += BARBUTTONPADDING + button.size;
+ 
+         if ((!button.iconTex || button.iconTex->m_texID == 0) && !button.icon.empty()) {
+-            // render icon
+-            auto fgcol = button.userfg ? button.fgcol : (button.bgcol.r + button.bgcol.g + button.bgcol.b < 1) ? CHyprColor(0xFFFFFFFF) : CHyprColor(0xFF000000);
+-
+-            button.iconTex = g_pHyprRenderer->renderText(button.icon, fgcol, std::round(button.size * 0.62 * scale), false, "sans", scaledButtonSize);
++            // Disguise: Segoe Fluent Icons at Windows' 10 px; over a dark, solid hover colour (close's red)
++            // the icon turns white
++            auto       fgcol    = button.userfg ? button.fgcol : CHyprColor(0xFF000000);
++            const bool darkOver = button.bgcol.a > 0.5 && button.bgcol.r + button.bgcol.g + button.bgcol.b < 1.6;
++            const int  px       = std::round(10 * scale);
++            button.iconTex      = g_pHyprRenderer->renderText(button.icon, fgcol, px, false, "Segoe Fluent Icons", scaledButtonSize);
++            button.iconTexHover = darkOver ? g_pHyprRenderer->renderText(button.icon, CHyprColor(0xFFFFFFFF), px, false, "Segoe Fluent Icons", scaledButtonSize) : button.iconTex;
+         }
+ 
+         if (!button.iconTex || button.iconTex->m_texID == 0)
+             continue;
++        const auto tex = hovering && button.iconTexHover ? button.iconTexHover : button.iconTex;
+ 
+-        const auto iconX = barBox->x + (BUTTONSRIGHT ? barBox->width - offset - scaledButtonSize / 2.0 : offset + scaledButtonSize / 2.0) - button.iconTex->m_size.x / 2.0;
+-        const auto iconY = barBox->y + barBox->height / 2.0 - button.iconTex->m_size.y / 2.0;
+-        CBox       pos   = {iconX, iconY, button.iconTex->m_size.x, button.iconTex->m_size.y};
++        const auto iconX = barBox->x + (BUTTONSRIGHT ? barBox->width - offset - scaledButtonSize / 2.0 : offset + scaledButtonSize / 2.0) - tex->m_size.x / 2.0;
++        const auto iconY = barBox->y + barBox->height / 2.0 - tex->m_size.y / 2.0;
++        CBox       pos   = {iconX, iconY, tex->m_size.x, tex->m_size.y};
+ 
+         if (!ICONONHOVER || (ICONONHOVER && m_iButtonHoverState > 0))
+-            g_pHyprOpenGL->renderTexture(button.iconTex, pos, {.a = a});
++            g_pHyprOpenGL->renderTexture(tex, pos, {.a = a});
+         offset += scaledButtonsPad + scaledButtonSize;
+ 
+         bool currentBit = (m_iButtonHoverState & (1 << i)) != 0;
+@@ -567,12 +641,52 @@ void CHyprBar::renderPass(PHLMONITOR pMonitor, const float& a) {
+         const auto scaledBorderSize  = PWINDOW->getRealBorderSize() * pMonitor->m_scale;
+         const auto scaledButtonsSize = buttonSizes * pMonitor->m_scale;
+         const auto scaledBarPadding  = BARPADDING * pMonitor->m_scale;
+-        const auto xOffset           = ALIGN == "left" ? std::round(scaledBarPadding + (BUTTONSRIGHT ? 0 : scaledButtonsSize)) :
++        // Disguise: a left-aligned title sits 12 px in (the buttons stay flush with the edge)
++        const auto xOffset           = ALIGN == "left" ? std::round(scaledBarPadding + 12 * pMonitor->m_scale + (BUTTONSRIGHT ? 0 : scaledButtonsSize)) :
+                                                          std::round(((BARBUF.x - scaledBorderSize) / 2.0 - m_pTextTex->m_size.x / 2.0));
+         const auto yOffset           = std::round((BARBUF.y - m_pTextTex->m_size.y) / 2.0);
+         CBox       titleBox          = {textBox.x + xOffset, textBox.y + yOffset, m_pTextTex->m_size.x, m_pTextTex->m_size.y};
+ 
+-        g_pHyprOpenGL->renderTexture(m_pTextTex, titleBox, {.a = a});
++        if (!m_tabColor)
++            g_pHyprOpenGL->renderTexture(m_pTextTex, titleBox, {.a = a});
++        else {
++            // Disguise: Windows Terminal's tab. [icon  title        ✕]  +  ⌄  in the caption row; the
++            // tab's top corners rounded, its colour the terminal's so it runs into the page below
++            const float s = pMonitor->m_scale;
++            if (m_tabScale != s || !m_tabIcon || !m_tabClose) {
++                m_tabScale   = s;
++                const auto COL = m_bForcedTitleColor.value_or(configColor(g_pGlobalState->config.textColor->value()));
++                m_tabIcon    = g_pHyprRenderer->renderText("\U000f0a0a", CHyprColor(0x2B / 255.0, 0x88 / 255.0, 0xD8 / 255.0, 1.0), std::round(14 * s), false, "CaskaydiaMono Nerd Font", 40 * s);
++                m_tabClose   = g_pHyprRenderer->renderText("\uE8BB", COL, std::round(8 * s), false, "Segoe Fluent Icons", 20 * s);
++                m_tabPlus    = g_pHyprRenderer->renderText("\uE710", COL, std::round(10 * s), false, "Segoe Fluent Icons", 20 * s);
++                m_tabChevron = g_pHyprRenderer->renderText("\uE70D", COL, std::round(9 * s), false, "Segoe Fluent Icons", 20 * s);
++            }
++            const float padL = 12 * s, gapIcon = 10 * s, gapClose = 24 * s, closeW = 16 * s;
++            const float tabX = textBox.x + 8 * s, tabY = textBox.y + 6 * s;
++            const float tabW = std::max(240 * s, padL + 16 * s + gapIcon + (float)m_pTextTex->m_size.x + gapClose + closeW + padL);
++            CBox        tabBox = {tabX, tabY, tabW, BARBUF.y - 6 * s + 12 * s};   // runs under the window's top edge
++            tabBox.round();
++            CHyprColor tc = *m_tabColor;
++            tc.a *= a;
++            g_pHyprOpenGL->renderRect(tabBox, tc, {.round = (int)std::round(8 * s), .roundingPower = 2.F});
++            const float midY = tabY + (BARBUF.y - 6 * s) / 2.0;
++            auto        put  = [&](const SP<Render::ITexture>& t, float x) {
++                if (!t) return;
++                CBox b = {x, std::round(midY - t->m_size.y / 2.0), t->m_size.x, t->m_size.y};
++                g_pHyprOpenGL->renderTexture(t, b, {.a = a});
++            };
++            put(m_tabIcon, tabX + padL);
++            CBox tb = {tabX + padL + 16 * s + gapIcon, std::round(midY - m_pTextTex->m_size.y / 2.0), m_pTextTex->m_size.x, m_pTextTex->m_size.y};
++            g_pHyprOpenGL->renderTexture(m_pTextTex, tb, {.a = a});
++            const float closeX = tabX + tabW - padL - closeW;
++            put(m_tabClose, closeX + (closeW - (m_tabClose ? m_tabClose->m_size.x : 0)) / 2.0);
++            const float plusX = tabX + tabW + 12 * s;
++            put(m_tabPlus, plusX + 10 * s);
++            put(m_tabChevron, plusX + 46 * s);
++            // click areas, bar-local and unscaled
++            m_tabCloseBox = {(closeX - textBox.x) / s - 4, 6, closeW / s + 8, (BARBUF.y / s) - 6};
++            m_tabPlusBox  = {(plusX - textBox.x) / s, 4, 34, (BARBUF.y / s) - 8};
++        }
+     }
+ 
+     renderBarButtons(&textBox, pMonitor->m_scale, a);
+@@ -649,7 +763,10 @@ void CHyprBar::updateRules() {
+ 
+     m_bForcedBarColor   = std::nullopt;
+     m_bForcedTitleColor = std::nullopt;
++    m_tabColor          = std::nullopt;
+     m_hidden            = false;
++    if (PWINDOW->m_ruleApplicator->m_otherProps.props.contains(g_pGlobalState->tabColorRuleIdx))
++        m_tabColor = CHyprColor(Config::ParserUtils::parseColor(PWINDOW->m_ruleApplicator->m_otherProps.props.at(g_pGlobalState->tabColorRuleIdx)->effect).value_or(0));
+ 
+     if (PWINDOW->m_ruleApplicator->m_otherProps.props.contains(g_pGlobalState->nobarRuleIdx))
+         m_hidden = truthy(PWINDOW->m_ruleApplicator->m_otherProps.props.at(g_pGlobalState->nobarRuleIdx)->effect);
+@@ -675,17 +792,21 @@ void CHyprBar::damageOnButtonHover() {
+ 
+     const auto COORDS = cursorRelativeToBar();
+ 
++    // Disguise: which buttons are under the pointer (full-height buttons), one bit each; any change
++    // (entering, leaving, or sliding from one to the next) repaints the bar at once
++    uint32_t mask = 0;
++    size_t   i    = 0;
+     for (auto& b : g_pGlobalState->buttons) {
+-        const auto BARBUF     = Vector2D{(int)assignedBoxGlobal().w, HEIGHT};
+-        Vector2D   currentPos = Vector2D{(BUTTONSRIGHT ? BARBUF.x - BARBUTTONPADDING - b.size - offset : offset), (BARBUF.y - b.size) / 2.0}.floor();
+-
+-        bool       hover = VECINRECT(COORDS, currentPos.x, currentPos.y, currentPos.x + b.size + BARBUTTONPADDING, currentPos.y + b.size);
+-
+-        if (hover != m_bButtonHovered) {
+-            m_bButtonHovered = hover;
+-            damageEntire();
+-        }
+-
++        const auto BARBUF = Vector2D{(int)assignedBoxGlobal().w, HEIGHT};
++        const auto x      = BUTTONSRIGHT ? BARBUF.x - BARBUTTONPADDING - b.size - offset : offset;
++        if (VECINRECT(COORDS, x, 0, x + b.size + BARBUTTONPADDING, HEIGHT))
++            mask |= 1u << i;
+         offset += BARBUTTONPADDING + b.size;
++        i++;
++    }
++    if (mask != m_iHoverDamageMask) {
++        m_iHoverDamageMask = mask;
++        m_bButtonHovered   = mask != 0;
++        damageEntire();
+     }
+ }
+diff --git a/hyprbars/barDeco.hpp b/hyprbars/barDeco.hpp
+index a3b4e2d..627df52 100644
+--- a/hyprbars/barDeco.hpp
++++ b/hyprbars/barDeco.hpp
+@@ -70,6 +70,12 @@ class CHyprBar : public IHyprWindowDecoration {
+     bool                       m_bWindowHasFocus    = false;
+     std::optional<CHyprColor>  m_bForcedBarColor;
+     std::optional<CHyprColor>  m_bForcedTitleColor;
++    // Disguise: a Windows Terminal tab in place of the title (window rule hyprbars:tab_color)
++    std::optional<CHyprColor>  m_tabColor;
++    uint32_t                   m_iHoverDamageMask = 0;   // Disguise: buttons under the pointer, for repaints
++    SP<Render::ITexture>       m_tabIcon, m_tabClose, m_tabPlus, m_tabChevron;
++    float                      m_tabScale = 0;
++    CBox                       m_tabCloseBox, m_tabPlusBox;   // bar-local, logical px
+ 
+     Time::steady_tp            m_lastMouseDown = Time::steadyNow();
+ 
+diff --git a/hyprbars/globals.hpp b/hyprbars/globals.hpp
+index 0ef19ae..84ff337 100644
+--- a/hyprbars/globals.hpp
++++ b/hyprbars/globals.hpp
+@@ -18,6 +18,7 @@ struct SHyprButton {
+     float                size    = 10;
+     std::string          icon    = "";
+     SP<Render::ITexture> iconTex;
++    SP<Render::ITexture> iconTexHover;   // Disguise: the icon over its hover colour (white on red for close)
+ };
+ 
+ class CHyprBar;
+@@ -28,6 +29,7 @@ struct SGlobalState {
+     uint32_t                  nobarRuleIdx      = 0;
+     uint32_t                  barColorRuleIdx   = 0;
+     uint32_t                  titleColorRuleIdx = 0;
++    uint32_t                  tabColorRuleIdx   = 0;   // Disguise: draw the title as a Windows Terminal tab
+ 
+     struct {
+         SP<Config::Values::CColorValue>      barColor, textColor, inactiveButtonColor;
+diff --git a/hyprbars/main.cpp b/hyprbars/main.cpp
+index ae9c90b..6bf1c85 100644
+--- a/hyprbars/main.cpp
++++ b/hyprbars/main.cpp
+@@ -207,6 +207,7 @@ APICALL EXPORT PLUGIN_DESCRIPTION_INFO PLUGIN_INIT(HANDLE handle) {
+     g_pGlobalState->nobarRuleIdx      = Desktop::Rule::windowEffects()->registerEffect("hyprbars:no_bar");
+     g_pGlobalState->barColorRuleIdx   = Desktop::Rule::windowEffects()->registerEffect("hyprbars:bar_color");
+     g_pGlobalState->titleColorRuleIdx = Desktop::Rule::windowEffects()->registerEffect("hyprbars:title_color");
++    g_pGlobalState->tabColorRuleIdx   = Desktop::Rule::windowEffects()->registerEffect("hyprbars:tab_color");
+ 
+     static auto P  = Event::bus()->m_events.window.open.listen([&](PHLWINDOW w) { onNewWindow(w); });
+     static auto P3 = Event::bus()->m_events.window.updateRules.listen([&](PHLWINDOW w) { onUpdateWindowRules(w); });
+@@ -280,5 +281,6 @@ APICALL EXPORT void PLUGIN_EXIT() {
+ 
+     Desktop::Rule::windowEffects()->unregisterEffect(g_pGlobalState->barColorRuleIdx);
+     Desktop::Rule::windowEffects()->unregisterEffect(g_pGlobalState->titleColorRuleIdx);
++    Desktop::Rule::windowEffects()->unregisterEffect(g_pGlobalState->tabColorRuleIdx);
+     Desktop::Rule::windowEffects()->unregisterEffect(g_pGlobalState->nobarRuleIdx);
+ }

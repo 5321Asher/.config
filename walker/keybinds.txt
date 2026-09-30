@@ -31,7 +31,7 @@ SUPER + D               | Toggle scratchpad
 SUPER + SHIFT + D       | Move window to scratchpad
 SUPER + CTRL + Space    | App launcher (Walker, or the setup's own)
 SUPER + Return          | kitty
-SUPER + B               | Brave
+SUPER + B               | Brave Origin Nightly
 SUPER + N               | Obsidian
 SUPER + E               | File manager (Thunar)
 SUPER + X               | Toggle floating

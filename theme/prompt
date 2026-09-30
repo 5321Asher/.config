@@ -1,0 +1,53 @@
+#!/bin/sh
+# Ask the user something in the active setup's own UI: the web-app and keybind scripts call this
+# instead of `walker --dmenu`, so a setup with its own launcher also asks its own questions.
+#
+#   prompt [--input] [--index] [--placeholder TEXT]   < options, one per line
+#
+#   --input        free text only (no options are read)
+#   --index        print the chosen option's line number (from 0) instead of its text
+#   --placeholder  the question
+#
+# Prints the answer (nothing when cancelled). Typing something that matches no option and pressing
+# Enter answers with the typed text, as Walker does.
+#
+# A setup opts in with setups/<setup>/setup.toml:  [menus] prompt = "qs ipc call prompt ask"
+# That command gets one argument, a request directory holding request.json
+#   {"placeholder": "...", "options": [...], "index": bool, "input": bool}
+# and a FIFO named reply; the UI writes the answer (or nothing, to cancel) into reply.
+# Without it, Walker's dmenu asks.
+
+input=false; index=false; placeholder=""
+while [ $# -gt 0 ]; do
+    case $1 in
+        --input) input=true ;;
+        --index) index=true ;;
+        --placeholder) placeholder=$2; shift ;;
+        *) echo "prompt: unknown option $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+dir=$(dirname "$(readlink -f "$0")")
+setup=$(cat "${XDG_STATE_HOME:-$HOME/.local/state}/theme/setup" 2>/dev/null || echo sharp)
+cmd=$(sed -n '/^\[menus\]/,/^\[/p' "$dir/setups/$setup/setup.toml" 2>/dev/null \
+      | sed -n 's/^prompt[[:space:]]*=[[:space:]]*"\(.*\)".*/\1/p' | head -1)
+
+if [ -z "$cmd" ]; then
+    set -- --dmenu --placeholder "$placeholder"
+    $input && set -- "$@" --inputonly
+    $index && set -- "$@" --index
+    if $input; then walker "$@" </dev/null; else walker "$@"; fi 2>/dev/null
+    exit 0
+fi
+
+req=$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/theme-prompt.XXXXXX") || exit 1
+trap 'rm -rf "$req"' EXIT INT TERM
+mkfifo "$req/reply"
+if $input; then options='[]'; else options=$(jq -R . | jq -s .); fi
+jq -n --arg p "$placeholder" --argjson o "$options" --argjson i "$index" --argjson t "$input" \
+    '{placeholder: $p, options: $o, index: $i, input: $t}' >"$req/request.json"
+
+sh -c "$cmd \"\$1\"" _ "$req" >/dev/null 2>&1 || exit 0
+# Blocks until the UI answers; gives up after 10 minutes (the shell died or restarted)
+timeout 600 cat "$req/reply"

@@ -35,7 +35,7 @@ Item {
         stdout: StdioCollector { onStreamFinished: root.fullName = text.trim() }
     }
 
-    // the desktop as it was, under everything (the fade starts and ends on it)
+    // the desktop as it was, under everything (the slide starts and ends on it)
     Image {
         anchors.fill: parent
         source: LockState.shotPath(root.screenName)
@@ -45,9 +45,17 @@ Item {
 
     Item {
         id: face
-        anchors.fill: parent
-        opacity: LockState.revealed ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: LockState.leaving ? Theme.lockOutro : Theme.lockIntro; easing.type: Easing.OutCubic } }
+        // as on Windows: the lock screen slides down over the desktop on lock, and back up off it on
+        // unlock (Win + L, then signing in)
+        width: parent.width
+        height: parent.height
+        y: LockState.revealed ? 0 : -height
+        Behavior on y {
+            NumberAnimation {
+                duration: LockState.leaving ? Theme.lockOutro : Theme.lockIntro
+                easing.type: LockState.leaving ? Easing.InOutCubic : Easing.OutCubic
+            }
+        }
 
         Rectangle { anchors.fill: parent; color: Theme.desktop }
         Image {

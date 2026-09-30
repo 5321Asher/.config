@@ -28,6 +28,12 @@ ShellRoot {
     // The console, Observatory's root menu (SUPER + Space): qs ipc call console toggle
     Console {}
 
+    // Questions from the web-app and keybind scripts (~/.config/theme/prompt): qs ipc call prompt ask <dir>
+    Prompt {}
+
+    // The plate archive, clipboard history (SUPER + V): qs ipc call clipboard toggle
+    Clipboard {}
+
     // 8 · Lock screen: qs ipc call lock lock (or preview)
     Lock {}
 
