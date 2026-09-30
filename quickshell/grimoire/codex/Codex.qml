@@ -403,6 +403,15 @@ PanelWindow {
                 hideSource: root.turning && root.leafDir < 0
                 visible: false
             }
+            // the back of a leaf: plain paper, bound on the right once it lies on the left
+            Parchment {
+                id: versoPage
+                x: 14; y: 10
+                width: root.pageW; height: root.pageH
+                radius: 3; gutter: 1; seed: 0.57; age: 0.5
+                visible: root.turning
+            }
+            ShaderEffectSource { id: versoShot; sourceItem: versoPage; hideSource: true; visible: false }
             Repeater {
                 model: root.turning ? root.leaves : []
                 Item {
@@ -410,7 +419,11 @@ PanelWindow {
                     required property var modelData
                     required property int index
                     readonly property var info: CodexState.pages[modelData.chapter] ?? CodexState.pages[0]
-                    z: 5 + (root.leafDir > 0 ? root.nLeaves - index : index)
+                    // stacking follows the leaf: unturned leaves lie in their stack, a leaf in the air
+                    // is above every leaf lying down (the earlier one on top until it passes the
+                    // middle, the later one after), and turned leaves stack up on the other side
+                    readonly property real a: root.leafDir > 0 ? leaf : 1 - leaf
+                    z: a <= 0 ? 100 - index : a >= 1 ? 200 + index : a < 0.5 ? 300 - index : 400 + index
                     x: 14; y: 10
                     width: root.pageW * 2
                     height: root.pageH
@@ -460,6 +473,12 @@ PanelWindow {
                         property real fold: root.pageW * (1 - leafSlot.leaf)
                         property real radius: root.pageW * 0.2 * Math.sin(Math.PI * leafSlot.leaf)
                         property real tilt: 0.3 * Math.sin(Math.PI * leafSlot.leaf)
+                        property var versoSource: versoShot
+                        // the leaf that ends up as the left page: forward the last to land, back the
+                        // first to lift
+                        property real backMix: root.leafDir > 0
+                            ? (leafSlot.index === root.nLeaves - 1 ? Math.max(0, (leafSlot.leaf - 0.82) / 0.18) : 0)
+                            : (leafSlot.index === 0 ? Math.max(0, 1 - (1 - leafSlot.leaf) / 0.18) : 0)
                         fragmentShader: Theme.shaders + "curl.frag.qsb"
                     }
                 }

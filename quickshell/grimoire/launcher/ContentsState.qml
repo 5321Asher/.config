@@ -21,7 +21,7 @@ Singleton {
     property var cards: []
     property int sel: 0
     // the card turned over (-1: the spread), and the menus open on its back, deepest last:
-    // [{ title, items: [{ text, sub_text, check, sub, run }], loading, sel }]
+    // [{ title, items: [{ text, sub_text, check, sub, run }], loading, sel (its row, once left) }]
     property int reading: -1
     property var stack: []
 
@@ -83,33 +83,38 @@ Singleton {
         stack = [];
         push(c.title, c.sub);
     }
+    // The row chosen in the deepest menu. Kept apart from `stack`: changing the stack rebuilds the
+    // list on screen, and the row under the pointer, rebuilt, would say "entered" again, forever
+    // (hovering the menu locked it up). Each level remembers its row only when you go deeper.
+    property int row: 0
     function push(title, sub) {
         const depth = stack.length;
+        if (depth > 0) {
+            const copy = stack.slice();
+            copy[depth - 1] = Object.assign({}, copy[depth - 1], { sel: row });
+            stack = copy;
+        }
+        row = 0;
         stack = stack.concat([{ title: title, items: [], loading: true, sel: 0 }]);
         sub(list => {
             if (stack.length <= depth || !stack[depth].loading) return;       // gone meanwhile
             const copy = stack.slice();
-            copy[depth] = Object.assign({}, copy[depth], { items: list ?? [], loading: false, sel: Math.max(0, (list ?? []).findIndex(x => x.check)) });
+            copy[depth] = Object.assign({}, copy[depth], { items: list ?? [], loading: false });
             stack = copy;
+            row = Math.max(0, (list ?? []).findIndex(x => x.check));
         });
     }
     function back() {
-        if (stack.length > 1) stack = stack.slice(0, -1);
+        if (stack.length > 1) { stack = stack.slice(0, -1); row = stack[stack.length - 1].sel ?? 0; }
         else if (reading >= 0) { reading = -1; stack = []; }
         else close();
     }
-    function setSel(i) {
-        const d = stack.length - 1;
-        if (d < 0) return;
-        const copy = stack.slice();
-        copy[d] = Object.assign({}, copy[d], { sel: i });
-        stack = copy;
-    }
+    function setSel(i) { row = i; }
     function choose(i) {
         const lv = stack[stack.length - 1];
         const it = lv?.items?.[i];
         if (!it) return;
-        if (it.sub) { setSel(i); push(it.text, it.sub); return; }
+        if (it.sub) { row = i; push(it.text, it.sub); return; }
         close();
         if (it.run) { later.fn = it.run; later.restart(); }
     }

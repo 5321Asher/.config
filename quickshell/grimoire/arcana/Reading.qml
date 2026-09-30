@@ -4,9 +4,9 @@ import "../theme"
 import "../widgets"
 import "../launcher"
 
-// The back of a drawn card, opened out: black leather in a gold rule, the card's numeral and name at
-// the head (and the way you came, if you've gone deeper), and on a parchment leaf the card's menu:
-// a red numeral, the entry, a line of italic under it; a wax dot marks the one in use, a › one that
+// The back of a drawn card, opened out: the same leather and gilt as its face, its numeral and name at
+// the head (and the way you came, if you have gone deeper), and set on the leather the card menu:
+// a gilt numeral, the entry, a line of italic under it; a wax dot marks the one in use, a › one that
 // opens further. Going deeper slides the next list in.
 Item {
     id: root
@@ -88,14 +88,14 @@ Item {
         }
 
         // ------------------------------------------------------------ the leaf
-        Parchment {
+        // the entries, set straight onto the card's leather (the same leather and gilt as its face)
+        GoldRule { x: 34; y: head.y + head.height + 8; width: parent.width - 68; color: Theme.alpha(Theme.gold, 0.6); ornament: "◆" }
+        Item {
             id: leaf
             anchors.fill: parent
-            anchors.margins: 20
-            anchors.topMargin: head.y + head.height + 18
+            anchors.margins: 22
+            anchors.topMargin: head.y + head.height + 26
             anchors.bottomMargin: 46
-            radius: 4
-            age: 0.35
 
             ListView {
                 id: list
@@ -103,7 +103,7 @@ Item {
                 anchors.margins: 14
                 clip: true
                 model: root.level.items
-                currentIndex: root.level.sel ?? 0
+                currentIndex: ContentsState.row
                 highlightFollowsCurrentItem: true
                 highlightMoveDuration: Theme.fast
                 boundsBehavior: Flickable.StopAtBounds
@@ -116,8 +116,16 @@ Item {
                 transform: Translate { x: list.slideX }
 
                 highlight: Item {
-                    Rectangle { anchors.fill: parent; radius: 3; color: Theme.alpha(Theme.rubric, 0.09) }
-                    Rectangle { width: 2; height: parent.height - 12; anchors.verticalCenter: parent.verticalCenter; color: Theme.rubric }
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 4
+                        gradient: Gradient {
+                            orientation: Gradient.Horizontal
+                            GradientStop { position: 0; color: Theme.alpha(Theme.gold, 0.18) }
+                            GradientStop { position: 1; color: Theme.alpha(Theme.gold, 0.02) }
+                        }
+                    }
+                    Rectangle { width: 2; height: parent.height - 12; anchors.verticalCenter: parent.verticalCenter; color: Theme.gold }
                 }
                 delegate: Item {
                     id: row
@@ -132,7 +140,7 @@ Item {
                         anchors.verticalCenter: parent.verticalCenter
                         text: Theme.roman(row.index + 1).toLowerCase() + "."
                         italic: true
-                        color: Theme.rubric
+                        color: Theme.alpha(Theme.gold, 0.85)
                         font.pixelSize: 14
                     }
                     Column {
@@ -145,7 +153,7 @@ Item {
                             elide: Text.ElideRight
                             text: row.modelData.text ?? ""
                             font.pixelSize: 18
-                            color: Theme.ink
+                            color: row.ListView.isCurrentItem ? Theme.goldBright : Theme.fg
                         }
                         Body {
                             visible: text !== ""
@@ -153,7 +161,7 @@ Item {
                             elide: Text.ElideRight
                             text: row.modelData.sub_text ?? ""
                             italic: true
-                            color: Theme.inkDim
+                            color: Theme.alpha(Theme.dim, 0.85)
                             font.pixelSize: 13
                         }
                     }
@@ -174,7 +182,7 @@ Item {
                         anchors.rightMargin: 14
                         anchors.verticalCenter: parent.verticalCenter
                         text: "›"
-                        color: Theme.inkDim
+                        color: Theme.alpha(Theme.dim, 0.85)
                         font.pixelSize: 22
                     }
                     MouseArea {
@@ -191,7 +199,7 @@ Item {
                 visible: root.level.loading || root.level.items.length === 0
                 text: root.level.loading ? "the cards are read…" : "nothing here"
                 italic: true
-                color: Theme.inkDim
+                color: Theme.alpha(Theme.dim, 0.85)
             }
         }
 

@@ -207,7 +207,7 @@ PanelWindow {
             if (ContentsState.reading >= 0) {
                 const lv = ContentsState.stack[ContentsState.stack.length - 1];
                 const items = lv?.items ?? [];
-                const sel = lv?.sel ?? 0;
+                const sel = ContentsState.row;
                 if (k === Qt.Key_Down || k === Qt.Key_Tab) ContentsState.setSel((sel + 1) % Math.max(1, items.length));
                 else if (k === Qt.Key_Up || k === Qt.Key_Backtab) ContentsState.setSel((sel - 1 + items.length) % Math.max(1, items.length));
                 else if (k === Qt.Key_Return || k === Qt.Key_Enter || k === Qt.Key_Right || k === Qt.Key_Space) ContentsState.choose(sel);
