@@ -9,7 +9,7 @@ import "../utilities"
 
 // The arcana: Grimoire's root menu (ContentsState holds what's in it). The screen sinks into a
 // candlelit dark with smoke drifting through it (shaders/veil.frag) and the cards rise into a fan,
-// one after another. The pointer lifts a card and its gold foil follows the light; drawing one
+// one after another. The pointer lifts a card and its gilt catches the light; drawing one
 // either does its thing or turns it over: it spins edge-on in the middle of the screen and its back
 // opens into the reading, the card's menu on a parchment leaf, one level at a time.
 //   ← → choose · Enter draws · 1–9 draw that card · Esc goes back

@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 
-// A card's emblem, as line art in white on a 100 × 100 field (the card stamps it in gold foil):
+// A card's emblem, as line art on a 100 × 100 field (the card presses it in gilt):
 //   star (Apps) · tower (Trigger) · moon (Style) · dusk (Power) · book (the codex) ·
 //   world (the whole book) · sigil (anything else)
 Item {
