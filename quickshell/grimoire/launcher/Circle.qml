@@ -167,7 +167,7 @@ PanelWindow {
             Item {
                 id: card
                 width: Math.min(600, root.width - 48)
-                height: 78 + list.height + 20
+                height: line.height + 10 + list.height + 16
                 MouseArea { anchors.fill: parent }
 
                 Rectangle {
@@ -189,40 +189,18 @@ PanelWindow {
                     Rectangle { anchors.fill: parent; anchors.margins: 8; radius: 7; color: "transparent"; border.width: 1.3; border.color: frame.gilt }
                 }
 
+                // what you've written: no box, just the words in small letters at the very top (the
+                // keyboard goes to a hidden input), so the seal below is what you watch being drawn
                 Item {
                     id: line
                     x: 30
                     width: parent.width - 60
-                    height: 70
-                    Text {
-                        id: quill
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "✦"
-                        color: Theme.gold
-                        font.family: Theme.symbols
-                        font.pixelSize: 15
-                    }
+                    height: 40
                     TextInput {
                         id: input
-                        anchors.left: quill.right
-                        anchors.leftMargin: 14
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: Theme.goldBright
-                        selectionColor: Theme.alpha(Theme.gold, 0.4)
-                        font.family: Theme.body
-                        font.italic: true
-                        font.pixelSize: 24
+                        width: 1; height: 1
+                        opacity: 0
                         focus: true
-                        cursorDelegate: Rectangle {
-                            width: 2
-                            color: Theme.gold
-                            SequentialAnimation on opacity {
-                                loops: Animation.Infinite
-                                NumberAnimation { to: 0.15; duration: 650; easing.type: Easing.InOutSine }
-                                NumberAnimation { to: 1; duration: 650; easing.type: Easing.InOutSine }
-                            }
-                        }
                         onTextEdited: root.query = text
                         Keys.onPressed: e => {
                             const n = root.results.length;
@@ -233,22 +211,39 @@ PanelWindow {
                             else return;
                             e.accepted = true;
                         }
-                        Body {
-                            visible: input.text === ""
+                    }
+                    Row {
+                        anchors.centerIn: parent
+                        anchors.verticalCenterOffset: 3
+                        spacing: 2
+                        Text {
+                            id: written
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "Summon…"
-                            italic: true
-                            color: Theme.alpha(Theme.dim, 0.7)
-                            font.pixelSize: 24
+                            text: root.query !== "" ? root.query.toLowerCase() : "write a name"
+                            color: root.query !== "" ? Theme.goldBright : Theme.alpha(Theme.dim, 0.55)
+                            font.family: Theme.body
+                            font.italic: true
+                            font.pixelSize: 15
+                            font.letterSpacing: 1.5
+                        }
+                        Rectangle {
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 1.5; height: 14
+                            color: Theme.gold
+                            SequentialAnimation on opacity {
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.1; duration: 650; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 1; duration: 650; easing.type: Easing.InOutSine }
+                            }
                         }
                     }
                 }
-                GoldRule { x: 24; y: line.height; width: parent.width - 48; color: Theme.alpha(Theme.gold, 0.55); ornament: "◆" }
+                GoldRule { x: 24; y: line.height - 2; width: parent.width - 48; color: Theme.alpha(Theme.gold, 0.45); ornament: "" }
 
                 ListView {
                     id: list
                     x: 16
-                    y: line.height + 12
+                    y: line.height + 6
                     width: parent.width - 32
                     height: Math.max(1, count) * 46
                     interactive: false
