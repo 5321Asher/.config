@@ -182,9 +182,7 @@ PanelWindow {
             id: reading
             readonly property real w: Math.min(480, root.width - 60)
             // as tall as its entries need
-            readonly property var items: ContentsState.stack[ContentsState.stack.length - 1]?.items ?? []
-            readonly property real need: 190 + Math.max(3, items.length) * 2 + items.reduce((a, it) => a + ((it.sub_text ?? "") !== "" ? 54 : 42), 0)
-            property real h: Math.min(660, root.height - 140, Math.max(340, need))
+            property real h: Math.min(root.height - 140, Math.max(300, needed))
             Behavior on h { NumberAnimation { duration: Theme.normal; easing.type: Theme.easing } }
             width: root.cardW + (w - root.cardW) * root.half2
             height: root.cardH + (h - root.cardH) * root.half2

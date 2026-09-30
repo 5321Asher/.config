@@ -15,6 +15,8 @@ Item {
     property bool open: false
     readonly property var level: ContentsState.stack[ContentsState.stack.length - 1] ?? ({ items: [], loading: true, sel: 0 })
     readonly property int depth: ContentsState.stack.length
+    // how tall the card must be to hold its head and every entry (Arcana sizes the card from this)
+    readonly property real needed: head.y + head.height + 26 + 28 + list.contentHeight + 46
 
     Rectangle {
         anchors.fill: parent
@@ -107,6 +109,8 @@ Item {
                 highlightFollowsCurrentItem: true
                 highlightMoveDuration: Theme.fast
                 boundsBehavior: Flickable.StopAtBounds
+                // scrolls only when there really are more entries than room
+                interactive: contentHeight > height + 1
                 spacing: 2
                 // going deeper slides the next list in
                 property int shownDepth: root.depth

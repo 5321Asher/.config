@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Effects
-import QtQuick.Shapes
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -9,19 +8,17 @@ import "../theme"
 import "../widgets"
 import "../utilities"
 
-// The summoning circle: Grimoire's app launcher (SUPER + CTRL + Space), made as a thing rather than
-// a light show. A disc of tooled leather (widgets/Cover.qml, lit from above): gilt rings, a band of
-// runes and a heptagram pressed blind into it. On the star's seven points, brass medallions hold the
-// seven likeliest programs; in the middle, in a brass ring, the scrying glass (shaders/scry.frag)
-// shows the one you'd summon. Under the circle, the line you write on.
-// Writing stirs the mist; ← → (or Tab) glide the medallions round to bring the next one to the top;
-// Enter: the glass flares and the medallions make one smooth turn as it goes. Click a medallion to
-// summon it. Nothing matching: Enter runs what you wrote as a command. Esc dismisses.
+// The seal-book: Grimoire's app launcher (SUPER + CTRL + Space). A plain search, and under it the
+// seal of the program you're on, drawn out in ink as you choose it. Every program has its own seal
+// and every part of it means something (launcher/seal.js): the sigil in the middle says what kind of
+// program it is, the signs round it what it does, the tick band counts its name's letters, and a
+// seal you summon often is drawn with more rings. Enter closes the ring: the seal glows and the
+// program is summoned. ↑ ↓ choose, Esc dismisses; nothing matching, Enter runs what you wrote.
+// (Its IPC is still `circle`, as setup.toml and older notes call it.)
 //   qs ipc call circle toggle | type <words> | cast
 PanelWindow {
     id: root
 
-    // Follows the focused monitor only while hidden (moving a shown window rebuilds its surface)
     Binding on screen {
         when: !root.visible
         value: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
@@ -39,7 +36,7 @@ PanelWindow {
     Region { id: noInput }
 
     property real shown: CircleState.open ? 1 : 0
-    Behavior on shown { NumberAnimation { duration: CircleState.open ? Theme.slow : Theme.normal; easing.type: Theme.easing } }
+    Behavior on shown { NumberAnimation { duration: CircleState.open ? Theme.normal : Theme.fast; easing.type: Theme.easing } }
 
     Connections {
         target: Debug
@@ -48,7 +45,7 @@ PanelWindow {
 
     // ---------------------------------------------------------------- the programs
     readonly property var apps: DesktopEntries.applications.values.filter(a => !a.noDisplay).sort((a, b) => a.name.localeCompare(b.name))
-    readonly property int points: 7
+    readonly property int rows: 7
     property string query: ""
     property int pick: 0
     property var launches: ({})
@@ -67,14 +64,19 @@ PanelWindow {
         const q = query.trim().toLowerCase();
         const boost = a => Math.min(45, 9 * Math.log2(1 + (launches[a.id] ?? 0)));
         if (q === "")
-            return apps.slice().sort((a, b) => boost(b) - boost(a) || a.name.localeCompare(b.name)).slice(0, points);
+            return apps.slice().sort((a, b) => boost(b) - boost(a) || a.name.localeCompare(b.name)).slice(0, rows);
         return apps.map(a => ({ a: a, s: match(a, q) })).filter(m => m.s > 0)
             .map(m => Object.assign(m, { s: m.s + boost(m.a) }))
-            .sort((x, y) => y.s - x.s || x.a.name.localeCompare(y.a.name)).slice(0, points).map(m => m.a);
+            .sort((x, y) => y.s - x.s || x.a.name.localeCompare(y.a.name)).slice(0, rows).map(m => m.a);
     }
     readonly property var chosen: results[pick] ?? null
-    onQueryChanged: { setPick(0); if (visible) stirAnim.restart(); }
-    onResultsChanged: if (pick >= results.length) setPick(0)
+    onQueryChanged: pick = 0
+    onResultsChanged: if (pick >= results.length) pick = 0
+
+    // the seal follows the choice a moment later, so typing quickly doesn't restart it on every key
+    property var sealed: null
+    onChosenChanged: settle.restart()
+    Timer { id: settle; interval: 90; onTriggered: root.sealed = root.chosen }
 
     FileView {
         id: usage
@@ -85,67 +87,36 @@ PanelWindow {
 
     function iconFor(a) { return Quickshell.iconPath(a?.icon || "application-x-executable", "application-x-executable"); }
 
-    // ---------------------------------------------------------------- the turning
-    // The medallions sit on the star's points; `turn` (degrees) brings the chosen one to the top by
-    // the shortest way round, gliding there.
-    property real turn: 0
-    Behavior on turn { NumberAnimation { duration: 460; easing.type: Easing.OutCubic } }
-    function setPick(i) {
-        const n = points;
-        let d = ((i - pick) % n + n) % n;
-        if (d > n / 2) d -= n;
-        pick = i;
-        turn -= d * 360 / n;
-    }
-    // coming in, the medallions glide into place from a little way round
-    property real arrive: 0
-    NumberAnimation { id: arriveAnim; target: root; property: "arrive"; from: -40; to: 0; duration: 700; easing.type: Easing.OutCubic }
-
     // ---------------------------------------------------------------- casting
+    property bool casting: false
     function cast() {
-        if (castAnim.running) return;
+        if (casting) return;
         const a = chosen;
         const q = query.trim();
         if (!a && !q) { CircleState.open = false; return; }
-        castAnim.restart();
         if (a) {
+            settle.stop();
+            root.sealed = a;
             const counts = Object.assign({}, launches);
             counts[a.id] = (counts[a.id] ?? 0) + 1;
             launches = counts;
             usage.setText(JSON.stringify(launches));
             a.execute();
-        } else Quickshell.execDetached(["sh", "-c", q]);
+            casting = true;
+            castAnim.restart();
+        } else {
+            Quickshell.execDetached(["sh", "-c", q]);
+            CircleState.open = false;
+        }
     }
-    property real flare: 0
-    property real spin: 0
+    // the ring closes and the seal glows (the program is already starting), then it's gone
     SequentialAnimation {
         id: castAnim
-        ParallelAnimation {
-            NumberAnimation { target: root; property: "spin"; from: 0; to: 360; duration: 620; easing.type: Easing.InOutCubic }
-            SequentialAnimation {
-                NumberAnimation { target: root; property: "flare"; from: 0; to: 1; duration: 260; easing.type: Easing.OutQuad }
-                PauseAnimation { duration: 200 }
-            }
-        }
+        PropertyAction { target: seal; property: "drawn"; value: 1 }
+        PauseAnimation { duration: 480 }
         ScriptAction { script: CircleState.open = false }
         PauseAnimation { duration: Theme.normal }
-        ScriptAction { script: { root.flare = 0; root.spin = 0; } }
-    }
-
-    // the mist: its time, and a stir that settles after each thing you write
-    property real time: 0
-    FrameAnimation { running: root.visible; onTriggered: root.time += frameTime }
-    property real stir: 0
-    NumberAnimation { id: stirAnim; target: root; property: "stir"; from: 1; to: 0; duration: 1800; easing.type: Easing.OutCubic }
-
-    // the program in the glass: it fades across when the choice changes
-    property var inGlass: null
-    onChosenChanged: glassSwap.restart()
-    SequentialAnimation {
-        id: glassSwap
-        NumberAnimation { target: glassIcon; property: "opacity"; to: 0; duration: 80 }
-        ScriptAction { script: root.inGlass = root.chosen }
-        NumberAnimation { target: glassIcon; property: "opacity"; to: 1; duration: 200 }
+        ScriptAction { script: root.casting = false }
     }
 
     Connections {
@@ -155,26 +126,28 @@ PanelWindow {
         function onOpenChanged() {
             if (CircleState.open) {
                 castAnim.stop();
-                root.flare = 0; root.spin = 0;
+                root.casting = false;
                 root.query = "";
                 root.pick = 0;
                 input.text = "";
                 input.forceActiveFocus();
                 usage.reload();
-                arriveAnim.restart();
+                root.sealed = null;
+                settle.restart();
             }
         }
     }
 
-    // ---------------------------------------------------------------- geometry
-    readonly property real dd: Math.round(Math.min(600, height * 0.6, width * 0.8))
-    readonly property real rr: dd / 2
-    readonly property real cy: height * 0.43
-    readonly property real starR: rr * 0.63
-    readonly property real medD: Math.round(dd * 0.15)
-    readonly property real glassD: Math.round(dd * 0.36)
-    // a light above and to the left of the circle, in the disc's coordinates
-    readonly property vector3d lamp: Qt.vector3d(dd * 0.2, -dd * 0.35, dd * 1.3)
+    // ---------------------------------------------------------------- what the seal says
+    readonly property var elementWords: ({ fire: "fire", water: "water", wind: "wind", earth: "earth", light: "light" })
+    readonly property var elementMeaning: ({ fire: "a thing for making", water: "a thing for reaching others", wind: "a thing of sound and sight",
+                                             earth: "a thing of the ground beneath", light: "a thing for reading and learning" })
+    function reading(s) {
+        if (!s) return "";
+        const n = ["", "one", "two", "three", "four", "five", "six", "seven", "eight"][s.fold] ?? String(s.fold);
+        return root.elementMeaning[s.element] + " · " + n + "-fold"
+            + (s.rings >= 3 ? " · thrice-ringed: an old friend" : s.rings === 2 ? " · twice-ringed: well used" : "");
+    }
 
     Item {
         id: body
@@ -183,233 +156,63 @@ PanelWindow {
         Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.mix(Theme.veil, "#000000", 0.3), 0.6 * root.shown) }
         MouseArea { anchors.fill: parent; onClicked: CircleState.open = false }
 
-        Item {
-            id: stage
-            anchors.fill: parent
+        Column {
+            id: stack
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Math.max(30, (root.height - height) * 0.38) - (1 - root.shown) * 16
+            spacing: 18
             opacity: root.shown
-            scale: 0.95 + 0.05 * root.shown
 
-            // ------------------------------------------------------------ the disc
+            // ------------------------------------------------------------ the search
             Item {
-                id: disc
-                width: root.dd; height: root.dd
-                x: (root.width - width) / 2
-                y: root.cy - root.rr
-                MouseArea { anchors.fill: parent; onClicked: {} }
+                id: card
+                width: Math.min(600, root.width - 48)
+                height: 78 + list.height + 20
+                MouseArea { anchors.fill: parent }
 
-                // its shadow on the desk
                 Rectangle {
                     anchors.fill: parent
-                    anchors.topMargin: 22; anchors.bottomMargin: -30; anchors.leftMargin: 8; anchors.rightMargin: -14
-                    radius: width / 2
-                    color: Qt.alpha("#000000", 0.6)
+                    anchors.topMargin: 12; anchors.bottomMargin: -20; anchors.leftMargin: 3; anchors.rightMargin: -8
+                    radius: 14
+                    color: Qt.alpha("#000000", 0.55)
                     layer.enabled: true
-                    layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 64 }
+                    layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 40 }
                 }
                 Cover {
-                    id: plate
+                    id: frame
                     anchors.fill: parent
-                    radius: width / 2
-                    bevel: 18
-                    wear: 0.6
-                    seed: 0.35
-                    color: Theme.mix(Theme.leatherDark, Theme.leather, 0.55)
-                    light: root.lamp
-                    lightPower: 1.3
-                    ambient: 0.55
-                    lightColor: Theme.mix(Theme.flame, "#ffffff", 0.5)
-
-                    // gilt rings at the rim, a band of runes pressed blind between them
-                    Rectangle { anchors.centerIn: parent; width: root.dd * 0.955; height: width; radius: width / 2; color: "transparent"; border.width: 2.2; border.color: plate.gilt }
-                    Rectangle { anchors.centerIn: parent; width: root.dd * 0.925; height: width; radius: width / 2; color: "transparent"; border.width: 1; border.color: plate.gilt }
-                    Repeater {
-                        model: 30
-                        Text {
-                            required property int index
-                            readonly property real a: index / 30 * 2 * Math.PI - Math.PI / 2
-                            x: root.rr + Math.cos(a) * root.rr * 0.845 - width / 2
-                            y: root.rr + Math.sin(a) * root.rr * 0.845 - height / 2
-                            rotation: index / 30 * 360
-                            text: Theme.allRunes[(index * 7) % Theme.allRunes.length]
-                            color: plate.blind
-                            font.family: Theme.runic
-                            font.pixelSize: root.dd * 0.04
-                        }
-                    }
-                    Rectangle { anchors.centerIn: parent; width: root.dd * 0.77; height: width; radius: width / 2; color: "transparent"; border.width: 1.6; border.color: plate.gilt }
-                    // the heptagram, pressed blind, its points under the medallions
-                    Shape {
-                        anchors.fill: parent
-                        preferredRendererType: Shape.CurveRenderer
-                        ShapePath {
-                            strokeColor: plate.blind
-                            strokeWidth: 3
-                            fillColor: "transparent"
-                            joinStyle: ShapePath.MiterJoin
-                            PathSvg {
-                                path: {
-                                    let d = "";
-                                    for (let k = 0; k <= 7; k++) {
-                                        const a = -Math.PI / 2 + (k * 3 % 7) * 2 * Math.PI / 7;
-                                        d += (k ? " L " : "M ") + (root.rr + Math.cos(a) * root.starR).toFixed(1) + " " + (root.rr + Math.sin(a) * root.starR).toFixed(1);
-                                    }
-                                    return d;
-                                }
-                            }
-                        }
-                    }
-                    Rectangle { anchors.centerIn: parent; width: root.starR * 2; height: width; radius: width / 2; color: "transparent"; border.width: 1; border.color: plate.blind }
+                    radius: 12; bevel: 9; wear: 0.5; seed: 0.47
+                    color: Theme.leather
+                    light: Qt.vector3d(width * 0.25, -height * 0.4, 700)
+                    lightPower: 1.2; ambient: 0.62
+                    lightColor: Theme.mix(Theme.flame, "#ffffff", 0.55)
+                    Rectangle { anchors.fill: parent; anchors.margins: 8; radius: 7; color: "transparent"; border.width: 1.3; border.color: frame.gilt }
                 }
-
-                // ------------------------------------------------------------ the medallions
-                Repeater {
-                    model: root.points
-                    Item {
-                        id: med
-                        required property int index
-                        readonly property var app: root.results[index] ?? null
-                        readonly property bool here: index === root.pick
-                        readonly property real a: (-90 + index * 360 / root.points + root.turn + root.arrive + root.spin) * Math.PI / 180
-                        width: root.medD; height: root.medD
-                        x: root.rr + Math.cos(a) * root.starR - width / 2
-                        y: root.rr + Math.sin(a) * root.starR - height / 2
-                        scale: here ? 1.12 : 1
-                        // no program for this point: it sinks away
-                        opacity: app ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: Theme.normal } }
-                        Behavior on scale { NumberAnimation { duration: Theme.normal; easing.type: Theme.easing } }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            anchors.margins: -3
-                            anchors.topMargin: 4
-                            radius: width / 2
-                            color: Qt.alpha("#000000", 0.55)
-                            layer.enabled: true
-                            layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 16 }
-                        }
-                        // a breath of arcane light round the chosen one
-                        Rectangle {
-                            anchors.fill: parent
-                            anchors.margins: -5
-                            radius: width / 2
-                            color: "transparent"
-                            border.width: 2
-                            border.color: Theme.arcane
-                            opacity: med.here ? 0.7 : 0
-                            Behavior on opacity { NumberAnimation { duration: Theme.normal } }
-                            layer.enabled: true
-                            layer.effect: MultiEffect { blurEnabled: true; blur: 0.5; blurMax: 12 }
-                        }
-                        Cover {
-                            anchors.fill: parent
-                            radius: width / 2
-                            bevel: width * 0.16
-                            metal: true
-                            wear: 0.35
-                            seed: 0.2 + med.index * 0.07
-                            light: Qt.vector3d(root.lamp.x - med.x, root.lamp.y - med.y, root.lamp.z)
-                            lightPower: 1.2
-                            ambient: 0.5
-                        }
-                        // the well, and the program in it
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: parent.width * 0.74; height: width
-                            radius: width / 2
-                            gradient: Gradient {
-                                GradientStop { position: 0; color: Qt.alpha("#000000", 0.85) }
-                                GradientStop { position: 1; color: Theme.mix(Theme.leatherDark, "#000000", 0.4) }
-                            }
-                            Image {
-                                anchors.centerIn: parent
-                                width: parent.width * 0.62; height: width
-                                sourceSize: Qt.size(96, 96)
-                                source: med.app ? root.iconFor(med.app) : ""
-                                visible: !!med.app
-                                opacity: med.here ? 1 : 0.8
-                            }
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: !!med.app
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: { root.setPick(med.index); root.cast(); }
-                        }
-                    }
-                }
-
-                // ------------------------------------------------------------ the glass
-                Cover {
-                    id: glassRing
-                    width: root.glassD + 20; height: width
-                    anchors.centerIn: parent
-                    radius: width / 2
-                    bevel: 8
-                    metal: true
-                    wear: 0.3
-                    seed: 0.58
-                    light: Qt.vector3d(root.lamp.x - x, root.lamp.y - y, root.lamp.z)
-                    lightPower: 1.2
-                    ambient: 0.5
-                    Rectangle { anchors.fill: parent; anchors.margins: 4; radius: width / 2; color: "transparent"; border.width: 1.2; border.color: glassRing.blind }
-                }
-                ShaderEffect {
-                    id: glass
-                    width: root.glassD; height: width
-                    anchors.centerIn: parent
-                    property real time: root.time
-                    property real stir: root.stir
-                    property real flare: root.flare
-                    property real px: width
-                    property color arcane: Theme.arcane
-                    property color gold: Theme.goldBright
-                    property color glass: Theme.mix(Theme.leatherDark, "#000000", 0.6)
-                    fragmentShader: Theme.shaders + "scry.frag.qsb"
-                }
-                Image {
-                    id: glassIcon
-                    anchors.centerIn: glass
-                    width: root.glassD * 0.42; height: width
-                    sourceSize: Qt.size(192, 192)
-                    source: root.inGlass ? root.iconFor(root.inGlass) : ""
-                    visible: !!root.inGlass
-                    layer.enabled: true
-                    layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Theme.arcane; shadowOpacity: 0.5; shadowBlur: 0.8
-                                                shadowHorizontalOffset: 0; shadowVerticalOffset: 0; blurMax: 32 }
-                }
-                Text {
-                    visible: !root.inGlass && root.query.trim() !== ""
-                    anchors.centerIn: glass
-                    text: "\u{f018d}"
-                    color: Theme.alpha(Theme.gold, 0.8)
-                    font.family: Theme.glyphs
-                    font.pixelSize: root.glassD * 0.3
-                }
-            }
-
-            // ------------------------------------------------------------ the line to write on
-            Column {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: disc.y + disc.height + 30
-                width: Math.min(560, root.width - 60)
-                spacing: 6
 
                 Item {
-                    width: parent.width
-                    height: 40
+                    id: line
+                    x: 30
+                    width: parent.width - 60
+                    height: 70
+                    Text {
+                        id: quill
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: "✦"
+                        color: Theme.gold
+                        font.family: Theme.symbols
+                        font.pixelSize: 15
+                    }
                     TextInput {
                         id: input
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        // empty, the caret waits at the start of the placeholder
-                        anchors.horizontalCenterOffset: text === "" ? -placeholder.width / 2 : 0
+                        anchors.left: quill.right
+                        anchors.leftMargin: 14
+                        anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter
-                        width: Math.max(contentWidth + 4, 2)
                         color: Theme.goldBright
                         selectionColor: Theme.alpha(Theme.gold, 0.4)
                         font.family: Theme.body
                         font.italic: true
-                        font.pixelSize: 28
+                        font.pixelSize: 24
                         focus: true
                         cursorDelegate: Rectangle {
                             width: 2
@@ -422,52 +225,167 @@ PanelWindow {
                         }
                         onTextEdited: root.query = text
                         Keys.onPressed: e => {
-                            const n = Math.max(1, root.results.length);
+                            const n = root.results.length;
                             if (e.key === Qt.Key_Escape) CircleState.open = false;
                             else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) root.cast();
-                            else if (e.key === Qt.Key_Right || e.key === Qt.Key_Down || e.key === Qt.Key_Tab) root.setPick((root.pick + 1) % n);
-                            else if (e.key === Qt.Key_Left || e.key === Qt.Key_Up || e.key === Qt.Key_Backtab) root.setPick((root.pick - 1 + n) % n);
+                            else if (e.key === Qt.Key_Down || e.key === Qt.Key_Tab) root.pick = n ? (root.pick + 1) % n : 0;
+                            else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab) root.pick = n ? (root.pick - 1 + n) % n : 0;
                             else return;
                             e.accepted = true;
                         }
-                    }
-                    Body {
-                        id: placeholder
-                        visible: input.text === ""
-                        anchors.centerIn: parent
-                        anchors.horizontalCenterOffset: 6
-                        text: "speak a name…"
-                        italic: true
-                        color: Theme.alpha(Theme.dim, 0.65)
-                        font.pixelSize: 26
+                        Body {
+                            visible: input.text === ""
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Summon…"
+                            italic: true
+                            color: Theme.alpha(Theme.dim, 0.7)
+                            font.pixelSize: 24
+                        }
                     }
                 }
-                GoldRule { width: parent.width; color: Theme.alpha(Theme.gold, 0.6); ornament: "◆" }
-                Text {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                    text: root.chosen ? root.chosen.name : root.query.trim() ? "Run “" + root.query.trim() + "”" : ""
-                    color: Theme.goldBright
-                    font.family: Theme.display; font.weight: Font.DemiBold
-                    font.pixelSize: 24
+                GoldRule { x: 24; y: line.height; width: parent.width - 48; color: Theme.alpha(Theme.gold, 0.55); ornament: "◆" }
+
+                ListView {
+                    id: list
+                    x: 16
+                    y: line.height + 12
+                    width: parent.width - 32
+                    height: Math.max(1, count) * 46
+                    interactive: false
+                    model: root.results.length ? root.results : root.query.trim() ? [null] : []
+                    currentIndex: root.pick
+                    highlightMoveDuration: Theme.fast
+                    highlight: Item {
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 5
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0; color: Theme.alpha(Theme.gold, 0.18) }
+                                GradientStop { position: 1; color: Theme.alpha(Theme.gold, 0.02) }
+                            }
+                        }
+                        Rectangle { width: 2; height: parent.height - 14; anchors.verticalCenter: parent.verticalCenter; color: Theme.gold }
+                    }
+                    delegate: Item {
+                        id: row
+                        required property var modelData
+                        required property int index
+                        readonly property bool here: ListView.isCurrentItem
+                        width: list.width
+                        height: 46
+                        Image {
+                            id: icon
+                            x: 16
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 28; height: 28
+                            sourceSize: Qt.size(56, 56)
+                            source: row.modelData ? root.iconFor(row.modelData) : ""
+                            visible: !!row.modelData
+                        }
+                        Text {
+                            visible: !row.modelData
+                            anchors.centerIn: icon
+                            text: "\u{f018d}"
+                            color: Theme.gold
+                            font.family: Theme.glyphs
+                            font.pixelSize: 20
+                        }
+                        Body {
+                            id: name
+                            x: 58
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, parent.width - x - 20)
+                            elide: Text.ElideRight
+                            text: row.modelData ? row.modelData.name : "Run “" + root.query.trim() + "”"
+                            color: row.here ? Theme.goldBright : Theme.fg
+                            font.pixelSize: 18
+                        }
+                        Body {
+                            anchors.left: name.right
+                            anchors.leftMargin: 14
+                            anchors.right: parent.right
+                            anchors.rightMargin: 16
+                            anchors.baseline: name.baseline
+                            horizontalAlignment: Text.AlignRight
+                            elide: Text.ElideRight
+                            text: row.modelData ? (row.modelData.genericName || row.modelData.comment || "") : "as a command"
+                            italic: true
+                            color: Theme.alpha(Theme.dim, row.here ? 0.9 : 0.6)
+                            font.pixelSize: 14
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onPositionChanged: root.pick = row.index
+                            onClicked: { root.pick = row.index; root.cast(); }
+                        }
+                    }
                 }
                 Body {
-                    width: parent.width
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                    text: root.chosen ? (root.chosen.comment || root.chosen.genericName || "") : root.query.trim() ? "nothing answers: it will run as a command" : ""
-                    italic: true
-                    color: Theme.alpha(Theme.dim, 0.75)
-                    font.pixelSize: 14
-                }
-                Item { width: 1; height: 14 }
-                Caps {
+                    visible: list.count === 0
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: "← →  turn   ·   enter  summons   ·   esc  dismisses"
-                    color: Theme.alpha(Theme.gold, 0.45)
-                    font.pixelSize: 10
-                    font.letterSpacing: 3
+                    y: list.y + 12
+                    text: "nothing answers"
+                    italic: true
+                    color: Theme.alpha(Theme.dim, 0.6)
+                }
+            }
+
+            // ------------------------------------------------------------ the seal
+            Item {
+                id: leaf
+                anchors.horizontalCenter: parent.horizontalCenter
+                readonly property real d: Math.max(200, Math.min(340, root.height - card.height - 190))
+                width: d + 80
+                height: d + 96
+                visible: !!root.sealed || root.casting
+                MouseArea { anchors.fill: parent }
+
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.topMargin: 10; anchors.bottomMargin: -16; anchors.leftMargin: 3; anchors.rightMargin: -7
+                    radius: 6
+                    color: Qt.alpha("#000000", 0.5)
+                    layer.enabled: true
+                    layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 32 }
+                }
+                Parchment { anchors.fill: parent; radius: 4; age: 0.55; seed: 0.74 }
+
+                SealView {
+                    id: seal
+                    x: 40; y: 26
+                    width: leaf.d; height: leaf.d
+                    app: root.sealed
+                    uses: root.sealed ? (root.launches[root.sealed.id] ?? 0) : 0
+                    closed: root.casting
+                    ink: Theme.mix(Theme.ink, Theme.rubric, 0.12)
+                }
+
+                Column {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: seal.y + seal.height + 10
+                    width: parent.width - 30
+                    spacing: 1
+                    Caps {
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                        text: seal.seal ? "sigil of " + root.elementWords[seal.seal.element] + "   ·   " + seal.seal.signs.join(" · ") : ""
+                        color: Theme.rubric
+                        font.pixelSize: 11
+                        font.letterSpacing: 2.5
+                    }
+                    Body {
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                        text: root.reading(seal.seal)
+                        italic: true
+                        color: Theme.inkDim
+                        font.pixelSize: 13
+                    }
                 }
             }
         }
