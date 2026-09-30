@@ -161,6 +161,19 @@ PanelWindow {
                 e.accepted = true;
             }
         }
+        // what Enter will summon, just under what you've written
+        Text {
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: Math.round(root.height * 0.07) + 24
+            opacity: root.shown
+            visible: root.query.trim() !== ""
+            text: root.chosen ? root.chosen.name : "run as a command"
+            color: Theme.alpha(Theme.gold, 0.6)
+            font.family: Theme.caps
+            font.pixelSize: 11
+            font.letterSpacing: 2.5
+            font.capitalization: Font.AllUppercase
+        }
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
             y: Math.round(root.height * 0.07)
