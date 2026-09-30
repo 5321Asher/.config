@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "../theme"
 import "../utilities"
+import "../widgets"
 
 // The candle: your session's uptime. It is lit fresh at boot and burns down over Theme.candleHours
 // to a stub, which keeps guttering however long you stay. Wax runs down its sides as it burns (a
@@ -22,8 +23,11 @@ Item {
 
     readonly property real maxWax: Math.max(60, Math.min(280, height - 120))     // a fresh taper, in px
     readonly property real waxH: maxWax * remaining
-    readonly property real waxW: 20
-    readonly property real dishY: height - 34
+    // the lock screen's candle stands bigger, beside the book
+    property bool large: false
+    readonly property real k: large ? 1.45 : 1
+    readonly property real waxW: Math.round(20 * k)
+    readonly property real dishY: height - 34 * k
     readonly property real waxTop: dishY + 4 - waxH
     readonly property color waxColor: Theme.mix(Theme.page, "#fffaf0", 0.35)
 
@@ -65,31 +69,34 @@ Item {
     // ---------------------------------------------------------------- the dish and the pool
     Item {
         id: dish
-        width: 54; height: 22
+        width: 54 * root.k; height: 22 * root.k
         x: (root.width - width) / 2
         y: root.dishY
         // the handle ring, to the right
-        Rectangle { x: parent.width - 8; y: 3; width: 14; height: 12; radius: 6; color: "transparent"; border.width: 2; border.color: Theme.goldDeep }
-        // the dish: a shallow brass ellipse, lit from the flame above
-        Rectangle {
-            y: 6; width: parent.width; height: 14; radius: 7
-            gradient: Gradient {
-                GradientStop { position: 0; color: Theme.goldBright }
-                GradientStop { position: 0.45; color: Theme.gold }
-                GradientStop { position: 1; color: Theme.goldDeep }
-            }
-            border.width: 1; border.color: Qt.darker(Theme.goldDeep, 1.3)
+        Rectangle { x: parent.width - 8 * root.k; y: 3 * root.k; width: 14 * root.k; height: 12 * root.k; radius: height / 2
+                    color: "transparent"; border.width: 2 * root.k; border.color: Theme.goldDeep }
+        // the dish: a shallow brass saucer, lit from the flame above
+        Cover {
+            y: 5 * root.k; width: parent.width; height: 15 * root.k
+            radius: height / 2; bevel: height * 0.45
+            metal: true; wear: 0.35; seed: 0.63
+            light: Qt.vector3d(width / 2, -root.waxH - 30, 60)
+            lightPower: 1.4 * root.flicker
+            ambient: 0.45
+            Rectangle { x: 4 * root.k; y: 1; width: parent.width - 8 * root.k; height: 7 * root.k; radius: height / 2; color: "#00ff00" }
         }
-        Rectangle { x: 4; y: 4; width: parent.width - 8; height: 8; radius: 4; color: Theme.mix(Theme.goldDeep, Theme.leatherDark, 0.3) }
         // the pool of wax, spreading as it burns
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.horizontalCenterOffset: -3
-            y: 4
-            width: root.waxW + 6 + (parent.width - 16 - root.waxW) * Math.min(1, root.burnt * 1.3)
-            height: 7
-            radius: 3.5
-            color: Theme.mix(root.waxColor, Theme.pageDeep, 0.2)
+            y: 4 * root.k
+            width: root.waxW + 6 + (parent.width - 16 * root.k - root.waxW) * Math.min(1, root.burnt * 1.3)
+            height: 7 * root.k
+            radius: height / 2
+            gradient: Gradient {
+                GradientStop { position: 0; color: Theme.mix(root.waxColor, Theme.flame, 0.2) }
+                GradientStop { position: 1; color: Theme.mix(root.waxColor, Theme.pageDeep, 0.35) }
+            }
         }
     }
 
@@ -102,30 +109,17 @@ Item {
         height: root.waxH
         Behavior on height { NumberAnimation { duration: 2000; easing.type: Easing.InOutSine } }
 
-        // the body: a cylinder of wax, lit from the front and warmer near the flame
-        Rectangle {
+        // the body: a cylinder of wax, the flame's light glowing down through it (shaders/wax.frag)
+        ShaderEffect {
             anchors.fill: parent
-            radius: 2
-            gradient: Gradient {
-                orientation: Gradient.Horizontal
-                GradientStop { position: 0; color: Theme.mix(root.waxColor, Theme.ink, 0.28) }
-                GradientStop { position: 0.35; color: root.waxColor }
-                GradientStop { position: 0.6; color: Theme.mix(root.waxColor, "#ffffff", 0.3) }
-                GradientStop { position: 1; color: Theme.mix(root.waxColor, Theme.ink, 0.38) }
-            }
+            anchors.topMargin: -4
+            property size size: Qt.size(width, height)
+            property color wax: root.waxColor
+            property color flameColor: Theme.flame
+            property real flicker: root.flicker
+            property real seed: 0.31
+            fragmentShader: Theme.shaders + "wax.frag.qsb"
         }
-        // the glow through the wax at the top
-        Rectangle {
-            width: parent.width; height: Math.min(parent.height, 26)
-            radius: 2
-            gradient: Gradient {
-                GradientStop { position: 0; color: Theme.alpha(Theme.flame, 0.45 * root.flicker) }
-                GradientStop { position: 1; color: "transparent" }
-            }
-        }
-        // the melted cup at the top
-        Rectangle { x: 1; y: -2; width: parent.width - 2; height: 5; radius: 2.5; color: Theme.mix(root.waxColor, Theme.flame, 0.25) }
-        Rectangle { x: 3; y: -1; width: parent.width - 6; height: 3; radius: 1.5; color: Theme.alpha(Theme.flame, 0.35) }
 
         // runs of wax down the sides
         Repeater {
@@ -144,18 +138,23 @@ Item {
                     x: run.modelData.side < 0 ? 0 : 1
                     width: 5; height: parent.height - 4
                     radius: 2.5
-                    color: Theme.mix(root.waxColor, "#ffffff", run.modelData.side < 0 ? 0.05 : 0.25)
-                    border.width: 0.5
-                    border.color: Theme.alpha(Theme.ink, 0.18)
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0; color: Theme.mix(root.waxColor, "#ffffff", 0.2) }
+                        GradientStop { position: 0.6; color: root.waxColor }
+                        GradientStop { position: 1; color: Theme.mix(root.waxColor, Theme.ink, 0.3) }
+                    }
                 }
                 // the bead at the end
                 Rectangle {
                     x: run.modelData.side < 0 ? -0.5 : 0.5
                     y: parent.height - 7
                     width: 6; height: 7; radius: 3
-                    color: Theme.mix(root.waxColor, "#ffffff", 0.18)
-                    border.width: 0.5
-                    border.color: Theme.alpha(Theme.ink, 0.2)
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0; color: Theme.mix(root.waxColor, "#ffffff", 0.25) }
+                        GradientStop { position: 1; color: Theme.mix(root.waxColor, Theme.ink, 0.28) }
+                    }
                 }
             }
         }
@@ -186,8 +185,8 @@ Item {
     // the wick
     Rectangle {
         x: root.width / 2 - 1
-        y: root.waxTop - 8
-        width: 2; height: 10; radius: 1
+        y: root.waxTop - 8 * root.k
+        width: 2; height: 10 * root.k; radius: 1
         rotation: 6
         color: Theme.mix(Theme.ink, "#000000", 0.4)
         Rectangle { y: 0; width: 2; height: 3; radius: 1; color: Theme.alpha(Theme.flame, 0.9) }
@@ -196,10 +195,10 @@ Item {
     // ---------------------------------------------------------------- the flame
     ShaderEffect {
         id: flame
-        width: 54
-        height: 112
+        width: 54 * root.k
+        height: 112 * root.k
         x: root.width / 2 - width / 2
-        y: root.waxTop - height + 14
+        y: root.waxTop - height + 14 * root.k
         property real time: 0
         property real seed: 0.37
         property real glow: 1.0

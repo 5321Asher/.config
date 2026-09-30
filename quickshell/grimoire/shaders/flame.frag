@@ -33,23 +33,25 @@ void main() {
 
     // the teardrop's half-width at this height (in the -1..1 space)
     float yc = clamp(y, 0.0, 1.0);
-    float w = 0.34 * pow(yc, 0.42) * pow(1.0 - yc, 0.75) * 1.9;
+    float w = 0.27 * pow(yc, 0.45) * pow(1.0 - yc, 0.8) * 1.9;
     float d = abs(x) / max(w, 1e-4);                   // 0 on the axis, 1 at the edge
     float inside = (y > 0.0 && y < 1.0) ? 1.0 - smoothstep(0.62, 1.0, d) : 0.0;
 
     vec3 flame = flameColor.rgb;
-    float core = (1.0 - smoothstep(0.0, 0.62, d)) * (1.0 - smoothstep(0.08, 0.62, y));
-    vec3 col = mix(flame, vec3(1.0, 0.97, 0.86), core);
+    float core = (1.0 - smoothstep(0.0, 0.75, d)) * (1.0 - smoothstep(0.12, 0.7, y));
+    vec3 col = mix(mix(flame, vec3(1.0, 0.86, 0.5), 0.5), vec3(1.0, 0.98, 0.9), core);
     col = mix(col, flame * vec3(1.0, 0.5, 0.3), smoothstep(0.5, 1.0, y) * (0.55 + 0.3 * gutter));
-    float root = (1.0 - smoothstep(0.0, 0.2, y)) * smoothstep(0.15, 0.95, d);
-    col = mix(col, vec3(0.32, 0.42, 1.0), root * 0.75);
-    float a = inside * (0.78 + 0.22 * core) * (1.0 - smoothstep(0.82, 1.0, y) * 0.6);
+    float root = (1.0 - smoothstep(0.0, 0.22, y)) * smoothstep(0.05, 0.9, d);
+    col = mix(col, vec3(0.25, 0.35, 0.95), root * 0.8);
+    float a = inside * (0.85 + 0.15 * core) * (1.0 - smoothstep(0.75, 1.0, y) * 0.75) * (1.0 - root * 0.45);
 
     // the halo round it, breathing with the flame
     vec2 g = vec2(p.x - lean * 0.2, (h - base - tall * 0.42) * 1.25);
     float breathe = 0.85 + 0.15 * noise(vec2(t * 2.0, 11.0 + seed));
-    float halo = exp(-dot(g, g) * 5.5) * 0.42 * glow * breathe;
+    float halo = (exp(-dot(g, g) * 7.0) * 0.38 + exp(-dot(g, g) * 1.6) * 0.14) * glow * breathe;
 
+    // fade the halo out before the item's edges
+    halo *= smoothstep(1.0, 0.7, abs(p.x)) * smoothstep(0.0, 0.25, uv.y) * smoothstep(1.0, 0.8, uv.y);
     vec3 rgb = col * a + flame * halo * (1.0 - a);
     float alpha = a + halo * (1.0 - a);
     fragColor = vec4(rgb, alpha) * qt_Opacity;

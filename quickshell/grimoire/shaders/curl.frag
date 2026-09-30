@@ -1,8 +1,8 @@
 #version 440
 // Turning a leaf of the codex: the right-hand page (the source) curls up from its bottom corner round
-// a cylinder whose fold sweeps to the spine, shows its blank back as it goes over, and settles on the
-// left-hand page. Drawn over the whole spread (the spine is at pageW). The page underneath gets the
-// curl's shadow. Premultiplied alpha.
+// a cylinder whose fold sweeps to the spine and lies down on the left. Its back is the left-hand page
+// (backSource), so when it lands it simply is that page: nothing fades. Drawn over the whole spread
+// (the spine is at pageW). The page underneath gets the curl's shadow. Premultiplied alpha.
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
 layout(std140, binding = 0) uniform buf {
@@ -13,21 +13,17 @@ layout(std140, binding = 0) uniform buf {
     float fold;         // where the fold is, px from the spine (pageW: flat .. 0: over)
     float radius;       // the curl's radius, px
     float tilt;         // how far the bottom leads the top (px of fold per px of height)
-    float settle;       // 0 .. 1: the turned leaf fading into the left page as it lands
-    vec4 paper;         // the back of the leaf
 };
 layout(binding = 1) uniform sampler2D source;
+layout(binding = 2) uniform sampler2D backSource;
 
 const float PI = 3.14159265;
 
 vec4 front(float u, float y) { return texture(source, vec2(u / pageW, y / size.y)); }
 vec4 back(float u, float y, float shade) {
-    // the back of the leaf: paper, the ink faintly showing through (mirrored)
-    vec4 t = front(u, y);
-    float inkThrough = 1.0 - dot(t.rgb / max(t.a, 0.001), vec3(0.3, 0.59, 0.11));
-    vec3 c = paper.rgb * (0.97 - inkThrough * 0.05) * shade;
-    float a = (1.0 - settle);
-    return vec4(c * a, a);
+    // the leaf's other side, which is the left page once it lies there (mirrored as it turns over)
+    vec4 t = texture(backSource, vec2((pageW - u) / pageW, y / size.y));
+    return vec4(t.rgb * shade, t.a);
 }
 
 void main() {
@@ -40,7 +36,7 @@ void main() {
     vec4 col = vec4(0.0);
     if (x < f) {
         float u = f + PI * R + (f - x);            // lying back over, flat, on top
-        if (u <= pageW && u >= 0.0) col = back(u, y, 0.93 + 0.07 * clamp((f - x) / 80.0, 0.0, 1.0));
+        if (u <= pageW && u >= 0.0) col = back(u, y, 1.0 - 0.1 * exp(-(f - x) / 40.0) * smoothstep(0.0, 40.0, f));
         else if (x >= 0.0) {
             col = front(x, y);
             col.rgb *= 1.0 - 0.18 * exp(-(f - x) / 18.0);   // the curl's shadow on the leaf itself
@@ -50,7 +46,7 @@ void main() {
         float t2 = PI - t1;
         float u2 = f + R * t2;
         float u1 = f + R * t1;
-        if (u2 <= pageW) col = back(u2, y, 0.8 + 0.2 * sin(t2));
+        if (u2 <= pageW) col = back(u2, y, 0.78 + 0.22 * sin(t2));
         else if (u1 <= pageW) {
             col = front(u1, y);
             col.rgb *= 1.0 - 0.35 * (1.0 - cos(t1));
@@ -59,7 +55,7 @@ void main() {
     // the curl's shadow on the page underneath
     if (col.a < 0.99 && x > f && x >= 0.0) {
         float d = x - (f + R * 0.6);
-        float s = 0.3 * exp(-max(d, 0.0) / 28.0) * (1.0 - settle);
+        float s = 0.3 * exp(-max(d, 0.0) / 28.0) * smoothstep(0.0, 40.0, f);
         col = col + vec4(0.0, 0.0, 0.0, s) * (1.0 - col.a);
     }
     fragColor = col * qt_Opacity;

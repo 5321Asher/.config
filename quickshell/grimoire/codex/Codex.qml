@@ -35,8 +35,25 @@ PanelWindow {
     mask: CodexState.open ? null : noInput
     Region { id: noInput }
 
-    property real shown: CodexState.open ? 1 : 0
-    Behavior on shown { NumberAnimation { duration: Theme.slow; easing.type: Theme.easing } }
+    // Opening (op 0 -> 1): the book arrives closed, its cover swings over on the spine, two leaves
+    // riffle after it, and it lies open at the chapter. Closing plays it backwards, quicker.
+    property real op: 0
+    readonly property real shown: Math.min(1, op * 5)
+    // driven frame by frame, and never more than a thirtieth of a second per frame, so the first
+    // frames (while the window maps and the chapter loads) can't swallow the start of it
+    FrameAnimation {
+        running: root.op !== (CodexState.open ? 1 : 0)
+        onTriggered: {
+            const dt = Math.min(frameTime, 1 / 30);
+            root.op = CodexState.open ? Math.min(1, root.op + dt / 1.35) : Math.max(0, root.op - dt / 0.8);
+        }
+    }
+    function phase(a, b) { const t = Math.max(0, Math.min(1, (op - a) / (b - a))); return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+    readonly property real arrive: phase(0, 0.14)
+    readonly property real coverT: spread ? phase(0.1, 0.52) : 1
+    readonly property real leaf1T: spread ? phase(0.42, 0.74) : 1
+    readonly property real leaf2T: spread ? phase(0.58, 0.97) : 1
+    readonly property bool settled: leaf2T >= 1
     onVisibleChanged: if (visible) keys.forceActiveFocus()
 
     Connections {
@@ -54,7 +71,7 @@ PanelWindow {
     // A real leaf (shaders/curl.frag): forward, a picture of the old chapter curls up from its corner
     // and over onto the left page, uncovering the new one; back, the new chapter's page comes over
     // from the left and lays itself down on the old. The chapter changes a frame after the picture.
-    property real leaf: 0              // 0 = flat on the right page, 1 = turned over onto the left
+    readonly property real leaf: leafEased  // 0 = flat on the right page, 1 = turned over onto the left
     property int leafDir: 1
     property bool turning: false
     property string showing: CodexState.page
@@ -62,27 +79,33 @@ PanelWindow {
         target: CodexState
         function onPageChanged() {
             if (!root.visible || !root.spread) { root.showing = CodexState.page; return; }
-            turn.stop();
             root.leafDir = CodexState.turning;
             oldShot.scheduleUpdate();
+            root.leafTo = -1;
             root.turning = true;
-            root.leaf = root.leafDir > 0 ? 0 : 1;
+            root.leafRaw = root.leafDir > 0 ? 0 : 1;
             swap.restart();
         }
     }
     Timer {
         id: swap
         interval: 40
-        onTriggered: { root.showing = CodexState.page; turn.to = root.leafDir > 0 ? 1 : 0; turn.restart(); }
+        onTriggered: { root.showing = CodexState.page; root.leafTo = root.leafDir > 0 ? 1 : 0; }
     }
-    NumberAnimation {
-        id: turn
-        target: root
-        property: "leaf"
-        duration: 680
-        easing.type: Easing.InOutSine
-        onFinished: root.turning = false
+    // frame by frame, at most a thirtieth of a second a frame: loading the new chapter stalls a few
+    // frames, and a timed animation would jump straight past most of the turn
+    property real leafTo: -1
+    FrameAnimation {
+        running: root.turning && root.leafTo >= 0
+        onTriggered: {
+            const step = Math.min(frameTime, 1 / 30) / 0.75;
+            root.leafRaw = root.leafTo > root.leafRaw ? Math.min(1, root.leafRaw + step) : Math.max(0, root.leafRaw - step);
+            if (root.leafRaw === root.leafTo) { root.turning = false; root.leafTo = -1; }
+        }
     }
+    property real leafRaw: 0
+    // eased (in-out sine)
+    readonly property real leafEased: (1 - Math.cos(Math.PI * leafRaw)) / 2
 
     FocusScope {
         id: keys
@@ -103,28 +126,62 @@ PanelWindow {
             width: (root.spread ? root.pageW * 2 : root.rightW) + 28
             height: root.pageH + 26
             anchors.centerIn: parent
-            anchors.verticalCenterOffset: 12 + (1 - root.shown) * 40
-            opacity: root.shown
-            scale: 0.96 + 0.04 * root.shown
+            anchors.verticalCenterOffset: 12 + (1 - root.arrive) * 50
+            // closed, the book sits centred: it slides left by half as the cover opens
+            anchors.horizontalCenterOffset: root.spread ? (root.pageW + 14) / 2 * (1 - root.coverT) : 0
+            opacity: root.arrive
+            scale: 0.95 + 0.05 * root.arrive
 
             MouseArea { anchors.fill: parent }
 
-            // shadow, then the cover under the pages
+            readonly property real spine: root.spread ? 14 + root.pageW : 0
+            readonly property real openW: book.width - book.spine          // one board, spine to edge
+            // a room light from above and to the left
+            readonly property vector3d lamp: Qt.vector3d(book.width * 0.15, -book.height * 0.35, 1100)
+
+            // shadow: under the closed book, spreading left as it opens
             Rectangle {
-                x: 10; y: 16; width: parent.width; height: parent.height; radius: 8
+                x: book.spine - (book.spine) * root.coverT + 10; y: 18
+                width: book.width - x + 10; height: parent.height
+                radius: 8
                 color: Qt.alpha("#000000", 0.55)
                 layer.enabled: true
-                layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 40 }
+                layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 48 }
             }
-            Leather { anchors.fill: parent; radius: 8; toolInset: 5 }
-
-            // page edges peeking out below the pages
-            Rectangle { x: 12; y: parent.height - 13; width: parent.width - 24; height: 3; radius: 1; color: Theme.mix(Theme.pageDeep, Theme.ink, 0.15) }
-            Rectangle { x: 13; y: parent.height - 11; width: parent.width - 26; height: 1; color: Theme.alpha(Theme.ink, 0.25) }
+            // the back board (right) and, for a single page, the whole cover
+            Cover {
+                z: 0
+                x: book.spine - (root.spread ? 4 : 0)
+                width: book.width - x
+                height: parent.height
+                radius: 8
+                bevel: 8
+                wear: 0.5
+                seed: 0.52
+                light: Qt.vector3d(book.lamp.x - x, book.lamp.y, book.lamp.z)
+                lightPower: 1.4
+                ambient: 0.85
+            }
+            // the page blocks, seen at the foot
+            PageBlock {
+                z: 2
+                x: book.spine + 2; y: 10 + root.pageH - 1
+                width: root.rightW - 4; height: 6
+                shadeDepth: 0.6
+            }
+            PageBlock {
+                z: 2
+                visible: root.spread && root.settled
+                x: 16; y: 10 + root.pageH - 1
+                width: root.pageW - 4; height: 6
+                shadeDepth: 0.6
+                seedValue: 0.8
+            }
 
             // ---------------------------------------------------------------- left page: the contents
             Parchment {
                 id: leftPage
+                z: 2
                 visible: root.spread
                 x: 14; y: 10
                 width: root.pageW
@@ -138,6 +195,7 @@ PanelWindow {
             // ---------------------------------------------------------------- right page: the chapter
             Parchment {
                 id: rightPage
+                z: 2
                 x: root.spread ? 14 + root.pageW : 14
                 y: 10
                 width: root.rightW
@@ -220,6 +278,80 @@ PanelWindow {
                 }
             }
 
+            // ---------------------------------------------------------------- opening: the leaves
+            // the left page as its leaf's other side (and hidden until that leaf has landed)
+            ShaderEffectSource {
+                id: leftAsLeaf
+                sourceItem: leftPage
+                live: true
+                hideSource: root.spread && !root.settled
+                visible: false
+            }
+            Repeater {
+                model: root.spread ? 2 : 0
+                Flip {
+                    required property int index
+                    z: 3
+                    visible: !root.settled && root.op > 0
+                    x: book.spine; y: 10
+                    width: root.pageW; height: root.pageH
+                    angle: -180 * (index === 0 ? root.leaf1T : root.leaf2T)
+                    // the first leaf over lies under the second
+                    front: Parchment { gutter: -1; seed: 0.5 + index * 0.1 }
+                    back: index === 0 ? blankBack : leafBack
+                }
+            }
+            Component { id: blankBack; Parchment { gutter: 1; seed: 0.66 } }
+            Component { id: leafBack; ShaderEffectSource { sourceItem: leftPage; live: true } }
+
+            // ---------------------------------------------------------------- the front cover
+            Flip {
+                visible: root.spread
+                z: root.coverT < 0.5 ? 4 : 1
+                x: book.spine - 4; y: 0
+                width: book.openW + 4; height: book.height
+                angle: -180 * root.coverT
+                // outside: leather, a gilt frame and the title
+                front: Cover {
+                    id: face
+                    radius: 8
+                    bevel: 12
+                    wear: 0.65
+                    seed: 0.44
+                    light: Qt.vector3d(book.lamp.x - book.spine, book.lamp.y, book.lamp.z)
+                    lightPower: 1.5
+                    ambient: 0.85
+                    Rectangle { x: 20; width: 3; height: face.height; color: face.blind }
+                    Rectangle { x: 38; y: 26; width: face.width - 64; height: face.height - 52; color: "transparent"; border.width: 2.5; border.color: face.gilt }
+                    Rectangle { x: 46; y: 34; width: face.width - 80; height: face.height - 68; color: "transparent"; border.width: 1.5; border.color: face.blind }
+                    Repeater {
+                        model: ["tl", "tr", "bl", "br"]
+                        Flourish {
+                            required property string modelData
+                            corner: modelData
+                            size: 70
+                            color: face.gilt; shade: face.gilt; stroke: 2
+                            x: modelData.endsWith("l") ? 50 : face.width - 38 - width
+                            y: modelData.startsWith("t") ? 38 : face.height - 38 - height
+                        }
+                    }
+                    Column {
+                        anchors.centerIn: parent
+                        anchors.horizontalCenterOffset: 8
+                        spacing: 6
+                        Text { anchors.horizontalCenter: parent.horizontalCenter; text: "Codex"; color: face.gilt; font.family: Theme.blackletter; font.pixelSize: 84 }
+                        Text { anchors.horizontalCenter: parent.horizontalCenter; text: "BEING THE BOOK OF THIS MACHINE"; color: face.gilt
+                               font.family: Theme.caps; font.pixelSize: 13; font.letterSpacing: 3 }
+                    }
+                }
+                // inside: the leather turned in round a pastedown
+                back: Item {
+                    Cover { anchors.fill: parent; radius: 8; bevel: 8; wear: 0.4; seed: 0.47; ambient: 0.6; lightPower: 0.9
+                            light: Qt.vector3d(book.lamp.x, book.lamp.y, book.lamp.z) }
+                    Parchment { anchors.fill: parent; anchors.margins: 18; radius: 2; color: Theme.pageDeep; age: 0.7; seed: 0.18 }
+                }
+            }
+
             // ---------------------------------------------------------------- the turning leaf
             // pictures of the right page: the old chapter (taken just before it changes) and the live one
             ShaderEffectSource {
@@ -230,6 +362,13 @@ PanelWindow {
                 live: false
                 // going back, the old chapter stays on the page while the new one comes over it
                 visible: root.turning && root.leafDir < 0
+                z: 3
+            }
+            ShaderEffectSource {
+                id: leftShot
+                sourceItem: leftPage
+                live: true
+                visible: false
             }
             ShaderEffectSource {
                 id: liveShot
@@ -239,18 +378,18 @@ PanelWindow {
                 visible: false
             }
             ShaderEffect {
+                z: 5
                 visible: root.turning
                 x: 14; y: 10
                 width: root.pageW * 2
                 height: root.pageH
                 property var source: root.leafDir > 0 ? oldShot : liveShot
+                property var backSource: leftShot
                 property size size: Qt.size(width, height)
                 property real pageW: root.pageW
                 property real fold: root.pageW * (1 - root.leaf)
-                property real radius: 2 + root.pageW * 0.2 * Math.sin(Math.PI * root.leaf)
+                property real radius: root.pageW * 0.2 * Math.sin(Math.PI * root.leaf)
                 property real tilt: 0.3 * Math.sin(Math.PI * root.leaf)
-                property real settle: Math.max(0, (root.leaf - 0.72) / 0.28)
-                property color paper: Theme.page
                 fragmentShader: Theme.shaders + "curl.frag.qsb"
             }
         }

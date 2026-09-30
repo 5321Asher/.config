@@ -54,6 +54,13 @@ PanelWindow {
     property real turn: ContentsState.reading >= 0 ? 1 : 0
     Behavior on turn { NumberAnimation { duration: 560; easing.type: Easing.InOutSine } }
     readonly property real half1: Math.min(1, turn * 2)
+    // the card that is (or was) turned over: kept until it has flipped back and gone home to the fan
+    property int turned: -1
+    Connections {
+        target: ContentsState
+        function onReadingChanged() { if (ContentsState.reading >= 0) root.turned = ContentsState.reading; }
+    }
+    onTurnChanged: if (turn === 0 && ContentsState.reading < 0) turned = -1
     readonly property real half2: Math.max(0, turn * 2 - 1)
 
     // deal the cards each time the arcana opens
@@ -110,7 +117,7 @@ PanelWindow {
                 required property int index
                 readonly property real t: index - (root.n - 1) / 2
                 readonly property bool chosen: ContentsState.sel === index
-                readonly property bool isReading: ContentsState.reading === index
+                readonly property bool isReading: root.turned === index
                 readonly property bool isDealt: index < root.dealt
 
                 // where it lies in the fan (lifted when chosen), and where it goes when turned over
@@ -125,7 +132,7 @@ PanelWindow {
                 width: root.cardW
                 height: root.cardH
                 x: isReading ? fanX + (root.width / 2 - root.cardW / 2 - fanX) * root.half1 : fanX
-                y: (isReading ? fanY + (root.cy - root.cardH / 2 - fanY) * root.half1 : fanY + (ContentsState.reading >= 0 ? 90 * root.turn : 0))
+                y: (isReading ? fanY + (root.cy - root.cardH / 2 - fanY) * root.half1 : fanY + 90 * root.turn)
                    + (1 - deal) * (root.height * 0.6)
                 rotation: (isReading ? fanR * (1 - root.half1) : fanR) + (1 - deal) * t * 6
                 scale: 1 + 0.05 * lift
@@ -138,7 +145,7 @@ PanelWindow {
                     axis { x: 0; y: 1; z: 0 }
                     angle: slot.isReading ? 90 * root.half1 : 0
                 }
-                Behavior on y { enabled: ContentsState.reading < 0 && slot.deal >= 1; NumberAnimation { duration: Theme.normal; easing.type: Theme.easing } }
+                Behavior on y { enabled: root.turn === 0 && slot.deal >= 1; NumberAnimation { duration: Theme.normal; easing.type: Theme.easing } }
 
                 Card {
                     anchors.fill: parent
@@ -150,7 +157,7 @@ PanelWindow {
                 }
                 MouseArea {
                     anchors.fill: parent
-                    enabled: ContentsState.reading < 0
+                    enabled: ContentsState.reading < 0 && root.turn === 0
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onEntered: ContentsState.sel = slot.index
@@ -184,7 +191,7 @@ PanelWindow {
             x: (root.width - width) / 2
             y: root.cy - height / 2
             visible: root.half2 > 0
-            card: ContentsState.cards[ContentsState.reading] ?? ContentsState.cards[ContentsState.sel] ?? ({})
+            card: ContentsState.cards[root.turned] ?? ({})
             open: root.half2 >= 1
             transform: Rotation {
                 origin.x: reading.width / 2

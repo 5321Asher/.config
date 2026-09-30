@@ -8,10 +8,12 @@ import "../theme"
 import "../widgets"
 import "../utilities"
 
-// The index: Grimoire's app launcher (SUPER + CTRL + Space). The desk blurs and dims, and a slim
-// leaf of black leather comes down from above: a line to write on, and under it the programs that
-// answer, the likeliest first (the ones you summon most rise to the top). ↑ ↓ choose, Enter
-// summons, Esc dismisses; nothing matching, Enter runs what you wrote as a command.
+// The scrying glass: Grimoire's app launcher (SUPER + CTRL + Space). The desk blurs and dims, and a
+// leaf of black leather comes down from above. On its left a round black mirror in a brass ring, a
+// mist turning slowly in it (shaders/scry.frag), and in the glass the program you'd summon; on its
+// right a line to write on and the programs that answer, the likeliest first (the ones you summon
+// most rise to the top). Writing stirs the mist a little. ↑ ↓ choose, Enter summons (the glass
+// flares, and it's gone), Esc dismisses; nothing matching, Enter runs what you wrote as a command.
 // (Its IPC is still called `circle`: the setup's [menus] and older notes call it by that name.)
 //   qs ipc call circle toggle | type <words> | cast
 PanelWindow {
@@ -69,7 +71,7 @@ PanelWindow {
             .sort((x, y) => y.s - x.s || x.a.name.localeCompare(y.a.name)).slice(0, rows).map(m => m.a);
     }
     readonly property var chosen: results[pick] ?? null
-    onQueryChanged: pick = 0
+    onQueryChanged: { pick = 0; if (visible) stirAnim.restart(); }
     onResultsChanged: if (pick >= results.length) pick = 0
 
     FileView {
@@ -81,11 +83,13 @@ PanelWindow {
 
     function iconFor(a) { return Quickshell.iconPath(a?.icon || "application-x-executable", "application-x-executable"); }
 
-    // summon the chosen program (or run what was written), then go
+    // summon the chosen program (or run what was written): the glass flares, then it's gone
     function cast() {
+        if (flareAnim.running) return;
         const a = chosen;
         const q = query.trim();
-        CircleState.open = false;
+        if (a || q) flareAnim.restart();
+        else CircleState.open = false;
         if (a) {
             const counts = Object.assign({}, launches);
             counts[a.id] = (counts[a.id] ?? 0) + 1;
@@ -93,6 +97,30 @@ PanelWindow {
             usage.setText(JSON.stringify(launches));
             a.execute();
         } else if (q) Quickshell.execDetached(["sh", "-c", q]);
+    }
+
+    property real flare: 0
+    SequentialAnimation {
+        id: flareAnim
+        NumberAnimation { target: root; property: "flare"; from: 0; to: 1; duration: 200; easing.type: Easing.OutQuad }
+        ScriptAction { script: CircleState.open = false }
+        PauseAnimation { duration: Theme.fast }
+        PropertyAction { target: root; property: "flare"; value: 0 }
+    }
+    // the mist: its time, and a stir that settles after each thing you write
+    property real time: 0
+    FrameAnimation { running: root.visible; onTriggered: root.time += frameTime }
+    property real stir: 0
+    NumberAnimation { id: stirAnim; target: root; property: "stir"; from: 1; to: 0; duration: 1800; easing.type: Easing.OutCubic }
+
+    // the program in the glass: it fades across when the choice changes
+    property var inGlass: null
+    onChosenChanged: glassSwap.restart()
+    SequentialAnimation {
+        id: glassSwap
+        NumberAnimation { target: glassIcon; property: "opacity"; to: 0; duration: 70 }
+        ScriptAction { script: root.inGlass = root.chosen }
+        NumberAnimation { target: glassIcon; property: "opacity"; to: 1; duration: 180 }
     }
 
     Connections {
@@ -120,8 +148,10 @@ PanelWindow {
         // ---------------------------------------------------------------- the leaf
         Item {
             id: leaf
-            width: Math.min(640, root.width - 48)
-            height: 86 + list.height + 56
+            width: Math.min(900, root.width - 48)
+            readonly property bool withGlass: width >= 760
+            readonly property real side: withGlass ? 280 : 0
+            height: Math.max(withGlass ? 360 : 0, 86 + list.height + 56)
             anchors.horizontalCenter: parent.horizontalCenter
             y: Math.round(root.height * 0.2) - (1 - root.shown) * 14
             opacity: root.shown
@@ -144,10 +174,106 @@ PanelWindow {
             Rectangle { anchors.fill: parent; anchors.margins: 6; radius: 8; color: "transparent"; border.width: 1; border.color: Theme.alpha(Theme.gold, 0.35) }
 
             // ------------------------------------------------------------ the line to write on
+            // ------------------------------------------------------------ the glass
+            Item {
+                id: glassCol
+                visible: leaf.withGlass
+                width: leaf.side
+                height: parent.height
+                readonly property real d: 196
+                // the brass ring
+                Cover {
+                    id: ring
+                    width: glassCol.d + 22; height: width
+                    radius: width / 2; bevel: 9
+                    x: (glassCol.width - width) / 2 + 6
+                    y: 30
+                    metal: true
+                    wear: 0.35
+                    seed: 0.58
+                    light: Qt.vector3d(-40, -60, 400)
+                    lightPower: 1.1
+                    ambient: 0.6
+                    Rectangle { anchors.fill: parent; anchors.margins: 5; radius: width / 2; color: "transparent"; border.width: 1.5; border.color: ring.blind }
+                }
+                ShaderEffect {
+                    id: glass
+                    width: glassCol.d; height: width
+                    anchors.centerIn: ring
+                    property real time: root.time
+                    property real stir: root.stir
+                    property real flare: root.flare
+                    property real px: width
+                    property color arcane: Theme.arcane
+                    property color gold: Theme.goldBright
+                    property color glass: Theme.mix(Theme.leatherDark, "#000000", 0.6)
+                    fragmentShader: Theme.shaders + "scry.frag.qsb"
+                }
+                // what the glass shows
+                Image {
+                    id: glassIcon
+                    anchors.centerIn: glass
+                    width: 84; height: 84
+                    sourceSize: Qt.size(168, 168)
+                    source: root.inGlass ? root.iconFor(root.inGlass) : ""
+                    visible: !!root.inGlass
+                    layer.enabled: true
+                    layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Theme.arcane; shadowOpacity: 0.55; shadowBlur: 0.8
+                                                shadowHorizontalOffset: 0; shadowVerticalOffset: 0; blurMax: 32 }
+                }
+                Text {
+                    visible: !root.inGlass && root.query.trim() !== ""
+                    anchors.centerIn: glass
+                    text: "\u{f018d}"
+                    color: Theme.alpha(Theme.gold, 0.8)
+                    font.family: Theme.glyphs
+                    font.pixelSize: 54
+                }
+                Column {
+                    anchors.horizontalCenter: ring.horizontalCenter
+                    y: ring.y + ring.height + 16
+                    width: glassCol.width - 40
+                    spacing: 2
+                    Text {
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                        text: root.inGlass ? root.inGlass.name : root.query.trim() ? "a command" : ""
+                        color: Theme.goldBright
+                        font.family: Theme.display; font.weight: Font.DemiBold
+                        font.pixelSize: 22
+                    }
+                    Body {
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                        text: root.inGlass ? (root.inGlass.comment || root.inGlass.genericName || "") : ""
+                        italic: true
+                        color: Theme.alpha(Theme.dim, 0.75)
+                        font.pixelSize: 13
+                    }
+                }
+            }
+            // a gilt hairline between the glass and the list
+            Rectangle {
+                visible: leaf.withGlass
+                x: leaf.side + 4
+                y: 26
+                width: 1
+                height: parent.height - 52
+                gradient: Gradient {
+                    GradientStop { position: 0; color: "transparent" }
+                    GradientStop { position: 0.5; color: Theme.alpha(Theme.gold, 0.45) }
+                    GradientStop { position: 1; color: "transparent" }
+                }
+            }
+
             Item {
                 id: line
-                x: 30
-                width: parent.width - 60
+                x: leaf.side + 30
+                width: parent.width - x - 30
                 height: 78
                 Text {
                     id: sigil
@@ -202,9 +328,9 @@ PanelWindow {
             }
             // a gilt rule under it, fading out at both ends
             Rectangle {
-                x: 24
+                x: leaf.side + 24
                 y: line.height
-                width: parent.width - 48
+                width: parent.width - x - 24
                 height: 1
                 gradient: Gradient {
                     orientation: Gradient.Horizontal
@@ -217,9 +343,9 @@ PanelWindow {
             // ------------------------------------------------------------ what answers
             ListView {
                 id: list
-                x: 14
+                x: leaf.side + 14
                 y: line.height + 10
-                width: parent.width - 28
+                width: parent.width - x - 14
                 height: Math.max(1, count) * 50
                 interactive: false
                 model: root.results.length ? root.results : root.query.trim() ? [null] : []
@@ -297,7 +423,7 @@ PanelWindow {
             }
             Body {
                 visible: list.count === 0
-                anchors.horizontalCenter: parent.horizontalCenter
+                x: leaf.side + (parent.width - leaf.side - width) / 2
                 y: list.y + 12
                 text: "nothing answers"
                 italic: true
@@ -305,7 +431,7 @@ PanelWindow {
             }
 
             Caps {
-                anchors.horizontalCenter: parent.horizontalCenter
+                x: leaf.side + (parent.width - leaf.side - width) / 2
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: 16
                 text: "↑ ↓  choose   ·   enter  summons   ·   esc  dismisses"

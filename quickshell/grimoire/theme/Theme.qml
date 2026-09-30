@@ -103,7 +103,7 @@ Singleton {
     readonly property int sysInterval: 2000
 
     readonly property int lockIntro: 900
-    readonly property int lockOutro: 1100
+    readonly property int lockOutro: 2000
 
     // ---------------------------------------------------------------- shaders
     readonly property string shaders: Quickshell.shellDir + "/shaders/"
