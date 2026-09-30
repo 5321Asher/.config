@@ -69,7 +69,8 @@ PanelWindow {
             .map(m => Object.assign(m, { s: m.s + boost(m.a) }))
             .sort((x, y) => y.s - x.s || x.a.name.localeCompare(y.a.name)).slice(0, rows).map(m => m.a);
     }
-    readonly property var chosen: results[pick] ?? null
+    // nothing written, nothing chosen: no seal until the first key
+    readonly property var chosen: query.trim() === "" ? null : (results[pick] ?? null)
     onQueryChanged: pick = 0
     onResultsChanged: if (pick >= results.length) pick = 0
 
