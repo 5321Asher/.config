@@ -23,6 +23,7 @@ layout(std140, binding = 0) uniform buf {
     float seed;
     float wear;          // 0 .. 1
     float metal;         // 0: leather, 1: brass
+    float reach;         // px: how far the point light's pool reaches (0: the whole piece)
 };
 layout(binding = 1) uniform sampler2D mask;
 
@@ -90,7 +91,8 @@ void main() {
     vec3 L = lightPos - P;
     float dist = length(L);
     L /= dist;
-    float fall = lightPower / (1.0 + pow(dist / max(size.x, size.y), 2.0) * 1.5);
+    float rch = reach > 0.0 ? reach : max(size.x, size.y) / 1.22;
+    float fall = lightPower / (1.0 + pow(dist / rch, 2.0));
     float diff = max(dot(n, L), 0.0);
     vec3 V = vec3(0.0, 0.0, 1.0);
     vec3 H = normalize(L + V);
@@ -102,6 +104,11 @@ void main() {
     vec3 lit = albedo * (ambient * (0.6 + 0.4 * top) + diff * fall * lightColor.rgb);
     lit += mix(specL, specG, shiny) * fall * mix(lightColor.rgb, goldBright.rgb, shiny);
     lit += shiny * goldBright.rgb * pow(top, 30.0) * 0.12 * ambient;
+    // metal mirrors the room: a soft bright-above, dark-below gradient bent by the surface, so gold
+    // reads as gold even where no point light lands on it
+    float env = 0.5 - n.y * 1.6 + n.x * 0.5 + (0.5 - qt_TexCoord0.y) * 0.5 + (fbm(px / 50.0 + s) - 0.5) * 0.35;
+    vec3 envCol = mix(goldDeep.rgb * 0.7, goldBright.rgb, clamp(env, 0.0, 1.0));
+    lit = mix(lit, envCol * (0.55 + 0.45 * ambient) + specG * fall * goldBright.rgb, shiny * 0.6);
     // tooling's walls in shadow
     lit *= 1.0 - (t.g * 0.4);
 

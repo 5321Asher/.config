@@ -68,44 +68,70 @@ PanelWindow {
     readonly property real pageH: Math.min(Theme.codexHeight, height - 90)
 
     // ---------------------------------------------------------------- turning
-    // A real leaf (shaders/curl.frag): forward, a picture of the old chapter curls up from its corner
-    // and over onto the left page, uncovering the new one; back, the new chapter's page comes over
-    // from the left and lays itself down on the old. The chapter changes a frame after the picture.
-    readonly property real leaf: leafEased  // 0 = flat on the right page, 1 = turned over onto the left
+    // Real leaves (shaders/curl.frag), one for every chapter you pass: from Sanctum to Familiar ten
+    // leaves riffle over, from one chapter to the next just one. Forward, a picture of the old chapter
+    // curls up first and over onto the left page, then the leaves of the chapters between (each shows
+    // its chapter's heading as it goes by), uncovering the new one; back, the leaves come over from the
+    // left one after another, the new chapter's page last, on top. A turned leaf's back is the left
+    // page, so it lands without a fade. The chapter changes a frame after the picture is taken.
     property int leafDir: 1
     property bool turning: false
-    property string showing: CodexState.page
+    // the chapter drawn on the right page, and the one we're turning from: plain values, not
+    // bindings to CodexState (a binding would already say the new chapter by the time the change
+    // handler runs, and the new page would show under the leaves before they turn)
+    property string showing: ""
+    property int fromIdx: 0
+    Component.onCompleted: { showing = CodexState.page; fromIdx = CodexState.index; }
+    // the leaves of this turn: { kind: "old" | "live" | "title", chapter }
+    property var leaves: []
+    readonly property int nLeaves: leaves.length
+    // how long each leaf takes, and how far behind the one before it it starts (s)
+    readonly property real leafDur: nLeaves > 1 ? Math.max(0.38, 0.72 - 0.04 * nLeaves) : 0.75
+    readonly property real leafGap: nLeaves > 1 ? Math.min(0.14, 0.8 / (nLeaves - 1)) : 0
+    readonly property real turnDur: leafDur + leafGap * Math.max(0, nLeaves - 1)
+    property real turnP: 0              // the whole turn, 0 -> 1
+    function leafAt(k) {                 // leaf k: 0 flat on the right .. 1 over on the left
+        const t = Math.max(0, Math.min(1, (turnP * turnDur - k * leafGap) / leafDur));
+        const e = (1 - Math.cos(Math.PI * t)) / 2;
+        return leafDir > 0 ? e : 1 - e;
+    }
     Connections {
         target: CodexState
         function onPageChanged() {
+            const from = root.fromIdx, to = CodexState.index;
+            root.fromIdx = to;
             if (!root.visible || !root.spread) { root.showing = CodexState.page; return; }
-            root.leafDir = CodexState.turning;
+            const n = Math.max(1, Math.abs(to - from));
+            root.leafDir = to > from ? 1 : -1;
+            const list = [];
+            for (let k = 0; k < n; k++) {
+                if (root.leafDir > 0) list.push(k === 0 ? { kind: "old", chapter: from } : { kind: "title", chapter: from + k });
+                else list.push(k === n - 1 ? { kind: "live", chapter: to } : { kind: "title", chapter: from - 1 - k });
+            }
             oldShot.scheduleUpdate();
-            root.leafTo = -1;
+            root.leaves = list;
+            root.turnP = 0;
             root.turning = true;
-            root.leafRaw = root.leafDir > 0 ? 0 : 1;
+            running_.value = false;
             swap.restart();
         }
     }
+    QtObject { id: running_; property bool value: false }
+    // a few frames for the leaves' pictures to be drawn before the chapter under them changes
     Timer {
         id: swap
-        interval: 40
-        onTriggered: { root.showing = CodexState.page; root.leafTo = root.leafDir > 0 ? 1 : 0; }
+        interval: 110
+        onTriggered: { root.showing = CodexState.page; running_.value = true; }
     }
     // frame by frame, at most a thirtieth of a second a frame: loading the new chapter stalls a few
     // frames, and a timed animation would jump straight past most of the turn
-    property real leafTo: -1
     FrameAnimation {
-        running: root.turning && root.leafTo >= 0
+        running: root.turning && running_.value
         onTriggered: {
-            const step = Math.min(frameTime, 1 / 30) / 0.75;
-            root.leafRaw = root.leafTo > root.leafRaw ? Math.min(1, root.leafRaw + step) : Math.max(0, root.leafRaw - step);
-            if (root.leafRaw === root.leafTo) { root.turning = false; root.leafTo = -1; }
+            root.turnP = Math.min(1, root.turnP + Math.min(frameTime, 1 / 30) / root.turnDur);
+            if (root.turnP >= 1) { root.turning = false; running_.value = false; root.leaves = []; }
         }
     }
-    property real leafRaw: 0
-    // eased (in-out sine)
-    readonly property real leafEased: (1 - Math.cos(Math.PI * leafRaw)) / 2
 
     FocusScope {
         id: keys
@@ -377,20 +403,66 @@ PanelWindow {
                 hideSource: root.turning && root.leafDir < 0
                 visible: false
             }
-            ShaderEffect {
-                z: 5
-                visible: root.turning
-                x: 14; y: 10
-                width: root.pageW * 2
-                height: root.pageH
-                property var source: root.leafDir > 0 ? oldShot : liveShot
-                property var backSource: leftShot
-                property size size: Qt.size(width, height)
-                property real pageW: root.pageW
-                property real fold: root.pageW * (1 - root.leaf)
-                property real radius: root.pageW * 0.2 * Math.sin(Math.PI * root.leaf)
-                property real tilt: 0.3 * Math.sin(Math.PI * root.leaf)
-                fragmentShader: Theme.shaders + "curl.frag.qsb"
+            Repeater {
+                model: root.turning ? root.leaves : []
+                Item {
+                    id: leafSlot
+                    required property var modelData
+                    required property int index
+                    readonly property var info: CodexState.pages[modelData.chapter] ?? CodexState.pages[0]
+                    z: 5 + (root.leafDir > 0 ? root.nLeaves - index : index)
+                    x: 14; y: 10
+                    width: root.pageW * 2
+                    height: root.pageH
+                    readonly property real leaf: root.leafAt(index)
+
+                    // a chapter passed on the way: its first page, the heading alone
+                    Item {
+                        id: titlePage
+                        visible: leafSlot.modelData.kind === "title"
+                        width: root.pageW
+                        height: root.pageH
+                        Parchment { anchors.fill: parent; radius: 3; gutter: -1; seed: 0.83 + leafSlot.index * 0.07 }
+                        Row {
+                            x: 46; y: 30
+                            spacing: 14
+                            Initial { letter: leafSlot.info.title.charAt(0); size: 56 }
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+                                Text { text: leafSlot.info.title; color: Theme.ink; font.family: Theme.display; font.weight: Font.DemiBold; font.pixelSize: 30 }
+                                Body { text: leafSlot.info.sub; italic: true; color: Theme.inkDim; font.pixelSize: 14 }
+                            }
+                        }
+                        GoldRule { x: 46; y: 104; width: parent.width - 80; color: Theme.alpha(Theme.inkDim, 0.6); ornament: "❦" }
+                        Body {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.bottom
+                            anchors.bottomMargin: 12
+                            text: "— " + Theme.roman(leafSlot.modelData.chapter * 2 + 3).toLowerCase() + " —"
+                            italic: true
+                            color: Theme.inkDim
+                            font.pixelSize: 13
+                        }
+                    }
+                    // (drawn through a source that hides it: a hidden item's own shader layers never render)
+                    ShaderEffectSource {
+                        id: titleShot
+                        sourceItem: titlePage
+                        hideSource: true
+                        visible: false
+                    }
+                    ShaderEffect {
+                        anchors.fill: parent
+                        property var source: leafSlot.modelData.kind === "old" ? oldShot : leafSlot.modelData.kind === "live" ? liveShot : titleShot
+                        property var backSource: leftShot
+                        property size size: Qt.size(width, height)
+                        property real pageW: root.pageW
+                        property real fold: root.pageW * (1 - leafSlot.leaf)
+                        property real radius: root.pageW * 0.2 * Math.sin(Math.PI * leafSlot.leaf)
+                        property real tilt: 0.3 * Math.sin(Math.PI * leafSlot.leaf)
+                        fragmentShader: Theme.shaders + "curl.frag.qsb"
+                    }
+                }
             }
         }
     }

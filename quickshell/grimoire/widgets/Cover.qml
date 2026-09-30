@@ -21,6 +21,7 @@ Item {
     property real lightPower: 1.3
     property color lightColor: Theme.mix(Theme.flame, "#ffffff", 0.35)
     property real ambient: 0.55
+    property real reach: 0            // px: the light's pool (0: the whole piece)
 
     default property alias tooling: mask.data
 
@@ -49,6 +50,7 @@ Item {
         property real seed: root.seed
         property real wear: root.wear
         property real metal: root.metal ? 1 : 0
+        property real reach: root.reach
         fragmentShader: Theme.shaders + "cover.frag.qsb"
     }
 }

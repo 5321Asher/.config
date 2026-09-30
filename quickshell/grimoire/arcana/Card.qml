@@ -36,17 +36,19 @@ Item {
         bevel: 9
         wear: 0.55
         seed: 0.13 + root.x * 0.001
-        color: Theme.leather
-        light: Qt.vector3d(root.light.x * width, root.light.y * height, root.chosen ? 260 : 520)
-        lightPower: root.chosen ? 1.5 : 1.1
-        ambient: root.chosen ? 0.7 : 0.55
+        color: Theme.mix(Theme.leather, Theme.leatherLight, 0.35)
+        // the pointer's light: a warm pool on the leather, the gilt flashing where it passes
+        light: Qt.vector3d(root.light.x * width, root.light.y * height, root.chosen ? 110 : 260)
+        lightPower: root.chosen ? 2.2 : 1.3
+        reach: root.chosen ? 170 : 320
+        ambient: 0.72
         lightColor: Theme.mix(Theme.flame, "#ffffff", 0.55)
     Item {
         id: art
         anchors.fill: parent
 
-        Rectangle { anchors.fill: parent; anchors.margins: 9; radius: 6; color: "transparent"; border.width: 1.3; border.color: face.gilt }
-        Rectangle { anchors.fill: parent; anchors.margins: 13; radius: 4; color: "transparent"; border.width: 0.8; border.color: face.gilt }
+        Rectangle { anchors.fill: parent; anchors.margins: 9; radius: 6; color: "transparent"; border.width: 2.4; border.color: face.gilt }
+        Rectangle { anchors.fill: parent; anchors.margins: 13; radius: 4; color: "transparent"; border.width: 1.4; border.color: face.gilt }
         Repeater {
             model: [[0, 0], [1, 0], [0, 1], [1, 1]]
             Text {
@@ -74,14 +76,14 @@ Item {
             height: width
             anchors.horizontalCenter: parent.horizontalCenter
             y: art.height * 0.2
-            Rectangle { anchors.fill: parent; radius: width / 2; color: "transparent"; border.width: 1.1; border.color: face.gilt }
-            Rectangle { anchors.fill: parent; anchors.margins: 5; radius: width / 2; color: "transparent"; border.width: 0.6; border.color: face.gilt }
+            Rectangle { anchors.fill: parent; radius: width / 2; color: "transparent"; border.width: 2.2; border.color: face.gilt }
+            Rectangle { anchors.fill: parent; anchors.margins: 5; radius: width / 2; color: "transparent"; border.width: 1.2; border.color: face.gilt }
             Emblem {
                 anchors.centerIn: parent
                 width: parent.width * 0.64
                 height: width
                 kind: root.card.emblem ?? "sigil"
-                stroke: 1.8
+                stroke: 2.6
                 color: face.gilt
             }
         }
