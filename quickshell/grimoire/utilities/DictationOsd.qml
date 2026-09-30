@@ -42,7 +42,7 @@ PanelWindow {
         Text {
             text: Voxtype.recording ? "The scribe listens" : "The scribe writes…"
             color: Theme.ink
-            font.family: Theme.uncial
+            font.family: Theme.display; font.weight: Font.DemiBold
             font.pixelSize: 17
             SequentialAnimation on opacity { running: Voxtype.transcribing; loops: Animation.Infinite
                 NumberAnimation { to: 0.35; duration: 500; easing.type: Easing.InOutSine } NumberAnimation { to: 1; duration: 500; easing.type: Easing.InOutSine } }

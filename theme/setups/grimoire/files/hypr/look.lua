@@ -78,12 +78,12 @@ hl.animation({ leaf = "layers", enabled = true, speed = 3, bezier = "arcane" })
 hl.animation({ leaf = "zoomFactor", enabled = true, speed = 5, bezier = "arcane" })
 
 -- Grimoire's panels (namespace grimoire-*): the bar and the spine are tooled leather (a little
--- see-through, blurred behind), and the codex, the whole book and the polkit prompt blur the desk
--- behind them. The summoning circle doesn't: the pages stay readable under it while it's cast.
+-- see-through, blurred behind), and the codex, the whole book, the arcana, the index (launcher) and
+-- the polkit prompt blur the desk behind them.
 -- Quickshell does all their motion itself.
 hl.layer_rule({
   name         = "grimoire-blur",
-  match        = { namespace = "^grimoire-(bar|spine|codex|overview|polkit)$" },
+  match        = { namespace = "^grimoire-(bar|spine|codex|overview|polkit|arcana|circle)$" },
   blur         = true,
   ignore_alpha = 0.2,
 })
@@ -96,6 +96,6 @@ hl.layer_rule({
 -- Brave's New Tab lets the desk show through
 hl.window_rule({
   name    = "grimoire-brave-newtab-glass",
-  match   = { class = "^brave-browser$", title = "^New (Private )?Tab - Brave$" },
+  match   = { class = "^brave-origin-nightly$", title = "^New (Private )?Tab - Brave Origin$" },
   opacity = "0.6 override 0.6 override",
 })

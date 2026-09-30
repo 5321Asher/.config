@@ -1,43 +1,31 @@
 import QtQuick
 import "../theme"
 
-// A piece of tooled leather: the theme's leather, its pebbled grain (assets/leather.png), a soft
-// light from above, and optionally blind tooling (a sunken line) just inside the edge.
+// A piece of tooled leather, drawn by shaders/leather.frag: pebbled grain, a mottle through the dye,
+// light from above; optionally blind tooling (a sunken line) just inside the edge.
 Item {
     id: root
 
     property color color: Theme.leather
     property real radius: 0
-    property real grain: Theme.light ? 0.16 : 0.2
+    property real grain: 1
     property bool tooled: true
     property real toolInset: 5
     property real opacity_: 1
+    property real seed: 0.61
 
-    Rectangle {
-        id: base
+    ShaderEffect {
         anchors.fill: parent
-        radius: root.radius
-        color: root.color
         opacity: root.opacity_
-    }
-    Image {
-        anchors.fill: parent
-        source: Theme.assets + "leather.png"
-        fillMode: Image.Tile
-        opacity: root.grain * root.opacity_
-        smooth: false
-        visible: root.radius === 0
-    }
-    // light from above, falling off
-    Rectangle {
-        anchors.fill: parent
-        radius: root.radius
-        opacity: root.opacity_
-        gradient: Gradient {
-            GradientStop { position: 0; color: Qt.alpha("#ffffff", Theme.light ? 0.12 : 0.05) }
-            GradientStop { position: 0.5; color: "transparent" }
-            GradientStop { position: 1; color: Qt.alpha("#000000", Theme.light ? 0.06 : 0.22) }
-        }
+        property size size: Qt.size(width, height)
+        property color base: root.color
+        property real seed: root.seed
+        property real grain: root.grain
+        property real radius: root.radius
+        property real light: Theme.light ? 0.4 : 1
+        property real scale: 4.5
+        fragmentShader: Theme.shaders + "leather.frag.qsb"
+        layer.enabled: true
     }
     // blind tooling: a dark line with a light one under it (pressed into the leather)
     Rectangle {

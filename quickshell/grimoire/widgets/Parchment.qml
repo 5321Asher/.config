@@ -1,41 +1,33 @@
 import QtQuick
 import "../theme"
 
-// A sheet of parchment: the page colour, its fibres and blotches (assets/paper.png), age at the
-// margins and the odd foxing spot (assets/foxing.png, stretched), a deckle-dark edge.
+// A sheet of parchment, drawn by shaders/paper.frag: the page colour with a slow wash of tone, fine
+// laid fibres, margins browned with age and, for a page in an open book, the gutter's shade.
 Item {
     id: root
 
     property color color: Theme.page
     property real radius: 2
-    property real texture: Theme.light ? 0.2 : 0.26
-    property real age: 0.45            // how browned the margins are
+    property real texture: 1               // how much fibre and grain
+    property real age: 0.45                // how browned the margins are
     property bool edge: true
+    property int gutter: 0                 // -1: bound on the left, 1: on the right
+    property real seed: 0.37
 
-    Rectangle {
+    ShaderEffect {
         anchors.fill: parent
-        radius: root.radius
-        color: root.color
-    }
-    Image {
-        anchors.fill: parent
-        anchors.margins: 1
-        source: Theme.assets + "paper.png"
-        fillMode: Image.Tile
-        opacity: root.texture
-    }
-    Image {
-        anchors.fill: parent
-        source: Theme.assets + "foxing.png"
-        opacity: root.age
-        smooth: true
-    }
-    Rectangle {
-        visible: root.edge
-        anchors.fill: parent
-        radius: root.radius
-        color: "transparent"
-        border.width: 1
-        border.color: Qt.alpha(Theme.mix(Theme.pageDeep, Theme.ink, 0.35), 0.8)
+        property size size: Qt.size(width, height)
+        property color base: root.color
+        property color deep: Theme.pageDeep
+        property color ink: Theme.ink
+        property real seed: root.seed
+        property real age: root.age
+        property real gutter: root.gutter
+        property real radius: root.radius
+        property real grain: root.texture
+        property real edge: root.edge ? 1 : 0
+        fragmentShader: Theme.shaders + "paper.frag.qsb"
+        // drawn once, then kept as a picture until something about it changes
+        layer.enabled: true
     }
 }

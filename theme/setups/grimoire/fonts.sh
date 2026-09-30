@@ -3,6 +3,7 @@
 # ~/.local/share/fonts/grimoire: UnifrakturMaguntia (blackletter), Uncial Antiqua, Cardo (book
 # text), Cinzel + Cinzel Decorative (engraved caps), IBM Plex Mono (the terminal), Noto Sans Runic
 # (the runes), Noto Sans Symbols 1 and 2 (alchemical signs, fleurons). Run once on a new machine.
+# Headings use Cormorant Garamond: sudo pacman -S otf-cormorant
 d="$HOME/.local/share/fonts/grimoire"
 base=https://github.com/google/fonts/raw/main/ofl
 mkdir -p "$d"

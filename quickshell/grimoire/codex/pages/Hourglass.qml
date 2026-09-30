@@ -65,7 +65,7 @@ Column {
             Text {
                 text: FocusTimer.remainingText
                 color: FocusTimer.running ? Theme.ink : Theme.inkDim
-                font.family: Theme.uncial
+                font.family: Theme.display; font.weight: Font.DemiBold
                 font.pixelSize: 62
             }
             Body {

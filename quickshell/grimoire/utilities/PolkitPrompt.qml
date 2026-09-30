@@ -66,7 +66,7 @@ Scope {
                     Initial { letter: "A"; size: 50 }
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
-                        Text { text: "Seal is Required"; color: Theme.ink; font.family: Theme.uncial; font.pixelSize: 26 }
+                        Text { text: "Seal is Required"; color: Theme.ink; font.family: Theme.display; font.weight: Font.DemiBold; font.pixelSize: 26 }
                         Body { text: "something asks for the keeper's authority"; italic: true; color: Theme.inkDim; font.pixelSize: 14 }
                     }
                 }

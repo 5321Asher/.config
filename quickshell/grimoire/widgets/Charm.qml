@@ -17,21 +17,24 @@ Item {
     implicitHeight: 62
     opacity: enabled ? 1 : 0.45
 
+    // set on the page itself: a hairline under it, nothing boxed in
     Rectangle {
-        anchors.fill: parent
-        radius: 4
-        color: root.checked ? Theme.alpha(Theme.arcane, 0.1) : Theme.alpha("#ffffff", 0.12)
-        border.width: 1
-        border.color: root.checked ? Theme.alpha(Theme.arcane, 0.55) : Theme.alpha(Theme.inkDim, 0.4)
-        Behavior on color { ColorAnimation { duration: Theme.normal } }
+        anchors.bottom: parent.bottom
+        width: parent.width
+        height: 1
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: Theme.alpha(Theme.inkDim, 0.45) }
+            GradientStop { position: 1; color: Theme.alpha(Theme.inkDim, 0.05) }
+        }
     }
     MouseArea { anchors.fill: parent; enabled: root.enabled; cursorShape: Qt.PointingHandCursor; onClicked: root.toggled() }
     Column {
-        x: 12
+        x: 2
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width - x - 70
         spacing: 1
-        Text { width: parent.width; elide: Text.ElideRight; text: root.name; color: Theme.ink; font.family: Theme.uncial; font.pixelSize: 15 }
+        Text { width: parent.width; elide: Text.ElideRight; text: root.name; color: Theme.ink; font.family: Theme.display; font.weight: Font.DemiBold; font.pixelSize: 15 }
         Body { width: parent.width; elide: Text.ElideRight; text: root.status; italic: true; color: Theme.inkDim; font.pixelSize: 13 }
     }
     Seal {

@@ -163,7 +163,7 @@ Item {
                             horizontalAlignment: Text.AlignRight
                             text: Theme.roman(row.number) + "."
                             color: Theme.rubric
-                            font.family: Theme.uncial
+                            font.family: Theme.display; font.weight: Font.DemiBold
                             font.pixelSize: 16
                         }
                         Text {

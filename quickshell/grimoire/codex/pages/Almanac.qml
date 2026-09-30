@@ -78,7 +78,7 @@ Column {
             Glyph { text: Weather.ready ? Weather.icon(Weather.current.code, Weather.current.isDay) : ""; color: Theme.goldDeep; font.pixelSize: 46 }
             Column {
                 anchors.verticalCenter: parent.verticalCenter
-                Text { text: Weather.ready ? Math.round(Weather.current.temp) + "°" : ""; color: Theme.ink; font.family: Theme.uncial; font.pixelSize: 40 }
+                Text { text: Weather.ready ? Math.round(Weather.current.temp) + "°" : ""; color: Theme.ink; font.family: Theme.display; font.weight: Font.DemiBold; font.pixelSize: 40 }
                 Body { text: Weather.ready ? Weather.describe(Weather.current.code) : ""; italic: true; color: Theme.inkDim }
             }
             Column {

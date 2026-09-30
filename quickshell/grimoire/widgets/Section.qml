@@ -34,7 +34,7 @@ Column {
                 anchors.baseline: cap.baseline
                 text: root.title.slice(1)
                 color: Theme.ink
-                font.family: Theme.uncial
+                font.family: Theme.display; font.weight: Font.DemiBold
                 font.pixelSize: 17
             }
         }

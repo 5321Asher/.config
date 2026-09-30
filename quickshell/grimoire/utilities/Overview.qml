@@ -183,7 +183,7 @@ PanelWindow {
                         Row {
                             spacing: 10
                             Text { text: "Chapter " + Theme.roman(col.wsId); color: col.current ? Theme.goldBright : Theme.fg
-                                   font.family: Theme.uncial; font.pixelSize: 17 }
+                                   font.family: Theme.display; font.weight: Font.DemiBold; font.pixelSize: 17 }
                             Body { anchors.verticalCenter: parent.verticalCenter; text: col.windows.length ? col.windows.length + (col.windows.length === 1 ? " page" : " pages") : ""
                                    italic: true; color: Theme.alpha(Theme.fg, 0.6); font.pixelSize: 13 }
                         }

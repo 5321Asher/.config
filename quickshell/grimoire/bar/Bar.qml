@@ -277,7 +277,7 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Qt.formatTime(clock.date, "h:mm")
                     color: Theme.goldBright
-                    font.family: Theme.uncial
+                    font.family: Theme.display; font.weight: Font.DemiBold
                     font.pixelSize: 21
                     style: Text.Raised
                     styleColor: Qt.alpha("#000000", 0.5)

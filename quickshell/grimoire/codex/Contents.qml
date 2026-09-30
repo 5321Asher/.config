@@ -51,7 +51,7 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: 6
                     radius: 3
-                    color: entry.here ? Theme.alpha(Theme.gold, 0.3) : mouse.containsMouse ? Theme.alpha(Theme.gold, 0.12) : "transparent"
+                    color: entry.here ? Theme.alpha(Theme.rubric, 0.09) : mouse.containsMouse ? Theme.alpha(Theme.ink, 0.05) : "transparent"
                 }
                 Text {
                     visible: entry.here
@@ -69,7 +69,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Theme.roman(entry.index + 1) + "."
                     color: Theme.rubric
-                    font.family: Theme.uncial
+                    font.family: Theme.display; font.weight: Font.DemiBold
                     font.pixelSize: 15
                 }
                 Text {
@@ -78,7 +78,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: entry.modelData.title
                     color: Theme.ink
-                    font.family: Theme.uncial
+                    font.family: Theme.display; font.weight: Font.DemiBold
                     font.pixelSize: 17
                 }
                 Text {

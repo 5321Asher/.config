@@ -85,8 +85,9 @@ PanelWindow {
                 Vial { anchors.horizontalCenter: parent.horizontalCenter; shape: "tube"; potion: Theme.green; height: 56; width: 30
                        value: root.s ? root.s.mem.used / root.s.mem.total : 0 }
             }
-            Band {}
+            Band { visible: root.hasBattery }
             Compartment {
+                visible: root.hasBattery
                 page: "hangar"
                 note: !root.hasBattery ? "No battery: the book draws on the ley line (mains power)."
                     : "Mana " + Math.round(root.charge * 100) + "%" + (root.charging ? ", drawing from the ley line." : root.battery.timeToEmpty > 0 ? ", about " + Math.round(root.battery.timeToEmpty / 60) + " minutes left." : ".")
@@ -185,14 +186,13 @@ PanelWindow {
         property string label
         property string value
         width: parent.width
-        height: holder.childrenRect.height + 50
+        height: visible ? holder.childrenRect.height + 38 : 0
         Item { id: holder; y: 10; width: parent.width; height: childrenRect.height }
         Column {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 5
-            Caps { anchors.horizontalCenter: parent.horizontalCenter; text: comp.label; color: Theme.alpha(Theme.dim, 0.9); font.pixelSize: 9; font.letterSpacing: 1 }
-            Body { anchors.horizontalCenter: parent.horizontalCenter; text: comp.value; color: Theme.fg; font.pixelSize: 13; strong: true }
+            Body { anchors.horizontalCenter: parent.horizontalCenter; text: comp.value; color: Theme.alpha(Theme.fg, 0.75); font.pixelSize: 12 }
         }
         MouseArea {
             anchors.fill: parent

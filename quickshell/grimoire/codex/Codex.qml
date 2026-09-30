@@ -11,13 +11,19 @@ import "pages"
 // The codex: Grimoire's control panel, an open book laid on the desk in the middle of the focused
 // screen. The left page is its table of contents (the chapters with red numerals and dotted leaders,
 // and a few facts at the foot); the right page is the chapter you're reading, headed by an
-// illuminated capital. Turning to another chapter turns a leaf across the spread. A silk bookmark
-// hangs from the gutter. Esc or a click on the desk closes it; Tab / Page Down turn forward.
+// illuminated capital. Turning to another chapter turns a real leaf (shaders/curl.frag).
+// Esc or a click on the desk closes it; Tab / Page Down turn forward.
 //   qs ipc call deck open <page>   (helm comms radio log almanac telemetry hangar optics lamps chronometer claude)
 PanelWindow {
     id: root
 
-    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+    // Follows the focused monitor only while hidden: moving a shown window rebuilds its surface
+    // (it vanished for a few frames mid-fade on close, when the keyboard grab let go).
+    Binding on screen {
+        when: !root.visible
+        value: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+        restoreMode: Binding.RestoreNone
+    }
     visible: CodexState.open || shown > 0.01
 
     anchors { top: true; bottom: true; left: true; right: true }
@@ -45,24 +51,37 @@ PanelWindow {
     readonly property real pageH: Math.min(Theme.codexHeight, height - 90)
 
     // ---------------------------------------------------------------- turning
-    // the leaf sweeps from the right page to the left (forward) or back; the chapter changes under it
-    property real leaf: 0              // 0 = flat on its start page, 1 = flat on the other
+    // A real leaf (shaders/curl.frag): forward, a picture of the old chapter curls up from its corner
+    // and over onto the left page, uncovering the new one; back, the new chapter's page comes over
+    // from the left and lays itself down on the old. The chapter changes a frame after the picture.
+    property real leaf: 0              // 0 = flat on the right page, 1 = turned over onto the left
     property int leafDir: 1
+    property bool turning: false
     property string showing: CodexState.page
     Connections {
         target: CodexState
         function onPageChanged() {
-            if (!root.visible) { root.showing = CodexState.page; return; }
+            if (!root.visible || !root.spread) { root.showing = CodexState.page; return; }
+            turn.stop();
             root.leafDir = CodexState.turning;
-            turn.restart();
+            oldShot.scheduleUpdate();
+            root.turning = true;
+            root.leaf = root.leafDir > 0 ? 0 : 1;
+            swap.restart();
         }
     }
-    SequentialAnimation {
+    Timer {
+        id: swap
+        interval: 40
+        onTriggered: { root.showing = CodexState.page; turn.to = root.leafDir > 0 ? 1 : 0; turn.restart(); }
+    }
+    NumberAnimation {
         id: turn
-        NumberAnimation { target: root; property: "leaf"; from: 0; to: 0.5; duration: 240; easing.type: Easing.InQuad }
-        ScriptAction { script: root.showing = CodexState.page }
-        NumberAnimation { target: root; property: "leaf"; from: 0.5; to: 1; duration: 300; easing.type: Easing.OutQuad }
-        PropertyAction { target: root; property: "leaf"; value: 0 }
+        target: root
+        property: "leaf"
+        duration: 680
+        easing.type: Easing.InOutSine
+        onFinished: root.turning = false
     }
 
     FocusScope {
@@ -111,17 +130,9 @@ PanelWindow {
                 width: root.pageW
                 height: root.pageH
                 radius: 3
+                gutter: 1
+                seed: 0.21
                 Contents { anchors.fill: parent }
-                // the gutter's shade
-                Rectangle {
-                    anchors.right: parent.right
-                    width: 46; height: parent.height
-                    gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop { position: 0; color: "transparent" }
-                        GradientStop { position: 1; color: Theme.alpha(Theme.ink, 0.22) }
-                    }
-                }
             }
 
             // ---------------------------------------------------------------- right page: the chapter
@@ -132,16 +143,8 @@ PanelWindow {
                 width: root.rightW
                 height: root.pageH
                 radius: 3
-
-                Rectangle {
-                    visible: root.spread
-                    width: 46; height: parent.height
-                    gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop { position: 0; color: Theme.alpha(Theme.ink, 0.22) }
-                        GradientStop { position: 1; color: "transparent" }
-                    }
-                }
+                gutter: root.spread ? -1 : 0
+                seed: 0.83
 
                 Item {
                     id: chapter
@@ -172,7 +175,7 @@ PanelWindow {
                         Initial { letter: chapter.info.title.charAt(0); size: 56 }
                         Column {
                             anchors.verticalCenter: parent.verticalCenter
-                            Text { text: chapter.info.title.slice(1).length ? chapter.info.title : ""; color: Theme.ink; font.family: Theme.uncial; font.pixelSize: 30 }
+                            Text { text: chapter.info.title.slice(1).length ? chapter.info.title : ""; color: Theme.ink; font.family: Theme.display; font.weight: Font.DemiBold; font.pixelSize: 30 }
                             Body { text: chapter.info.sub; italic: true; color: Theme.inkDim; font.pixelSize: 14 }
                         }
                     }
@@ -218,50 +221,37 @@ PanelWindow {
             }
 
             // ---------------------------------------------------------------- the turning leaf
-            Item {
-                id: leafItem
-                visible: turn.running && root.spread
-                x: 14 + root.pageW
-                y: 10
-                width: root.pageW
-                height: root.pageH
-                // forward: starts on the right page and swings over to the left; back: the reverse
-                readonly property real angle: root.leafDir > 0 ? -180 * root.leaf : -180 * (1 - root.leaf)
-                transform: Rotation {
-                    origin.x: 0
-                    origin.y: leafItem.height / 2
-                    axis { x: 0; y: 1; z: 0 }
-                    angle: leafItem.angle
-                }
-                Parchment { anchors.fill: parent; radius: 3; age: 0.35 }
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 3
-                    // darker as it stands up edge-on
-                    color: Theme.alpha(Theme.ink, 0.35 * Math.sin(Math.abs(leafItem.angle) * Math.PI / 180))
-                }
+            // pictures of the right page: the old chapter (taken just before it changes) and the live one
+            ShaderEffectSource {
+                id: oldShot
+                x: rightPage.x; y: rightPage.y
+                width: rightPage.width; height: rightPage.height
+                sourceItem: rightPage
+                live: false
+                // going back, the old chapter stays on the page while the new one comes over it
+                visible: root.turning && root.leafDir < 0
             }
-
-            // the bookmark, lying in the gutter and hanging out past the foot of the book
-            Item {
-                visible: root.spread
-                x: 14 + root.pageW - width / 2
-                y: 6
-                width: 14
-                height: root.pageH + 58
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.bottomMargin: 7
-                    gradient: Gradient {
-                        orientation: Gradient.Horizontal
-                        GradientStop { position: 0; color: Qt.darker(Theme.arcane, 1.8) }
-                        GradientStop { position: 0.45; color: Qt.lighter(Theme.arcane, 1.08) }
-                        GradientStop { position: 1; color: Qt.darker(Theme.arcane, 1.9) }
-                    }
-                }
-                // the swallowtail
-                Text { anchors.horizontalCenter: parent.horizontalCenter; anchors.bottom: parent.bottom; anchors.bottomMargin: -4
-                       text: "▼"; color: Theme.leather; font.pixelSize: 13 }
+            ShaderEffectSource {
+                id: liveShot
+                sourceItem: rightPage
+                live: true
+                hideSource: root.turning && root.leafDir < 0
+                visible: false
+            }
+            ShaderEffect {
+                visible: root.turning
+                x: 14; y: 10
+                width: root.pageW * 2
+                height: root.pageH
+                property var source: root.leafDir > 0 ? oldShot : liveShot
+                property size size: Qt.size(width, height)
+                property real pageW: root.pageW
+                property real fold: root.pageW * (1 - root.leaf)
+                property real radius: 2 + root.pageW * 0.2 * Math.sin(Math.PI * root.leaf)
+                property real tilt: 0.3 * Math.sin(Math.PI * root.leaf)
+                property real settle: Math.max(0, (root.leaf - 0.72) / 0.28)
+                property color paper: Theme.page
+                fragmentShader: Theme.shaders + "curl.frag.qsb"
             }
         }
     }

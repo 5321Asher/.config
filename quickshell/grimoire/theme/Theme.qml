@@ -60,7 +60,7 @@ Singleton {
     readonly property string body: palette.fontSans ?? "Cardo"                      // everything you read
     readonly property string blackletter: palette.fontDisplay ?? "UnifrakturMaguntia" // titles, illuminated capitals
     readonly property string mono: palette.fontMono ?? "IBM Plex Mono"
-    readonly property string uncial: "Uncial Antiqua"       // headings, chapter names, the clock
+    readonly property string display: "Cormorant Garamond"  // headings, chapter names, the clock
     readonly property string caps: "Cinzel"                 // engraved small caps: labels
     readonly property string decorative: "Cinzel Decorative"
     readonly property string runic: "Noto Sans Runic"
@@ -105,8 +105,7 @@ Singleton {
     readonly property int lockIntro: 900
     readonly property int lockOutro: 1100
 
-    // ---------------------------------------------------------------- assets
-    readonly property string assets: Quickshell.shellDir + "/assets/"
+    // ---------------------------------------------------------------- shaders
     readonly property string shaders: Quickshell.shellDir + "/shaders/"
 
     // ---------------------------------------------------------------- runes

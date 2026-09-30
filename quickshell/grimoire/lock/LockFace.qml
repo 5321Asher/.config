@@ -10,7 +10,7 @@ import "../spine"
 // closed: a leather cover with a gilt frame and brass corners, its title in blackletter, a strap
 // across to the clasp, and on the clasp a lock rune glowing in the arcane colour. Under it, "Speak
 // the word": what you type appears as runes on a gilt line (one per letter, never the letter itself).
-// A wrong word: the rune flares red, the book shudders, the runes crumble. The right one: the clasp
+// A wrong word: the rune turns red and the book gives a small shudder. The right one: the clasp
 // flares gold and the cover swings open on its spine, and the desk comes back. The candle burns
 // beside the book. Only the main screen gets the word; the others show the book alone.
 Item {
@@ -82,7 +82,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             text: Qt.formatTime(clock.date, "h:mm")
             color: Theme.goldBright
-            font.family: Theme.uncial
+            font.family: Theme.display; font.weight: Font.DemiBold
             font.pixelSize: 54
             style: Text.Raised
             styleColor: Qt.alpha("#000000", 0.6)
@@ -115,10 +115,9 @@ Item {
         transform: Translate { x: book.shake }
         SequentialAnimation {
             id: shudder
-            NumberAnimation { target: book; property: "shake"; to: -10; duration: 50 }
-            NumberAnimation { target: book; property: "shake"; to: 9; duration: 70 }
-            NumberAnimation { target: book; property: "shake"; to: -6; duration: 70 }
-            NumberAnimation { target: book; property: "shake"; to: 3; duration: 70 }
+            NumberAnimation { target: book; property: "shake"; to: -6; duration: 60 }
+            NumberAnimation { target: book; property: "shake"; to: 5; duration: 80 }
+            NumberAnimation { target: book; property: "shake"; to: -2; duration: 80 }
             NumberAnimation { target: book; property: "shake"; to: 0; duration: 90 }
         }
         Connections {
@@ -306,8 +305,8 @@ Item {
                     property real breath: 0
                     SequentialAnimation on breath {
                         loops: Animation.Infinite
-                        NumberAnimation { to: 1; duration: 2200; easing.type: Easing.InOutSine }
-                        NumberAnimation { to: 0; duration: 2200; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 1; duration: 3600; easing.type: Easing.InOutSine }
+                        NumberAnimation { to: 0; duration: 3600; easing.type: Easing.InOutSine }
                     }
                     readonly property color runeColor: root.granted ? Theme.goldBright : root.bad ? Theme.danger : Theme.arcane
 
@@ -334,7 +333,7 @@ Item {
                     // a ring of small runes round the inside, turning
                     Item {
                         anchors.fill: parent
-                        rotation: clasp.breath * 12 + (LockState.status === "verifying" ? spinner.a : 0)
+                        rotation: LockState.status === "verifying" ? spinner.a : 0
                         Repeater {
                             model: 16
                             Text {
@@ -361,8 +360,8 @@ Item {
                         layer.effect: MultiEffect {
                             shadowEnabled: true
                             shadowColor: clasp.runeColor
-                            shadowBlur: 0.7 + clasp.breath * 0.3
-                            shadowOpacity: 0.8 + clasp.breath * 0.2
+                            shadowBlur: 0.6 + clasp.breath * 0.1
+                            shadowOpacity: 0.7 + clasp.breath * 0.1
                             shadowHorizontalOffset: 0
                             shadowVerticalOffset: 0
                             blurMax: 32
@@ -402,16 +401,11 @@ Item {
                                     id: wr
                                     required property int index
                                     text: Theme.allRunes[(index * 11 + 5) % Theme.allRunes.length]
-                                    color: root.bad ? Theme.danger : Theme.mix(Theme.arcane, "#ffffff", 0.3)
+                                    color: root.bad ? Theme.danger : Theme.goldBright
                                     font.family: Theme.runic
                                     font.pixelSize: 20
-                                    property real born: 0
-                                    opacity: born
-                                    scale: 1 + (1 - born) * 0.8
-                                    NumberAnimation on born { from: 0; to: 1; duration: 260; easing.type: Easing.OutCubic }
-                                    layer.enabled: true
-                                    layer.effect: MultiEffect { shadowEnabled: true; shadowColor: Theme.arcane; shadowBlur: 0.6; shadowOpacity: 0.9
-                                                                shadowHorizontalOffset: 0; shadowVerticalOffset: 0; blurMax: 12 }
+                                    // it just appears, softly: no pop, no glow
+                                    NumberAnimation on opacity { from: 0; to: 1; duration: 120 }
                                 }
                             }
                         }
@@ -452,15 +446,6 @@ Item {
         height: Math.min(420, root.bookH * 0.9)
         x: root.width / 2 - root.bookW / 2 - width - 40
         y: book.y + book.height - height + 20
-        opacity: root.presence
-    }
-    Sparks {
-        anchors.fill: parent
-        running: root.presence > 0.9
-        rate: 4
-        ringX: root.width / 2
-        ringY: book.y + book.height * 0.42
-        ringR: root.bookW * 0.2
         opacity: root.presence
     }
 }

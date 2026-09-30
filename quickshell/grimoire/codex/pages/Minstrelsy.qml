@@ -25,9 +25,12 @@ Column {
     readonly property PwNode sink: Pipewire.defaultAudioSink
     readonly property var sinks: Pipewire.nodes.values.filter(n => n.audio && n.isSink && !n.isStream)
     readonly property PwNode source: Pipewire.defaultAudioSource
-    readonly property var sources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream && n.properties?.["media.class"] === "Audio/Source")
-    readonly property var streams: Pipewire.nodes.values.filter(n => n.audio && n.isStream && n.properties?.["media.class"] === "Stream/Output/Audio")
-    PwObjectTracker { objects: [root.sink, root.source].filter(n => n).concat(root.sinks, root.sources, root.streams) }
+    // Track every candidate, then filter: a node's properties (media.class) only arrive once it's tracked
+    readonly property var allSources: Pipewire.nodes.values.filter(n => n.audio && !n.isSink && !n.isStream)
+    readonly property var sources: allSources.filter(n => n.properties?.["media.class"] === "Audio/Source")
+    readonly property var allStreams: Pipewire.nodes.values.filter(n => n.audio && n.isStream)
+    readonly property var streams: allStreams.filter(n => n.properties?.["media.class"] === "Stream/Output/Audio")
+    PwObjectTracker { objects: [root.sink, root.source].filter(n => n).concat(root.sinks, root.allSources, root.allStreams) }
     function name(n) { return n?.nickname || n?.description || n?.name || ""; }
 
     Section {
@@ -56,7 +59,7 @@ Column {
                 width: root.width - 130
                 spacing: 3
                 Text { width: parent.width; elide: Text.ElideRight; text: root.player?.trackTitle || "an untitled air"; color: Theme.ink
-                       font.family: Theme.uncial; font.pixelSize: 20 }
+                       font.family: Theme.display; font.weight: Font.DemiBold; font.pixelSize: 20 }
                 Body { width: parent.width; elide: Text.ElideRight; text: root.player?.trackArtist ?? ""; italic: true }
                 Body { width: parent.width; elide: Text.ElideRight; text: root.player?.trackAlbum ?? ""; italic: true; color: Theme.inkDim; font.pixelSize: 13 }
                 Item { width: 1; height: 8 }

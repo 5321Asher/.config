@@ -2,51 +2,127 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Hyprland
 import Quickshell.Io
-import "../menus"
 import "../services"
 import "../codex"
 import "../utilities"
 
-// The table of contents: Grimoire's root menu (SUPER + Space, or the clasp in the corner), a
-// parchment contents page dropped from the clasp. Its entries are the shared menus
-// (~/.config/elephant/menus, the ones Walker shows: Apps, Trigger, Style, Power…) with their
-// subtexts, then Grimoire's own: the codex, the whole book (overview) and the summoning circle.
+// The arcana: Grimoire's root menu (SUPER + Space, or the clasp in the corner). The screen sinks into
+// candlelit dark and the cards are dealt in a fan: one card per shared menu (~/.config/elephant/menus,
+// the ones Walker shows: Apps, Trigger, Style, Power…), then Grimoire's own: the codex and the whole
+// book. Drawing a card either does its thing (Apps opens the summoning circle) or turns it over into
+// a reading: its menu, on the card's back, one level at a time (drawn by arcana/Arcana.qml).
 //   qs ipc call contents toggle | open | close
+//   qs ipc call contents draw <card> | choose <row> | back      (testing without the keyboard)
 Singleton {
     id: root
 
-    function screen() { return Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]; }
+    property bool open: false
+    property var cards: []
+    property int sel: 0
+    // the card turned over (-1: the spread), and the menus open on its back, deepest last:
+    // [{ title, items: [{ text, sub_text, check, sub, run }], loading, sel }]
+    property int reading: -1
+    property var stack: []
 
-    function toggle() {
-        if (Menus.open && Menus.kind === "contents") { Menus.close(); return; }
-        Menus.show(screen().name, "contents", topLevel, 10, 56, { big: true });
-    }
+    // what each shared menu looks like as a card: its numeral and its emblem (arcana/Emblem.qml)
+    readonly property var arcana: ({
+        apps: { numeral: "XVII", emblem: "star" },
+        trigger: { numeral: "XVI", emblem: "tower" },
+        style: { numeral: "XVIII", emblem: "moon" },
+        power: { numeral: "XIII", emblem: "dusk" },
+    })
 
-    function topLevel(done) {
+    function toggle() { if (open) close(); else show(); }
+    function show() {
+        reading = -1;
+        stack = [];
+        sel = 0;
+        open = true;
         Elephant.query("menus:start", list => {
             const shared = list.map(it => {
-                const t = (it.text ?? "").toLowerCase();
+                const key = (it.text ?? "").toLowerCase();
+                const look = arcana[key] ?? { numeral: "", emblem: "sigil" };
+                const card = { title: it.text, sub_text: it.subtext ?? "", numeral: look.numeral, emblem: look.emblem };
                 const isMenu = ((it.actions ?? [])[0] ?? "") === "menus:open";
-                const item = { text: it.text, sub_text: it.subtext ?? "" };
-                if (t === "apps") item.run = () => CircleState.open = true;       // the summoning circle
-                else if (isMenu) item.sub = d => Elephant.query(it.identifier.split("::")[0], l => d(Elephant.toItems(l)));
-                else item.run = () => Elephant.activate(it);
-                return item;
+                if (key === "apps") card.run = () => CircleState.open = true;     // the summoning circle
+                else if (isMenu) card.sub = loader(it);
+                else card.run = () => Elephant.activate(it);
+                return card;
             });
-            done(shared.concat([
-                { sep: true },
-                { text: "The Codex", sub_text: "switches, levels, letters, the almanac…", run: () => CodexState.show("helm") },
-                { text: "The Whole Book", sub_text: "every chapter laid open", run: () => OverviewState.open = true },
-            ]));
+            cards = shared.concat([
+                { title: "Codex", sub_text: "switches · levels · letters", numeral: "II", emblem: "book", run: () => CodexState.show("helm") },
+                { title: "The Book", sub_text: "every chapter laid open", numeral: "XXI", emblem: "world", run: () => OverviewState.open = true },
+            ]);
         });
     }
+    function close() {
+        open = false;
+        reading = -1;
+        stack = [];
+    }
+
+    // an elephant menu's items, loaded when the reading gets to it
+    function loader(it) {
+        return done => Elephant.query(it.identifier.split("::")[0], l => done(l.map(x => {
+            const raw = x.text ?? "";
+            const item = { text: raw.replace(/^[●\s]+/, ""), sub_text: x.subtext ?? "", check: raw.startsWith("●") };
+            if (((x.actions ?? [])[0] ?? "") === "menus:open") item.sub = loader(x);
+            else item.run = () => Elephant.activate(x);
+            return item;
+        })));
+    }
+
+    // draw card i: do it, or turn it over
+    function draw(i) {
+        const c = cards[i];
+        if (!c) return;
+        sel = i;
+        if (c.run) { later.fn = c.run; close(); later.restart(); return; }
+        reading = i;
+        stack = [];
+        push(c.title, c.sub);
+    }
+    function push(title, sub) {
+        const depth = stack.length;
+        stack = stack.concat([{ title: title, items: [], loading: true, sel: 0 }]);
+        sub(list => {
+            if (stack.length <= depth || !stack[depth].loading) return;       // gone meanwhile
+            const copy = stack.slice();
+            copy[depth] = Object.assign({}, copy[depth], { items: list ?? [], loading: false, sel: Math.max(0, (list ?? []).findIndex(x => x.check)) });
+            stack = copy;
+        });
+    }
+    function back() {
+        if (stack.length > 1) stack = stack.slice(0, -1);
+        else if (reading >= 0) { reading = -1; stack = []; }
+        else close();
+    }
+    function setSel(i) {
+        const d = stack.length - 1;
+        if (d < 0) return;
+        const copy = stack.slice();
+        copy[d] = Object.assign({}, copy[d], { sel: i });
+        stack = copy;
+    }
+    function choose(i) {
+        const lv = stack[stack.length - 1];
+        const it = lv?.items?.[i];
+        if (!it) return;
+        if (it.sub) { setSel(i); push(it.text, it.sub); return; }
+        close();
+        if (it.run) { later.fn = it.run; later.restart(); }
+    }
+    // a moment later, so the arcana is gone from the screen first (e.g. before a screenshot)
+    Timer { id: later; property var fn; interval: 140; onTriggered: if (fn) fn() }
 
     IpcHandler {
         target: "contents"
         function toggle(): void { root.toggle(); }
-        function open(): void { if (!(Menus.open && Menus.kind === "contents")) root.toggle(); }
-        function close(): void { Menus.close(); }
+        function open(): void { if (!root.open) root.show(); }
+        function close(): void { root.close(); }
+        function draw(i: int): void { root.draw(i); }
+        function choose(i: int): void { root.choose(i); }
+        function back(): void { root.back(); }
     }
 }
