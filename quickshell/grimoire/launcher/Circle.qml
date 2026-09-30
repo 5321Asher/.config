@@ -8,12 +8,12 @@ import "../theme"
 import "../widgets"
 import "../utilities"
 
-// The seal-book: Grimoire's app launcher (SUPER + CTRL + Space). A plain search, and under it the
-// seal of the program you're on, drawn out in ink as you choose it. Every program has its own seal
+// The seal-book: Grimoire's app launcher (SUPER + CTRL + Space). Nothing on screen but what you've
+// written, small at the top, and in the middle the seal of the program it finds, drawn out in gold. Every program has its own seal
 // and every part of it means something (launcher/seal.js): the sigil in the middle says what kind of
 // program it is, the signs round it what it does, the tick band counts its name's letters, and a
 // seal you summon often is drawn with more rings. Enter closes the ring: the seal glows and the
-// program is summoned. ↑ ↓ choose, Esc dismisses; nothing matching, Enter runs what you wrote.
+// program is summoned. ↑ ↓ step through the other matches (redrawing the seal), Esc dismisses; nothing matching, Enter runs what you wrote.
 // (Its IPC is still `circle`, as setup.toml and older notes call it.)
 //   qs ipc call circle toggle | type <words> | cast
 PanelWindow {
@@ -85,8 +85,6 @@ PanelWindow {
         onLoaded: { try { root.launches = JSON.parse(text()); } catch (e) {} }
     }
 
-    function iconFor(a) { return Quickshell.iconPath(a?.icon || "application-x-executable", "application-x-executable"); }
-
     // ---------------------------------------------------------------- casting
     property bool casting: false
     function cast() {
@@ -138,251 +136,69 @@ PanelWindow {
         }
     }
 
-    // ---------------------------------------------------------------- what the seal says
-    readonly property var elementWords: ({ fire: "fire", water: "water", wind: "wind", earth: "earth", light: "light" })
-    readonly property var elementMeaning: ({ fire: "a thing for making", water: "a thing for reaching others", wind: "a thing of sound and sight",
-                                             earth: "a thing of the ground beneath", light: "a thing for reading and learning" })
-    function reading(s) {
-        if (!s) return "";
-        const n = ["", "one", "two", "three", "four", "five", "six", "seven", "eight"][s.fold] ?? String(s.fold);
-        return root.elementMeaning[s.element] + " · " + n + "-fold"
-            + (s.rings >= 3 ? " · thrice-ringed: an old friend" : s.rings === 2 ? " · twice-ringed: well used" : "");
-    }
-
     Item {
         id: body
         anchors.fill: parent
 
-        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.mix(Theme.veil, "#000000", 0.3), 0.6 * root.shown) }
+        Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.mix(Theme.veil, "#000000", 0.4), 0.72 * root.shown) }
         MouseArea { anchors.fill: parent; onClicked: CircleState.open = false }
 
-        Column {
-            id: stack
+        // what you've written, small, at the top middle (the keys go to a hidden input)
+        TextInput {
+            id: input
+            width: 1; height: 1
+            opacity: 0
+            focus: true
+            onTextEdited: root.query = text
+            Keys.onPressed: e => {
+                const n = root.results.length;
+                if (e.key === Qt.Key_Escape) CircleState.open = false;
+                else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) root.cast();
+                else if (e.key === Qt.Key_Down || e.key === Qt.Key_Tab || e.key === Qt.Key_Right) root.pick = n ? (root.pick + 1) % n : 0;
+                else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab || e.key === Qt.Key_Left) root.pick = n ? (root.pick - 1 + n) % n : 0;
+                else return;
+                e.accepted = true;
+            }
+        }
+        Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            y: Math.max(30, (root.height - height) * 0.38) - (1 - root.shown) * 16
-            spacing: 18
+            y: Math.round(root.height * 0.07)
             opacity: root.shown
-
-            // ------------------------------------------------------------ the search
-            Item {
-                id: card
-                width: Math.min(600, root.width - 48)
-                height: line.height + 10 + list.height + 16
-                MouseArea { anchors.fill: parent }
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.topMargin: 12; anchors.bottomMargin: -20; anchors.leftMargin: 3; anchors.rightMargin: -8
-                    radius: 14
-                    color: Qt.alpha("#000000", 0.55)
-                    layer.enabled: true
-                    layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 40 }
-                }
-                Cover {
-                    id: frame
-                    anchors.fill: parent
-                    radius: 12; bevel: 9; wear: 0.5; seed: 0.47
-                    color: Theme.leather
-                    light: Qt.vector3d(width * 0.25, -height * 0.4, 700)
-                    lightPower: 1.2; ambient: 0.62
-                    lightColor: Theme.mix(Theme.flame, "#ffffff", 0.55)
-                    Rectangle { anchors.fill: parent; anchors.margins: 8; radius: 7; color: "transparent"; border.width: 1.3; border.color: frame.gilt }
-                }
-
-                // what you've written: no box, just the words in small letters at the very top (the
-                // keyboard goes to a hidden input), so the seal below is what you watch being drawn
-                Item {
-                    id: line
-                    x: 30
-                    width: parent.width - 60
-                    height: 40
-                    TextInput {
-                        id: input
-                        width: 1; height: 1
-                        opacity: 0
-                        focus: true
-                        onTextEdited: root.query = text
-                        Keys.onPressed: e => {
-                            const n = root.results.length;
-                            if (e.key === Qt.Key_Escape) CircleState.open = false;
-                            else if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) root.cast();
-                            else if (e.key === Qt.Key_Down || e.key === Qt.Key_Tab) root.pick = n ? (root.pick + 1) % n : 0;
-                            else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab) root.pick = n ? (root.pick - 1 + n) % n : 0;
-                            else return;
-                            e.accepted = true;
-                        }
-                    }
-                    Row {
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: 3
-                        spacing: 2
-                        Text {
-                            id: written
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: root.query !== "" ? root.query.toLowerCase() : "write a name"
-                            color: root.query !== "" ? Theme.goldBright : Theme.alpha(Theme.dim, 0.55)
-                            font.family: Theme.body
-                            font.italic: true
-                            font.pixelSize: 15
-                            font.letterSpacing: 1.5
-                        }
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 1.5; height: 14
-                            color: Theme.gold
-                            SequentialAnimation on opacity {
-                                loops: Animation.Infinite
-                                NumberAnimation { to: 0.1; duration: 650; easing.type: Easing.InOutSine }
-                                NumberAnimation { to: 1; duration: 650; easing.type: Easing.InOutSine }
-                            }
-                        }
-                    }
-                }
-                GoldRule { x: 24; y: line.height - 2; width: parent.width - 48; color: Theme.alpha(Theme.gold, 0.45); ornament: "" }
-
-                ListView {
-                    id: list
-                    x: 16
-                    y: line.height + 6
-                    width: parent.width - 32
-                    height: Math.max(1, count) * 46
-                    interactive: false
-                    model: root.results.length ? root.results : root.query.trim() ? [null] : []
-                    currentIndex: root.pick
-                    highlightMoveDuration: Theme.fast
-                    highlight: Item {
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 5
-                            gradient: Gradient {
-                                orientation: Gradient.Horizontal
-                                GradientStop { position: 0; color: Theme.alpha(Theme.gold, 0.18) }
-                                GradientStop { position: 1; color: Theme.alpha(Theme.gold, 0.02) }
-                            }
-                        }
-                        Rectangle { width: 2; height: parent.height - 14; anchors.verticalCenter: parent.verticalCenter; color: Theme.gold }
-                    }
-                    delegate: Item {
-                        id: row
-                        required property var modelData
-                        required property int index
-                        readonly property bool here: ListView.isCurrentItem
-                        width: list.width
-                        height: 46
-                        Image {
-                            id: icon
-                            x: 16
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: 28; height: 28
-                            sourceSize: Qt.size(56, 56)
-                            source: row.modelData ? root.iconFor(row.modelData) : ""
-                            visible: !!row.modelData
-                        }
-                        Text {
-                            visible: !row.modelData
-                            anchors.centerIn: icon
-                            text: "\u{f018d}"
-                            color: Theme.gold
-                            font.family: Theme.glyphs
-                            font.pixelSize: 20
-                        }
-                        Body {
-                            id: name
-                            x: 58
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: Math.min(implicitWidth, parent.width - x - 20)
-                            elide: Text.ElideRight
-                            text: row.modelData ? row.modelData.name : "Run “" + root.query.trim() + "”"
-                            color: row.here ? Theme.goldBright : Theme.fg
-                            font.pixelSize: 18
-                        }
-                        Body {
-                            anchors.left: name.right
-                            anchors.leftMargin: 14
-                            anchors.right: parent.right
-                            anchors.rightMargin: 16
-                            anchors.baseline: name.baseline
-                            horizontalAlignment: Text.AlignRight
-                            elide: Text.ElideRight
-                            text: row.modelData ? (row.modelData.genericName || row.modelData.comment || "") : "as a command"
-                            italic: true
-                            color: Theme.alpha(Theme.dim, row.here ? 0.9 : 0.6)
-                            font.pixelSize: 14
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onPositionChanged: root.pick = row.index
-                            onClicked: { root.pick = row.index; root.cast(); }
-                        }
-                    }
-                }
-                Body {
-                    visible: list.count === 0
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    y: list.y + 12
-                    text: "nothing answers"
-                    italic: true
-                    color: Theme.alpha(Theme.dim, 0.6)
+            spacing: 2
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.query.toLowerCase()
+                color: Theme.goldBright
+                font.family: Theme.body
+                font.italic: true
+                font.pixelSize: 16
+                font.letterSpacing: 1.5
+            }
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: 1.5; height: 16
+                color: Theme.gold
+                SequentialAnimation on opacity {
+                    loops: Animation.Infinite
+                    NumberAnimation { to: 0.1; duration: 650; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1; duration: 650; easing.type: Easing.InOutSine }
                 }
             }
+        }
 
-            // ------------------------------------------------------------ the seal
-            Item {
-                id: leaf
-                anchors.horizontalCenter: parent.horizontalCenter
-                readonly property real d: Math.max(200, Math.min(340, root.height - card.height - 190))
-                width: d + 80
-                height: d + 96
-                visible: !!root.sealed || root.casting
-                MouseArea { anchors.fill: parent }
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.topMargin: 10; anchors.bottomMargin: -16; anchors.leftMargin: 3; anchors.rightMargin: -7
-                    radius: 6
-                    color: Qt.alpha("#000000", 0.5)
-                    layer.enabled: true
-                    layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 32 }
-                }
-                Parchment { anchors.fill: parent; radius: 4; age: 0.55; seed: 0.74 }
-
-                SealView {
-                    id: seal
-                    x: 40; y: 26
-                    width: leaf.d; height: leaf.d
-                    app: root.sealed
-                    uses: root.sealed ? (root.launches[root.sealed.id] ?? 0) : 0
-                    closed: root.casting
-                    ink: Theme.mix(Theme.ink, Theme.rubric, 0.12)
-                }
-
-                Column {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    y: seal.y + seal.height + 10
-                    width: parent.width - 30
-                    spacing: 1
-                    Caps {
-                        width: parent.width
-                        horizontalAlignment: Text.AlignHCenter
-                        elide: Text.ElideRight
-                        text: seal.seal ? "sigil of " + root.elementWords[seal.seal.element] + "   ·   " + seal.seal.signs.join(" · ") : ""
-                        color: Theme.rubric
-                        font.pixelSize: 11
-                        font.letterSpacing: 2.5
-                    }
-                    Body {
-                        width: parent.width
-                        horizontalAlignment: Text.AlignHCenter
-                        elide: Text.ElideRight
-                        text: root.reading(seal.seal)
-                        italic: true
-                        color: Theme.inkDim
-                        font.pixelSize: 13
-                    }
-                }
-            }
+        // the seal, in the middle, drawn in gold ink on the dark
+        SealView {
+            id: seal
+            readonly property real d: Math.min(560, root.height * 0.58, root.width * 0.8)
+            width: d; height: d
+            anchors.centerIn: parent
+            opacity: root.shown
+            scale: 0.97 + 0.03 * root.shown
+            app: root.sealed
+            uses: root.sealed ? (root.launches[root.sealed.id] ?? 0) : 0
+            closed: root.casting
+            ink: Theme.goldBright
+            glowColor: Theme.gold
         }
     }
 }
