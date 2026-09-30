@@ -5,7 +5,7 @@ and glowing runes. This is the Quickshell half of the **Grimoire setup**; the re
 fonts, Hyprland look, kitty, GTK/Qt, icons, cursors, wallpapers, Walker, the burn transition) lives in
 `~/.config/theme/setups/grimoire/`.
 
-Switch to it with `~/.config/theme/theme setup grimoire` (or the table of contents / Walker: Style →
+Switch to it with `~/.config/theme/theme setup grimoire` (or the arcana / Walker: Style →
 Setup). Run it on its own with `qs -c grimoire`; it reloads live (`touch shell.qml` if a change doesn't
 show).
 
@@ -14,7 +14,7 @@ show).
 | piece | what it is |
 |---|---|
 | **the bar** (`bar/`) | the head of the book: tooled leather over a gilt edge. The clasp in the corner opens the arcana (right-click: the codex). Chapters (workspaces) in Roman numerals, a violet silk ribbon hanging from the open one; it swings when you turn chapters. The running head (chapter and the page you're on) in the middle; on the right, whatever runs (scrying = recording, the scribe = dictation, the hourglass = focus timer), the tray, the vigil (stay awake), the letters, the moon and the hour. |
-| **the spine** (`spine/`) | down the left: raised bands with the reagents between them: the heat crystal (CPU temperature: arcane when cool, gold, then flame, red past 85°), two potion vials (CPU in a flask, memory in a tube, bubbling), the mana tube (the battery; "ley" on mains). The spine's title in blackletter, and at its foot **the candle**: your uptime. Lit at boot, it burns down over `Theme.candleHours`, wax runs down its sides and pools in the dish, the flame (a shader) never stops flickering, and it relights when you reboot. Hover anything for a note; click to open its chapter of the codex. |
+| **the spine** (`spine/`) | down the left: raised bands with the reagents between them: the heat crystal (CPU temperature: arcane when cool, gold, then flame, red past 85°), two potion vials (CPU in a flask, memory in a tube, bubbling), the mana tube (the battery; hidden on mains). Each shows its reading, no labels. The spine's title in blackletter, and at its foot **the candle**: your uptime. Lit at boot, it burns down over `Theme.candleHours`, the wax (a shader, lit through by the flame) runs down its sides and pools in the brass dish, the flame (a shader) never stops flickering, `qs ipc call debug candle <hours>` shows it at any age, and it relights when you reboot. Hover anything for a note; click to open its chapter of the codex. |
 | **the seal-book** (`launcher/Circle.qml`, `SealView.qml`, `seal.js`) | the app launcher, and nothing else on screen: what you have written in small italics at the top middle (the keys go to a hidden input), and in the middle the seal of the program it finds, drawn out in gold by an unseen pen (↑ ↓ step through other matches). After Witch Hat Atelier's glyphs, every part means something: the **sigil** in the middle is its element from its categories (fire: making; water: reaching others; wind: sound and sight; earth: the system; light: reading and learning), the **signs** round it are what it does, from its name and description (column: sends out; dispersion: spreads; convergence: gathers; levitation: holds lightly, i.e. tools; cycle: plays and repeats; ward: guards; weave: none of these), the **symmetry** grows with its name, the **tick band** has four ticks per letter, dots mark where signs meet, and the **rings** grow with use (a second inner ring after 5 summonings, a second outer ring after 20). The outer ring stays open by a hair; Enter closes it, the seal glows and the program comes. Its IPC is still `circle`. |
 | **the commonplace book** (`launcher/Clipboard.qml`) | clipboard history (SUPER + V): an open book, the entries on the left page (newest first, the kept ones first of all with a dab of wax), the chosen one written out on the right (code in the mono face, pictures tipped in with photo corners). Enter copies, Ctrl+P keeps, Ctrl+D strikes out, Ctrl+Shift+D twice clears. Same history as Walker (elephant). |
 | **a question** (`launcher/Prompt.qml`) | what `theme/prompt` asks (web apps, keybinds): a parchment leaf in a gilt-tooled leather frame, the question at its head, a line to write on, the choices numbered in red. |
@@ -33,12 +33,13 @@ shell.qml                what's on screen
 theme/Theme.qml          every colour, font, size and timing; the rune table (Theme.futhark), roman()
 widgets/                 the kit. Leather, Parchment, Cover (lit boards with gilt/blind tooling), PageBlock
                          (shader-drawn surfaces), Hinge (a gentle-perspective turn), Flourish, GoldRule,
-                         Initial (illuminated capital), Moon; for pages (ink on
-                         parchment): Section, KV (dotted leader), Btn, Seal (wax-seal switch), Slider,
+                         Initial (illuminated capital), Moon; for pages (ink on parchment): Section, KV (dotted leader), Btn, Seal (wax-seal switch), Slider,
                          Field, Row2, Meter, Charm, Caps, Body, Glyph
 bar/                     Bar, Chapters, Ribbon, Tray, TrayMenus
 spine/                   Spine, Candle, Crystal, Vial, Mana
-launcher/                Circle + CircleState (the index: app launcher), ContentsState (the arcana's state)
+launcher/                Circle + CircleState + SealView + seal.js (the seal-book: app launcher and the seal
+                         generator), ContentsState (the arcana's state), Clipboard (the commonplace book),
+                         Prompt (questions from theme/prompt), ClipboardState, PromptState
 arcana/                  Arcana (the spread), Card, Emblem (line-art emblems), Reading (a card's menu)
 menus/                   the slips for tray menus (Menus, MenuLayer, MenuPanel)
 codex/                   Codex, CodexState (the shared `deck` IPC), Contents, pages/*
@@ -49,9 +50,9 @@ utilities/               Overview, DictationOsd (the scribe), PolkitPrompt, Over
 services/                the shared logic (Net, Capture, Displays, Weather, Updates, Backlight…)
 shaders/                 paper.frag + leather.frag (every page and cover), cover.frag (lit book boards, brass),
                          pages.frag (page-block edges), flame.frag + wax.frag (the candle), veil.frag
-                         (the arcana), curl.frag (the codex's turning leaf);
-                         build.sh compiles them
-                         (and theme/transition/burn.frag) to .qsb with Qt's qsb
+                         (the arcana), curl.frag (the codex's turning leaves); build.sh compiles them (and
+                         theme/transition/burn.frag) to .qsb with Qt's qsb
+assets/                  none: every texture is drawn by a shader
 ```
 
 ## How it maps onto the other setups

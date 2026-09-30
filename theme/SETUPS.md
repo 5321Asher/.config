@@ -38,9 +38,9 @@ Existing setups, as references:
 | **sharp** | 2 (styled) | flat, square, quick; tabbed top bar; Cascadia | `quickshell/sharp/` (bar + side ControlPanel with tabs) | Walker | hyprlock | icons + cursors |
 | **observatory** | 3 (fully custom) | brass instruments, orbits, phosphor; JetBrains + Cormorant | `quickshell/observatory/` (horizon line, dome sundial, orbital workspaces, gauges, control deck) | own console + star-chart launcher | own Quickshell lock | gtk3/gtk4/qss/satty + icons + cursors |
 | **memphis** | 3 (fully custom) | Windows 98: grey bevels, Start button, Control Panel; W95FA + IBM VGA | `quickshell/memphis/` (taskbar, Start menu, shell windows: Control Panel + Properties sheets, Run…, Inbox, Media Player) | own Start menu + Run… launcher | own Quickshell lock (98 logon box) | gtk3/gtk4/qss/satty (98 widgets) + Chicago95 icons + pixel cursors |
-| **netrunner** | 3 (fully custom) | Cyberpunk: red/cyan on black glass, cut corners, HUD of real system state; Chakra Petch + JetBrains Mono + Noto CJK | `quickshell/netrunner/` (bar with ticker, window frames overlay, deck dashboard on special:deck, rig control panel) | own hub (quickhack list) + EXEC launcher | own Quickshell lock (pic-4 style) | gtk3/gtk4/qss/satty + folder icons + cursors |
+| **netrunner** | 3 (fully custom) | Cyberpunk: red/cyan on black glass, cut corners, HUD of real system state; Chakra Petch + JetBrains Mono + Noto CJK | `quickshell/netrunner/` (bar with ticker, window frames overlay, deck dashboard on special:deck, rig control panel) | BREACH PROTOCOL root menu (code matrix) + EXEC quickhack scanner + DATA SHARDS clipboard + INPUT REQUIRED prompt | own Quickshell lock (pic-4 style) | gtk3/gtk4/qss/satty + folder icons + cursors |
 | **disguise** | 3 (fully custom) | Windows 11: Mica/Acrylic, centred taskbar, Fluent controls; Segoe UI Variable + Segoe Fluent Icons + Cascadia | `quickshell/disguise/` (taskbar, flyout layer: Start, Search, Quick Settings, notification centre, Widgets, tray; Settings as a real FloatingWindow; Task View; toasts; OSD) | own Start menu + Search | own Quickshell lock (curtain + sign-in) | gtk3/gtk4/qss/satty (WinUI) + Win11 icons + cursors |
-| **grimoire** | 3 (fully custom) | a spellbook on a candlelit desk: oxblood leather, parchment, gold leaf, glowing runes; Cardo + UnifrakturMaguntia + Uncial Antiqua + Cinzel + IBM Plex Mono + Noto Runic | `quickshell/grimoire/` (bar with chapter ribbon, spine of reagents + the uptime candle, window flourishes, codex = open-book control panel, sealed-letter notifications, shaders for the flame) | own table of contents + summoning-circle launcher | own Quickshell lock (the closed book) | gtk3/gtk4/qss/satty + leather-bound folders + gilded cursors |
+| **grimoire** | 3 (fully custom) | a spellbook on a candlelit desk: oxblood leather, parchment, gold leaf, glowing runes; Cardo + UnifrakturMaguntia + Cormorant Garamond + Cinzel + IBM Plex Mono + Noto Runic | `quickshell/grimoire/` (bar with chapter ribbon, spine of reagents + the uptime candle, codex = open-book control panel with a page-curl shader, sealed-letter notifications, gilt flourishes on the focused window; paper, leather, lit covers, wax and the flame are shaders) | own arcana (tarot-spread root menu) + seal-book launcher (generated glyph per app) + commonplace book (clipboard) + prompt | own Quickshell lock (the closed book) | gtk3/gtk4/qss/satty + leather-bound folders + gilded cursors |
 
 ---
 
@@ -169,7 +169,7 @@ new shell (a setup never imports another setup's files) and write only the UI.
 
 ### 3.5 GNOME keyring (all setups)
 Session-wide, nothing per setup except the lock (above). Brave/Chromium use it via
-`~/.config/{brave,chromium}-flags.conf` (`--password-store=gnome-libsecret`); `gh` and git use it.
+`~/.config/{brave-origin-nightly,brave,chromium}-flags.conf` (`--password-store=gnome-libsecret`; Brave Origin Nightly reads its file as one argument: one flag, no comments); `gh` and git use it.
 The session autologs in on tty1, so the first app needing a secret after boot prompts once, or
 unlocking the lock screen unlocks it. Setting it up again on a new machine needs sudo (the user
 runs it): `pacman -S gnome-keyring seahorse`, two `pam_gnome_keyring` lines in `/etc/pam.d/login`
@@ -191,7 +191,9 @@ first (§7 step 0); check with `fc-list : family | grep -i <name>`.
 theme/setups/<id>/setup.toml             see §4.1
 theme/setups/<id>/themes/<theme>.toml    colour themes (§4.2), ≥ 1
 theme/setups/<id>/style.py               optional (levels 2–3): gtk3 gtk4 qss satty icons cursors (p, ctx)
-theme/setups/<id>/images/<theme>/        walker.* (Walker side image), fastfetch.* (logo); images/_default/ as fallback
+theme/setups/<id>/images/<theme>/        walker.* (Walker side image), fastfetch.* (logo; an animated GIF plays in kitty:
+                                         writers.py switches the logo to kitty-icat); images/_default/ as fallback.
+                                         Observatory's: setups/observatory/fetchclip.sh crops each theme's wallpaper video
 theme/setups/<id>/templates/fastfetch.jsonc   fastfetch layout ({{accent}}-style placeholders, see Sharp's)
 theme/setups/<id>/files/kitty/kitty.conf       ┐ symlinked into ~/.config on a switch
 theme/setups/<id>/files/hypr/look.lua          │ (gaps, borders, rounding, blur, shadows, animations,
@@ -217,7 +219,9 @@ lock = "pidof hyprlock || hyprlock"       # or "qs ipc call lock lock || pidof h
 [icons]            # theme        (fallback if style.py has no icons())
 [hyprland]
 border = "gradient"                        # accent -> second accent, "accent" (solid), or "palette" (the theme's activeBorder / inactiveBorder)
-[menus]            # optional (level 3): root = "…", apps = "…"  (shell commands; default: Walker)
+[menus]            # optional (level 3): root = "…", apps = "…", clipboard = "…"  (shell commands run by
+                   #   theme/menu; default: Walker), prompt = "qs ipc call prompt ask" (theme/prompt: the
+                   #   web-app / keybind scripts' questions; gets a request dir, see the script's header)
 [transition]
 style = "fade"                             # fade | wipe | iris | dissolve | glitch | burn
 duration = 700                             # ms
@@ -363,6 +367,8 @@ Check `git status` for generated files before committing (§4.4).
   `shell.qml`'s `Component.onCompleted`.
 - **An `Image` that fails to load never retries:** publish a file path only once the file exists
   (the lock screens' snapshots: `LockState.engage()` sets `shot` after grim finishes).
+- **Never start `qs -c <id> -d` for the setup that's active:** the copy takes the notification server when
+  the live shell restarts, and `qs list` doesn't show it (find it with `ps`, kill by PID).
 - **Test a new shell beside the live one** with `qs -c <id> -d` and `qs ipc -c <id> call …`; nothing
   renders while the session is locked (not even `grabToImage`), so wait for the user to come back.
 - **Cut (chamfered) window corners:** Hyprland's `rounding` with `rounding_power = 1.0` draws the
@@ -382,6 +388,31 @@ Check `git status` for generated files before committing (§4.4).
   with a capital (`W`, `H`); a Theme colour and a size can't share a name (`control`). `Column` and
   `Row` have a read-only `implicitHeight`. `ListView` sections need model roles: with a JS array
   model, put header rows into the array instead.
+- **Never bind a shown window's `screen` live to `Hyprland.focusedMonitor`:** when a full-screen panel lets
+  go of the keyboard on close, the focused monitor flickers, the window is moved, and its surface is
+  rebuilt mid-fade (it vanishes for a few frames). Follow the focused monitor only while hidden:
+  `Binding on screen { when: !root.visible; value: …; restoreMode: Binding.RestoreNone }` (Observatory's
+  Console, StarChart, Deck).
+- **Walker prompts:** scripts ask through `theme/prompt` (never `walker --dmenu` directly) and SUPER + V
+  runs `theme/menu clipboard`, so a level-3 setup can answer both in its own UI (Observatory:
+  `launcher/Prompt.qml`, `launcher/Clipboard.qml`).
+- **`z` only orders siblings:** a drop-down list that opens over later content must be reparented to
+  the surface's top item while open (Memphis `widgets/Combo.qml`), or the next group / button draws
+  over it.
+- **PipeWire node properties arrive only once tracked:** filter `media.class` *after* tracking every
+  candidate (`allStreams` / `allSources` in a `PwObjectTracker`), never track just the filtered list,
+  or it stays empty forever.
+- **`hl.monitor` rules only change what they state:** a rule without `disabled = false` doesn't turn a
+  disabled output back on, and one without `mirror = ""` doesn't end mirroring. `Displays.luaFor` (every
+  setup) states both, so reverting works.
+- **Don't touch a delegate after changing its model:** closing a list or updating the draft rebuilds the
+  delegates, and code after that line runs in a dead context (`root is not defined`, "not a function").
+  Do the work first, close last (Memphis Combo rows, Display arrangement boxes).
+- **UI tests with real clicks:** /dev/uinput is writable by the user; a uinput mouse for buttons plus
+  `hyprctl eval 'hl.dispatch(hl.dsp.cursor.move({ x = X, y = Y }))'` for position drives any shell UI.
+- **Confirm dialogs outlive their sheet:** the display "keep these settings?" countdown is its own
+  window (Memphis `MonitorKeep.qml`); inside the Properties sheet, OK closed it and the change
+  silently reverted.
 - **A PopupWindow isn't an Item:** inside one, `parent.hovered` is undefined; give the target an id.
 - **Laptop brightness without root:** logind's `SetBrightness` on the session
   (`busctl call org.freedesktop.login1 /org/freedesktop/login1/session/auto org.freedesktop.login1.Session SetBrightness ssu backlight <dev> <raw>`)
@@ -397,9 +428,64 @@ Check `git status` for generated files before committing (§4.4).
 - **Shaders in Quickshell:** Qt 6 needs compiled `.qsb` files for `ShaderEffect` (Vulkan-style GLSL 440 in,
   `/usr/lib/qt6/bin/qsb --glsl "100es,120,150" --hlsl 50 --msl 12` out). Grimoire's `shaders/build.sh`
   does it (and pastes a shared `noise.glsl` in). Properties on the ShaderEffect map to the uniform block by
-  name (`color` → `vec4`).
+  name (`color` → `vec4`, `size`/`point` → `vec2`). A `.qsb` that was missing when first requested stays
+  failed for the process's life (live reload doesn't retry): build first, or `theme shell` after.
 - **MultiEffect masks come out blocky** when the mask is a small `Shape` layer: to clip a fill to a shape,
   put a copy of the shape (filled) inside a rectangular `clip: true` window instead (Grimoire's vials).
 - **Names that clash, again:** a directory type shadows nothing: `widgets/Seal.qml` imported beside a local
   `Seal.qml` wins and the local one is unreachable (name them apart); a property called `left` is FINAL on
   Item; a `PathLine` can't reach its `Shape` through `parent` (use the Shape's id).
+- **Don't map and unmap a full-screen flyout layer per open:** mapping it made Hyprland re-send the pointer to
+  the taskbar under it, and the next click there was lost (so a taskbar button couldn't close its own
+  flyout). Keep the layer mapped and give it no input while closed: `mask: Region { item: <a 0 × 0 Item> }`
+  (an empty `Region {}` still takes every click). Disguise's FlyoutLayer.
+- **Alt + Tab order:** a toplevel's `lastIpcObject.focusHistoryID` is a cached query and often stale; keep
+  your own most-recently-used list from `Hyprland.activeToplevel` (Disguise's AltTabState).
+- **Windows that draw their own title bar** (a Quickshell FloatingWindow) need `["hyprbars:no_bar"] = true`
+  in their window rule in a setup with hyprbars; a rule only reaches an open window after `hyprctl reload`.
+  Their own caption buttons must run the same commands as hyprbars' (Disguise: `scripts/caption.sh`),
+  not `float toggle`, or maximise tiles them behind a maximised window.
+- **GTK 4 apps read the user `gtk-4.0/gtk.css` above their own CSS** (Satty's overrides.css too): restyling
+  such an app means adding its rules to the setup's `gtk4()` as well (Disguise: `snipping()`).
+- **Never load a Hyprland plugin from inside the Lua config, and never unload one live** (hyprbars):
+  its init calls `HyprlandAPI::reloadConfig()`, so a config that loads it when it "isn't loaded yet"
+  re-runs itself while the plugin is still initialising, loads it again, and recurses until Lua's stack
+  overflows: Hyprland segfaulted on every start (2026-09-29) and start-hyprland fell back to
+  `--safe-mode` (a bare config that ignores `hyprctl reload`; leave it with `hyprctl dispatch
+  'hl.dsp.exit()'`, the autologin starts Hyprland normally). `theme/titlebars.sh` loads it from outside
+  (at Hyprland's start and on a setup switch); install a rebuilt one with cp to a temp name + mv, and try
+  a new build in a **nested Hyprland** first (`Hyprland -c test.lua` inside the session, commands with
+  `HYPRLAND_INSTANCE_SIGNATURE=<its dir>` in front): if it crashes, only that window dies.
+- **Disguise's maximise is Windows', not Hyprland's:** Hyprland keeps one maximised window per workspace,
+  so `scripts/caption.sh` makes a maximised window a floating one filling the work area, tagged
+  `disguise-max` (square corners via a tag rule); apps' own maximise requests are converted (WinKeys
+  runs `caption.sh adopt` on each fullscreen event); focusing a window also raises it (`alter_zorder`).
+- **A HoverHandler, not a MouseArea, to tell whether the pointer is over a popup:** a MouseArea behind
+  other hover-enabled items never sees the pointer over them (the taskbar previews closed on arrival).
+- **A hidden scratchpad keeps keyboard focus:** after SUPER+D hides `special:magic` over an empty workspace,
+  Hyprland leaves focus on the hidden window, and a click on any exclusive-keyboard layer (every setup's
+  menus) refocuses it, which reopens the scratchpad. `hypr/binds.lua`'s `toggle_scratchpad` moves focus off
+  it after hiding (a hop to another monitor and back, or through an empty workspace on one monitor).
+- **Qt's `Rotation { axis.y: 1 }` has a very strong perspective** (a turning page or cover balloons to about
+  twice its size edge-on). Grimoire's `widgets/Hinge.qml` is a Matrix4x4 with a gentle one (distance 3200).
+- **Timed animations skip when a frame stalls:** a NumberAnimation that starts as a window maps or as a heavy
+  Loader builds jumps past most of itself. Step it in a `FrameAnimation` with `frameTime` capped at 1/30 s
+  (Grimoire's codex opening and page turn).
+- **An id called `text` breaks a `StdioCollector`'s handler:** inside `onStreamFinished`, `text` resolves to
+  the item with that id before the collector's own property ("Property 'split' of object QQuickText is not a
+  function"). Don't give items ids that match properties used in nearby handlers.
+- **`property string x: Other.y` is a live binding until something assigns to x.** Code that "remembers the
+  previous value" this way works only after the first assignment breaks it (and fails again after every live
+  reload). For a remembered value, declare it plain and set it in `Component.onCompleted` (Grimoire's codex
+  `showing` / `fromIdx`).
+- **A hidden item's own shader layers don't render into a ShaderEffect source:** use a visible item behind a
+  `ShaderEffectSource { hideSource: true }` instead (Grimoire's codex title leaves).
+- **Testing hover:** a warped cursor (`hl.dsp.cursor.move`) doesn't count as pointer motion; nudge it with a
+  relative uinput mouse afterwards (no clicks needed).
+- **Never keep the hovered row inside the list model:** writing the selection into the array a ListView shows
+  rebuilds its delegates; the one under the pointer is recreated, fires `entered` again, writes again, and the
+  list locks up (Grimoire's arcana readings; the selection now lives in `ContentsState.row`). Test menus with a
+  real pointer (uinput), not only IPC.
+- **Live reload can silently stop** after many quick edits (the log shows "Configuration Loaded" but old code
+  runs). If a change doesn't show, `touch shell.qml`, or `theme shell`.
+- **Live reload doesn't pick up an imported `.js` file** (`import "seal.js" as X`): after editing one, `theme shell`.
