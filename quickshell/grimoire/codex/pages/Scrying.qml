@@ -95,7 +95,7 @@ Column {
                     Component.onCompleted: place()
                     width: size.w * canvas.k
                     height: size.h * canvas.k
-                    z: drag.drag.active ? 10 : 1
+                    z: dragArea.drag.active ? 10 : 1
                     Rectangle { anchors.fill: parent; radius: 2; color: box.sel ? Theme.alpha(Theme.gold, 0.35) : Theme.alpha(Theme.page, 0.9)
                                 border.width: box.sel ? 2 : 1; border.color: box.sel ? Theme.goldDeep : Theme.inkDim }
                     Column {
@@ -104,14 +104,15 @@ Column {
                         Body { anchors.horizontalCenter: parent.horizontalCenter; text: box.modelData.width + "×" + box.modelData.height; italic: true; color: Theme.inkDim; font.pixelSize: 12 }
                     }
                     MouseArea {
-                        id: drag
+                        id: dragArea
                         anchors.fill: parent
                         drag.target: box
                         drag.threshold: 4
                         cursorShape: Qt.OpenHandCursor
                         onPressed: root.selected = box.modelData.name
-                        onReleased: {
-                            if (!drag.active) return;
+                        // commit when the drag ends: by `released`, drag.active is already false,
+                        // so a check there threw every move away
+                        drag.onActiveChanged: if (!drag.active) {
                             let nx = canvas.bounds.x + (box.x - canvas.ox) / canvas.k;
                             let ny = canvas.bounds.y + (box.y - canvas.oy) / canvas.k;
                             const snap = 20 / canvas.k, me = box.size;
