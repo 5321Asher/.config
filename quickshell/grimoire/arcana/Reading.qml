@@ -27,9 +27,22 @@ Item {
         layer.enabled: true
         layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 48 }
     }
-    Leather { anchors.fill: parent; radius: 14; tooled: false; color: Theme.mix(Theme.leatherDark, "#000000", 0.35); seed: 0.29 }
-    Rectangle { anchors.fill: parent; radius: 14; color: "transparent"; border.width: 1; border.color: Theme.alpha(Theme.goldDeep, 0.9) }
-    Rectangle { anchors.fill: parent; anchors.margins: 9; radius: 8; color: "transparent"; border.width: 1; border.color: Theme.alpha(Theme.gold, 0.8) }
+    // the card's back: the same leather and gilt as its face
+    Cover {
+        id: back
+        anchors.fill: parent
+        radius: 14
+        bevel: 10
+        wear: 0.5
+        seed: 0.29
+        color: Theme.leather
+        light: Qt.vector3d(width * 0.25, -height * 0.2, 700)
+        lightPower: 1.2
+        ambient: 0.6
+        lightColor: Theme.mix(Theme.flame, "#ffffff", 0.55)
+        Rectangle { anchors.fill: parent; anchors.margins: 9; radius: 8; color: "transparent"; border.width: 1.3; border.color: back.gilt }
+        Rectangle { anchors.fill: parent; anchors.margins: 13; radius: 6; color: "transparent"; border.width: 0.8; border.color: back.gilt }
+    }
 
     Item {
         anchors.fill: parent

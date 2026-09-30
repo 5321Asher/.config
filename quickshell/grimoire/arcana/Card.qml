@@ -3,9 +3,9 @@ import QtQuick.Effects
 import "../theme"
 import "../widgets"
 
-// One card of the arcana, face up: black leather, and stamped on it in gold foil (shaders/foil.frag)
-// a double rule, the numeral, the emblem in its ring, the name and a line under it. The foil catches
-// the light where the pointer is; the chosen card catches it most.
+// One card of the arcana, face up: the theme's leather over a board, and pressed into it in gilt a
+// double rule, the numeral, the emblem in its ring, the name and a line under it. The pointer is
+// the light, so the gilt catches it as you move; the chosen card is lit most.
 Item {
     id: root
 
@@ -26,39 +26,34 @@ Item {
         layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 32 }
     }
 
-    Leather {
+    // ---------------------------------------------------------------- the card: lit leather, tooled
+    // (widgets/Cover.qml: the theme's leather over a board with rounded, rubbed edges, everything on
+    // it pressed in gilt). The pointer is the light: the gold catches it as you move across the card.
+    Cover {
+        id: face
         anchors.fill: parent
         radius: 11
-        tooled: false
-        color: Theme.mix(Theme.leatherDark, "#000000", 0.35)
+        bevel: 9
+        wear: 0.55
         seed: 0.13 + root.x * 0.001
-    }
-    // a warm edge, as if lit from the candle
-    Rectangle {
-        anchors.fill: parent
-        radius: 11
-        color: "transparent"
-        border.width: 1
-        border.color: Theme.alpha(Theme.goldDeep, root.chosen ? 0.9 : 0.55)
-    }
-
-    // ---------------------------------------------------------------- the gold, as a stencil
+        color: Theme.leather
+        light: Qt.vector3d(root.light.x * width, root.light.y * height, root.chosen ? 260 : 520)
+        lightPower: root.chosen ? 1.5 : 1.1
+        ambient: root.chosen ? 0.7 : 0.55
+        lightColor: Theme.mix(Theme.flame, "#ffffff", 0.55)
     Item {
         id: art
         anchors.fill: parent
-        visible: false
-        layer.enabled: true
-        layer.samples: 4
 
-        Rectangle { anchors.fill: parent; anchors.margins: 9; radius: 6; color: "transparent"; border.width: 1.3; border.color: "white" }
-        Rectangle { anchors.fill: parent; anchors.margins: 13; radius: 4; color: "transparent"; border.width: 0.8; border.color: "white" }
+        Rectangle { anchors.fill: parent; anchors.margins: 9; radius: 6; color: "transparent"; border.width: 1.3; border.color: face.gilt }
+        Rectangle { anchors.fill: parent; anchors.margins: 13; radius: 4; color: "transparent"; border.width: 0.8; border.color: face.gilt }
         Repeater {
             model: [[0, 0], [1, 0], [0, 1], [1, 1]]
             Text {
                 required property var modelData
                 x: modelData[0] ? art.width - 13 - width / 2 : 13 - width / 2
                 y: modelData[1] ? art.height - 13 - height / 2 : 13 - height / 2
-                text: "◆"; color: "white"; font.pixelSize: 8
+                text: "◆"; color: face.gilt; font.pixelSize: 8
             }
         }
 
@@ -66,7 +61,7 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             y: art.height * 0.075
             text: root.card.numeral ?? ""
-            color: "white"
+            color: face.gilt
             font.family: Theme.caps
             font.pixelSize: Math.round(art.width * 0.085)
             font.letterSpacing: 3
@@ -79,14 +74,15 @@ Item {
             height: width
             anchors.horizontalCenter: parent.horizontalCenter
             y: art.height * 0.2
-            Rectangle { anchors.fill: parent; radius: width / 2; color: "transparent"; border.width: 1.1; border.color: "white" }
-            Rectangle { anchors.fill: parent; anchors.margins: 5; radius: width / 2; color: "transparent"; border.width: 0.6; border.color: "white" }
+            Rectangle { anchors.fill: parent; radius: width / 2; color: "transparent"; border.width: 1.1; border.color: face.gilt }
+            Rectangle { anchors.fill: parent; anchors.margins: 5; radius: width / 2; color: "transparent"; border.width: 0.6; border.color: face.gilt }
             Emblem {
                 anchors.centerIn: parent
                 width: parent.width * 0.64
                 height: width
                 kind: root.card.emblem ?? "sigil"
-                stroke: 1.5
+                stroke: 1.8
+                color: face.gilt
             }
         }
 
@@ -98,7 +94,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             text: root.card.title ?? ""
-            color: "white"
+            color: face.gilt
             font.family: Theme.caps
             font.pixelSize: Math.round(art.width * 0.1)
             font.letterSpacing: 2
@@ -113,24 +109,19 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             text: root.card.sub_text ?? ""
-            color: "white"
-            opacity: 0.75
+            color: face.gilt
             font.family: Theme.body
             font.italic: true
             font.pixelSize: Math.round(art.width * 0.068)
         }
     }
-
-    // ---------------------------------------------------------------- stamped in foil
-    ShaderEffect {
+    }
+    // a hairline of shadow round the edge, lifting it off the desk
+    Rectangle {
         anchors.fill: parent
-        property var source: art
-        property point light: root.light
-        property real shine: root.chosen ? 1 : 0.25
-        property color gold: Theme.gold
-        property color goldBright: Theme.goldBright
-        property color goldDeep: Theme.goldDeep
-        fragmentShader: Theme.shaders + "foil.frag.qsb"
-        Behavior on shine { NumberAnimation { duration: Theme.normal } }
+        radius: 11
+        color: "transparent"
+        border.width: 1
+        border.color: Qt.alpha("#000000", 0.45)
     }
 }

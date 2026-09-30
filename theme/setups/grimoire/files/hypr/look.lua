@@ -78,12 +78,12 @@ hl.animation({ leaf = "layers", enabled = true, speed = 3, bezier = "arcane" })
 hl.animation({ leaf = "zoomFactor", enabled = true, speed = 5, bezier = "arcane" })
 
 -- Grimoire's panels (namespace grimoire-*): the bar and the spine are tooled leather (a little
--- see-through, blurred behind), and the codex, the whole book, the arcana, the index (launcher) and
--- the polkit prompt blur the desk behind them.
+-- see-through, blurred behind), and the codex, the whole book, the arcana, the summoning circle, the
+-- commonplace book (clipboard), questions and the polkit prompt blur the desk behind them.
 -- Quickshell does all their motion itself.
 hl.layer_rule({
   name         = "grimoire-blur",
-  match        = { namespace = "^grimoire-(bar|spine|codex|overview|polkit|arcana|circle)$" },
+  match        = { namespace = "^grimoire-(bar|spine|codex|overview|polkit|arcana|circle|clipboard|prompt)$" },
   blur         = true,
   ignore_alpha = 0.2,
 })

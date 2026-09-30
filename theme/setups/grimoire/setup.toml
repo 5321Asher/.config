@@ -40,6 +40,8 @@ border = "palette"
 [menus]
 root = "qs ipc call contents toggle"
 apps = "qs ipc call circle toggle"
+clipboard = "qs ipc call clipboard toggle"
+prompt = "qs ipc call prompt ask"
 
 # How switching to this setup, or between its themes, is revealed: fade | wipe | iris | dissolve |
 # glitch | burn (the old page burns away from a scatter of embers, its edges glowing in the accent)

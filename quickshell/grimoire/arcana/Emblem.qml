@@ -9,6 +9,7 @@ Item {
 
     property string kind: "sigil"
     property real stroke: 1.6
+    property color color: "white"
     implicitWidth: 100
     implicitHeight: 100
 
@@ -80,7 +81,7 @@ Item {
         transformOrigin: Item.TopLeft
         preferredRendererType: Shape.CurveRenderer
         ShapePath {
-            strokeColor: "white"
+            strokeColor: root.color
             strokeWidth: root.stroke
             fillColor: "transparent"
             capStyle: ShapePath.RoundCap
@@ -89,7 +90,7 @@ Item {
         }
         ShapePath {
             strokeColor: "transparent"
-            fillColor: "white"
+            fillColor: root.color
             PathSvg { path: root.art[1] }
         }
     }

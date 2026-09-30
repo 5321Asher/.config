@@ -17,14 +17,14 @@ import "services"
 // Grimoire: the desktop as a wizard's spellbook on a candlelit desk. Structure and tweaking notes: README.md
 ShellRoot {
     // Singletons that only answer IPC are created on first use: use them now
-    Component.onCompleted: { ContentsState.toString(); CircleState.open; CodexState.open; TrayMenus.openers; OverviewState.open; Debug.toString(); Updates.count; }
+    Component.onCompleted: { ContentsState.toString(); CircleState.open; CodexState.open; TrayMenus.openers; OverviewState.open; Debug.toString(); Updates.count; ClipboardState.open; PromptState.open; }
 
     // the head of the book (bar) and its spine (reagents and the candle), on every screen
     Variants { model: Quickshell.screens; Bar {} }
     Variants { model: Quickshell.screens; Spine {} }
 
-    // gilt flourishes on the focused window's corners: off (Hyprland's gold rule is enough)
-    // Variants { model: Quickshell.screens; Frames {} }
+    // gilt flourishes on the focused window's corners
+    Variants { model: Quickshell.screens; Frames {} }
 
     // the codex (control panel): qs ipc call deck open <page>
     Codex {}
@@ -42,6 +42,10 @@ ShellRoot {
 
     // the closed book (lock): qs ipc call lock lock (or preview)
     Lock {}
+
+    // the commonplace book (clipboard, SUPER + V) and questions from theme/prompt
+    Clipboard {}
+    Prompt {}
 
     // the arcana, the root menu (SUPER + Space): qs ipc call contents toggle
     Arcana {}

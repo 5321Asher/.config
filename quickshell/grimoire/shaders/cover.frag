@@ -103,7 +103,7 @@ void main() {
     lit += mix(specL, specG, shiny) * fall * mix(lightColor.rgb, goldBright.rgb, shiny);
     lit += shiny * goldBright.rgb * pow(top, 30.0) * 0.12 * ambient;
     // tooling's walls in shadow
-    lit *= 1.0 - (t.g * 0.25);
+    lit *= 1.0 - (t.g * 0.4);
 
     fragColor = vec4(lit * alpha, alpha) * qt_Opacity;
 }
