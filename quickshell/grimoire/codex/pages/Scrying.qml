@@ -5,7 +5,8 @@ import "../../widgets"
 import "../../services"
 
 // VIII. Scrying: the screens laid out on the page (drag to move them, edges snap), then the chosen
-// one's resolution, refresh, scale, turning and light. Changes wait for "apply"; after it you have
+// one's resolution, refresh, scale, turning and light. Changes wait for "apply" (a bar at the top of the
+// page and a row at its foot, whenever something is changed); after it you have
 // Displays.confirmSeconds to keep them or they revert.
 Column {
     id: root
@@ -21,6 +22,18 @@ Column {
     function ddcIndex(m) {
         if (!m) return -1;
         return Brightness.displays.findIndex(d => d.name && (m.model.includes(d.name) || m.description.includes(d.name)));
+    }
+
+    // changes waiting: apply them (also at the foot of the page)
+    Item {
+        visible: Displays.dirty && !Displays.confirming
+        width: parent.width
+        height: 70
+        Rectangle { anchors.fill: parent; radius: 3; color: Theme.alpha(Theme.gold, 0.14); border.width: 1; border.color: Theme.alpha(Theme.goldDeep, 0.8) }
+        Body { x: 14; y: 10; text: "The screens are changed on the page, not yet in the world."; strong: true }
+        Row { x: 14; y: 36; spacing: 8
+              Btn { text: "apply"; primary: true; onClicked: Displays.apply() }
+              Btn { text: "never mind"; onClicked: Displays.resetDraft() } }
     }
 
     // keep them?
