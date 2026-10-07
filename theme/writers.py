@@ -13,6 +13,10 @@ Used by ~/.config/theme/theme, which calls configure(setup) first. Writes:
   ~/.config/zed/themes/wallpaper.json               (Zed, reloaded live)
   ~/.config/nvim/wallpaper.json                     (tokyonight colours, running Neovims reloaded)
   ~/.config/qBittorrent/themes/wallpaper/           (qBittorrent UI theme, read at launch)
+  ~/.config/qt5ct/ (palette, qss, conf) + vlc.desktop (VLC 3 = Qt 5, started with qt5ct; read at launch)
+  ~/.config/kdeglobals + color-schemes/Wallpaper.colors (KDE apps: Okular; read at launch)
+  ~/.config/okularpartrc                             (Okular page backdrop + "Change Colors" colours)
+  ~/.local/share/TauonMusicBox/theme/Wallpaper.ttheme (+ tauon.conf theme/fonts when it isn't running)
   <vault>/.obsidian/snippets/wallpaper.css           (every Obsidian vault, reloaded live)
   ~/.config/walker/themes/<setup>/side.jpg          (symlink to the theme's Walker image)
   ~/.config/fastfetch/config.jsonc                  (from <setup>/templates/fastfetch.jsonc: colours + logo)
@@ -557,16 +561,19 @@ def write_qt(p, style=None, ctx=None):
             p["bg"], p["bg"], p["bgDark"], p["fg"], p["dim"], p["accent"]])
 
     head = HEAD
-    write(f"{HOME}/.config/qt6ct/colors/wallpaper.conf", f"""# {head}
+    for ct, drop in (("qt6ct", 0), ("qt5ct", 1)):     # Qt 5 has no Accent role: qt5ct wants exactly 21
+        def scheme(text):
+            return ", ".join(roles(text).split(", ")[:22 - drop])
+        write(f"{HOME}/.config/{ct}/colors/wallpaper.conf", f"""# {head}
 [ColorScheme]
-active_colors={roles(p["fg"])}
-inactive_colors={roles(p["fg"])}
-disabled_colors={roles(p["dim"])}
+active_colors={scheme(p["fg"])}
+inactive_colors={scheme(p["fg"])}
+disabled_colors={scheme(p["dim"])}
 """)
 
     if style and hasattr(style, "qss"):
         qss = f"/* {head} */\n" + style.qss(p, ctx)
-        write(f"{HOME}/.config/qt6ct/qss/wallpaper.qss", qss)
+        write_qss(qss)
         return qss
     qss = f"""/* {head} */
 /* Flat and sharp like the Quickshell bar; the palette does the rest */
@@ -640,8 +647,23 @@ QSlider::handle:horizontal {{ background: {p["fg"]}; width: 10px; margin: -6px 0
 QStatusBar {{ background: {p["bg"]}; color: {p["dim"]}; border-top: 1px solid {p["border"]}; }}
 QSplitter::handle {{ background: {p["border"]}; }}
 """
-    write(f"{HOME}/.config/qt6ct/qss/wallpaper.qss", qss)
+    write_qss(qss)
     return qss
+
+
+def write_qss(qss):
+    """The stylesheet for Qt 6 (qt6ct) and Qt 5 (qt5ct: VLC) apps alike."""
+    for ct in ("qt6ct", "qt5ct"):
+        write(f"{HOME}/.config/{ct}/qss/wallpaper.qss", qss)
+    write_qt5ct()
+
+
+def write_qt5ct():
+    """qt5ct.conf points at the generated palette + stylesheet (like qt6ct.conf, set once by hand)."""
+    path = f"{HOME}/.config/qt5ct/qt5ct.conf"
+    set_ini(path, "Appearance", {"color_scheme_path": f"{HOME}/.config/qt5ct/colors/wallpaper.conf",
+                                 "custom_palette": "true", "style": "Fusion", "standard_dialogs": "default"})
+    set_ini(path, "Interface", {"stylesheets": f"{HOME}/.config/qt5ct/qss/wallpaper.qss"})
 
 
 def write_qbittorrent(p, qss):
@@ -683,6 +705,207 @@ def write_qbittorrent(p, qss):
     write(f"{theme}/config.json", json.dumps(
         {"colors": colors, "colors.dark": colors, "colors.light": colors}, indent=2) + "\n")
     write(f"{theme}/stylesheet.qss", qss)
+
+
+def kde_rgb(h):
+    return ",".join(str(v) for v in rgb(h))
+
+
+def contrast(a, b):
+    """WCAG contrast ratio of two hex colours."""
+    def lum(h):
+        f = lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4  # noqa: E731
+        r, g, b_ = (f(v / 255) for v in rgb(h))
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b_
+    la, lb = sorted((lum(a), lum(b)))
+    return (lb + 0.05) / (la + 0.05)
+
+
+def legible(c, fg, *grounds, ratio=3.0):
+    """c, pulled toward fg until it reads on every ground (Memphis's accent is a selection colour that
+    barely shows as text on its grey, and its second accent is the grey itself)."""
+    for i in range(11):
+        out = mix(c, fg, i / 10)
+        if all(contrast(out, g) >= ratio for g in grounds):
+            return out
+    return fg
+
+
+def write_kde(p, appearance):
+    """KDE colour scheme "Wallpaper" (kdeglobals + color-schemes/): KDE apps (Okular) colour their own
+    widgets (sidebars, view backgrounds, selections, message bars) from it, not from the Qt palette.
+    Read at launch. Other kdeglobals groups (fonts, icons, user settings) are left alone.
+    """
+    def group(bg, alt, fg, inactive=None, focus=None):
+        return {
+            "BackgroundNormal": kde_rgb(bg), "BackgroundAlternate": kde_rgb(alt),
+            "ForegroundNormal": kde_rgb(fg), "ForegroundInactive": kde_rgb(inactive or p["dim"]),
+            "ForegroundActive": kde_rgb(p["accent"]), "ForegroundLink": kde_rgb(p["accent"]),
+            "ForegroundVisited": kde_rgb(p["purple"]), "ForegroundNegative": kde_rgb(p["danger"]),
+            "ForegroundNeutral": kde_rgb(p["warn"]), "ForegroundPositive": kde_rgb(p["green"]),
+            "DecorationFocus": kde_rgb(focus or p["accent"]), "DecorationHover": kde_rgb(p["hover"]),
+        }
+    sets = {
+        "Colors:View": group(p["bgDark"], p["bg"], p["fg"]) | {
+            k: kde_rgb(legible(p[c], p["fg"], p["bgDark"])) for k, c in
+            (("ForegroundActive", "accent"), ("ForegroundLink", "accent"), ("ForegroundVisited", "purple"))},
+        "Colors:Window": group(p["bg"], p["surface"], p["fg"]),
+        "Colors:Button": group(p["surface"], p["hover"], p["fg"]),
+        "Colors:Selection": group(p["accentMuted"], p["accent"], p["fg"], inactive=p["fg"]),
+        "Colors:Tooltip": group(p["bgDark"], p["bg"], p["fg"]),
+        "Colors:Complementary": group(p["bgDark"], p["surface"], p["fg"]),
+        "Colors:Header": group(p["bg"], p["surface"], p["fg"]),
+        "Colors:Header][Inactive": group(p["bg"], p["surface"], p["dim"]),
+    }
+    wm = {"activeBackground": kde_rgb(p["bg"]), "activeForeground": kde_rgb(p["fg"]),
+          "inactiveBackground": kde_rgb(p["bgDark"]), "inactiveForeground": kde_rgb(p["dim"]),
+          "activeBlend": kde_rgb(p["accent"]), "inactiveBlend": kde_rgb(p["border"])}
+    general = {"ColorScheme": "Wallpaper", "Name": "Wallpaper", "shadeSortColumn": "false"}
+
+    text = f"# {HEAD}\n[General]\n" + "".join(f"{k}={v}\n" for k, v in general.items())
+    for name, vals in sets.items():
+        text += f"\n[{name}]\n" + "".join(f"{k}={v}\n" for k, v in vals.items())
+    text += "\n[WM]\n" + "".join(f"{k}={v}\n" for k, v in wm.items())
+    write(f"{HOME}/.local/share/color-schemes/Wallpaper.colors", text)
+
+    path = f"{HOME}/.config/kdeglobals"
+    set_ini(path, "General", general)
+    for name, vals in sets.items():
+        set_ini(path, name, vals)
+    set_ini(path, "WM", wm)
+    set_ini(path, "KDE", {"contrast": "4"})
+
+
+def write_okular(p):
+    """Okular: the grey around the pages, and the colours its "Change Colors" (View menu) recolours
+    pages to. Whether pages are recoloured stays the user's choice. Read at launch."""
+    path = f"{HOME}/.config/okularpartrc"
+    # (groups as in Okular's okular.kcfg / the core's: PaperColor is the "Paper color" mode's)
+    set_ini(path, "PageView", {"UseCustomBackgroundColor": "true", "BackgroundColor": kde_rgb(p["bgDark"])})
+    set_ini(path, "Dlg Accessibility", {"RecolorBackground": kde_rgb(p["bg"]), "RecolorForeground": kde_rgb(p["fg"])})
+    set_ini(path, "Document", {"PaperColor": kde_rgb(p["bg"])})
+
+
+def write_vlc_launcher():
+    """VLC 3 is a Qt 5 app, and Qt 5 has no qt6ct plugin: its launcher (a copy of the system
+    vlc.desktop, refreshed so package updates carry over) starts it with qt5ct instead."""
+    src, dst = "/usr/share/applications/vlc.desktop", f"{HOME}/.local/share/applications/vlc.desktop"
+    if not (os.path.isfile(src) and os.path.isfile("/usr/lib/qt/plugins/platformthemes/libqt5ct.so")):
+        return
+    with open(src) as f:
+        text = f.read()
+    text = re.sub(r"^(Exec=)(?!env )", r"\1env QT_QPA_PLATFORMTHEME=qt5ct ", text, flags=re.M)
+    text = f"# {HEAD.split(' from the ')[0]}: the system launcher with Qt 5 theming (qt5ct)\n" + text
+    try:
+        with open(dst) as f:
+            if f.read() == text:
+                return
+    except OSError:
+        pass
+    write(dst, text)
+    run("update-desktop-database", f"{HOME}/.local/share/applications")
+
+
+def tauon_running():
+    try:
+        with open(f"{HOME}/.local/share/TauonMusicBox/program.pid") as f:
+            pid = int(f.read().strip() or 0)
+        return pid > 0 and os.path.exists(f"/proc/{pid}") and "tauon" in open(f"/proc/{pid}/cmdline").read()
+    except (OSError, ValueError):
+        return False
+
+
+def write_tauon(p, fonts, appearance):
+    """Tauon Music Box: theme file "Wallpaper" (its own SDL drawing, no Qt/GTK), selected once in
+    tauon.conf with the setup's sans font. Read at launch. Tauon rewrites tauon.conf when it quits,
+    so the conf is only touched while it isn't running (the theme file always is: same name)."""
+    base = f"{HOME}/.local/share/TauonMusicBox"
+    if not os.path.isdir(base):
+        return
+    fg, list_bg, panel = p["fg"], p["bgDark"], p["bg"]
+    a = legible(p["accent"], fg, list_bg, panel)
+    t = legible(p["purple"], fg, list_bg, panel)
+    dim = legible(p["dim"], fg, list_bg, panel, ratio=2.5)
+    playing = mix(a, fg, 0.3)
+
+    def c(h, alpha=None):
+        return kde_rgb(h) + (f",{alpha}" if alpha is not None else "")
+    rows = [
+        # (labels are matched by substring in Tauon's loader: keep these exact names)
+        ("Backgrounds", [(panel, "player background"), (list_bg, "playlist panel"),
+                         (panel, "side panel"), (panel, "lyrics panel"),
+                         (panel, "bottom panel"), (list_bg, "gallery background"),
+                         (panel, "queue panel"), (panel, "playlist box bg")]),
+        ("Playlist", [(fg, "track line"), (dim, "track time"), (dim, "track index"),
+                      (mix(fg, dim, 0.5), "track artist"), (mix(fg, dim, 0.3), "album line"),
+                      (a, "track playing"), (a, "index playing"), (playing, "artist playing"),
+                      (playing, "album playing"), (a, "time playing"),
+                      (mix(list_bg, p["danger"], 0.6), "track missing"),
+                      (t, "fav line"), (t, "star line playing"), (p["border"], "folder line"),
+                      (mix(fg, a, 0.35), "folder title"),
+                      (c(a, 34), "playing highlight"), (c(fg, 18), "select highlight"),
+                      (a, "gallery highlight"),
+                      (panel, "column bar background"), (dim, "column bar text"), (p["border"], "column grip")]),
+        ("Bottom panel", [(dim, "buttons off"), (fg, "buttons over"), (a, "buttons active"),
+                          (a, "playing time"), (a, "seek bar"), (p["hover"], "seek bg"),
+                          (mix(a, t, 0.5), "volume bar"), (p["hover"], "volume bg"),
+                          (p["border"], "scroll bar"), (dim, "mode off"), (fg, "mode over"),
+                          (a, "mode on"), (fg, "bottom title")]),
+        ("Menu", [(p["surface"], "menu background"), (p["accentMuted"], "menu highlight"),
+                  (p["border"], "menu border"), (fg, "menu text"), (dim, "menu disable text"),
+                  (dim, "menu icons"), (dim, "menu button normal"), (fg, "menu button hover"),
+                  (dim, "corner button off"), (a, "corner button on")]),
+        ("Top panel", [(p["accentText"], "tab active line"), (dim, "tab line"),
+                       (panel, "tab background"), (p["hover"], "tab over"),
+                       (p["accent"], "tab active background"), (a, "music vis"), (panel, "visualizer bg"),
+                       (panel, "window buttons background"), (p["hover"], "window buttons on"),
+                       (dim, "window buttons icon off"), (fg, "window buttons icon over"),
+                       (p["danger"], "window button x on")]),
+        ("Side panel", [(fg, "title info"), (dim, "extra info"), (p["border"], "art border"),
+                        (dim, "lyrics text"), (fg, "active lyric")]),
+        ("Dialog box", [(p["surface"], "box background"), (p["border"], "box border"),
+                        (a, "box title text"), (dim, "box text label"), (fg, "box text normal"),
+                        (dim, "box sub text"), (fg, "box input text"), (p["border"], "box text border"),
+                        (fg, "box button text normal"), (p["accentText"], "box button text highlight"),
+                        (p["hover"], "box button background normal"), (p["accent"], "box button background highlight"),
+                        (p["border"], "box button border"), (p["hover"], "box thumb background")]),
+        ("Misc", [(p["border"], "window frame"), (list_bg, "artist bio background"),
+                  (fg, "artist bio text"), (a, "link text"), (p["surface"], "message box bg"),
+                  (fg, "message box text"), (a, "queue drag indicator"), (a, "pulse colour"),
+                  (p["surface"], "queue card background")]),
+        ("Mini mode", [(panel, "mini bg"), (p["border"], "mini border"), (fg, "mini text 1"),
+                       (a, "mini text 2")]),
+    ]
+    text = f"# Tauon Music Box theme file\n# {HEAD}\n"
+    if appearance == "light":
+        text += "\nlight-mode\n"
+    for title, items in rows:
+        text += f"\n#-{title}-----\n"
+        for col, label in items:
+            col = col if "," in col else c(col)
+            text += f"{col:<20}{label}\n"
+    write(f"{base}/theme/Wallpaper.ttheme", text)
+
+    if tauon_running():
+        return
+    conf = f"{base}/tauon.conf"
+    try:
+        with open(conf) as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return
+    sans = fonts["sans"]
+    want = {"theme-name": "Wallpaper", "use-custom-fonts": "true",
+            "font-main-standard": sans, "font-main-medium": f"{sans} Medium",
+            "font-main-bold": f"{sans} Bold", "font-main-condensed": sans,
+            "font-main-condensed-bold": f"{sans} Bold"}
+    for i, line in enumerate(lines):
+        m = re.match(r"^([\w-]+)(\s*=\s*)(\S.*?)(\s+#.*)?$", line)
+        if m and m.group(1) in want:
+            v = want[m.group(1)]
+            v = v if v in ("true", "false") else json.dumps(v)
+            lines[i] = f"{m.group(1)}{m.group(2)}{v}{m.group(4) or ''}"
+    write(conf, "\n".join(lines) + "\n")
 
 
 def write_zed(p, ansi, syn, appearance):
@@ -874,6 +1097,8 @@ def write_icons(name):
         set_ini(f"{HOME}/.config/{gtk}/settings.ini", "Settings", {"gtk-icon-theme-name": name})
     run("gsettings", "set", "org.gnome.desktop.interface", "icon-theme", name)
     set_ini(f"{HOME}/.config/qt6ct/qt6ct.conf", "Appearance", {"icon_theme": name})
+    set_ini(f"{HOME}/.config/qt5ct/qt5ct.conf", "Appearance", {"icon_theme": name})
+    set_ini(f"{HOME}/.config/kdeglobals", "Icons", {"Theme": name})     # KDE apps' own icon loader
 
 
 def write_fonts(fonts, cursor):
@@ -905,6 +1130,9 @@ def write_fonts(fonts, cursor):
 
     qfont = lambda f: f'"{f},{size},-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'  # noqa: E731
     set_ini(f"{HOME}/.config/qt6ct/qt6ct.conf", "Fonts", {"general": qfont(sans), "fixed": qfont(mono)})
+    qfont5 = lambda f: f'"{f},{size},-1,5,50,0,0,0,0,0"'  # noqa: E731  (Qt 5's QFont string: weight 50 = normal)
+    set_ini(f"{HOME}/.config/qt5ct/qt5ct.conf", "Fonts", {"general": qfont5(sans), "fixed": qfont5(mono)})
+    set_ini(f"{HOME}/.config/kdeglobals", "General", {"font": qfont(sans).strip('"'), "fixed": qfont(mono).strip('"')})
 
     # Zed reloads settings.json live; only the font values are touched (it may contain comments)
     path = f"{HOME}/.config/zed/settings.json"
@@ -1292,6 +1520,10 @@ inactive_tab_background {tp["bgDark"]}
     write_satty(p, style, ctx)
     write_gtk(p, style, ctx)
     write_qbittorrent(p, write_qt(p, style, ctx))
+    write_kde(p, appearance)
+    write_okular(p)
+    write_vlc_launcher()
+    write_tauon(p, fonts, appearance)
     write_btop(tp)
     write_zed(p, ansi, syn, appearance)
     write_nvim(tp, tsyn, theme.get("native_nvim", False))

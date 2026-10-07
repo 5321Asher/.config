@@ -254,7 +254,11 @@ fonts, dir, cache, appearance}`. Each returns text (CSS/QSS) or a theme name:
 ### 4.4 Generated files (never edit, never commit)
 `quickshell/*/colors.json`, `walker/themes/*/colors.css` + `side.jpg`, `kitty/skwd-colors.conf`,
 `hypr/colors.lua`, `hypr/hyprlock-colors.conf`, `fastfetch/config.jsonc`, `fontconfig/fonts.conf`,
-`gtk-{3,4}.0/gtk.css`, `qt6ct/colors/`, `qt6ct/qss/`, `satty/overrides.css`, the setup symlinks.
+`gtk-{3,4}.0/gtk.css`, `qt6ct/colors/`, `qt6ct/qss/`, `qt5ct/` (VLC 3 is Qt 5: `~/.local/share/applications/vlc.desktop`
+starts it with qt5ct), `kdeglobals` colour groups + `~/.local/share/color-schemes/Wallpaper.colors` (Okular and
+other KDE apps colour their own widgets from it), `okularpartrc` (page backdrop + Change Colors colours),
+`~/.local/share/TauonMusicBox/theme/Wallpaper.ttheme` (+ theme/fonts in `tauon.conf`, only while Tauon isn't
+running: it rewrites the conf on exit), `satty/overrides.css`, the setup symlinks.
 All are in `.gitignore`. New themeable app? Add a writer to `theme/writers.py` (paths via
 `writers.configure(setup)`), not a hand-made config.
 
