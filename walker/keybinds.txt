@@ -47,3 +47,4 @@ SUPER + L               | Lock screen
 SUPER + SHIFT + R       | Reload Hyprland
 SUPER + SHIFT + Escape  | System monitor (btop)
 SUPER + O               | Overview (all workspaces)
+SUPER + ALT + ← / →       | Previous / next workspace (a new empty one after the last)

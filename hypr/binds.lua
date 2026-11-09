@@ -41,6 +41,31 @@ hl.bind("SUPER + CTRL + left", hl.dsp.window.resize({ x = -40, y = 0, relative =
 hl.bind("SUPER + CTRL + right", hl.dsp.window.resize({ x = 40, y = 0, relative = true }), { repeating = true }) -- Grow window width
 hl.bind("SUPER + CTRL + up", hl.dsp.window.resize({ x = 0, y = -40, relative = true }), { repeating = true }) -- Shrink window height
 hl.bind("SUPER + CTRL + down", hl.dsp.window.resize({ x = 0, y = 40, relative = true }), { repeating = true }) -- Grow window height
+-- Step through this monitor's workspaces in order: next after the last opens a new empty one (unless
+-- this one is already empty), previous stops at the first. Same in every feel.
+local function workspace_step(dir)
+  return function()
+    local mon = hl.get_active_monitor()
+    local cur = mon and mon.active_workspace
+    if not cur then return end
+    local list = {}
+    for _, ws in ipairs(hl.get_workspaces()) do
+      if not ws.special and ws.id > 0 and ws.monitor and ws.monitor.id == mon.id then table.insert(list, ws.id) end
+    end
+    table.sort(list)
+    local i
+    for k, id in ipairs(list) do if id == cur.id then i = k end end
+    local target
+    if dir > 0 then
+      target = (i and list[i + 1]) or (not cur.is_empty and "emptynm") or nil
+    else
+      target = i and i > 1 and list[i - 1] or nil
+    end
+    if target then hl.dispatch(hl.dsp.focus({ workspace = target })) end
+  end
+end
+hl.bind("SUPER + ALT + left", workspace_step(-1)) -- Previous workspace (this monitor)
+hl.bind("SUPER + ALT + right", workspace_step(1)) -- Next workspace (a new empty one after the last)
 for i = 1, 10 do hl.bind("SUPER + " .. (i % 10), hl.dsp.focus({ workspace = i })) end -- Go to workspace
 for i = 1, 10 do hl.bind("SUPER + SHIFT + " .. (i % 10), hl.dsp.window.move({ workspace = i })) end -- Move window to workspace
 for i = 1, 10 do hl.bind("SUPER + ALT + " .. (i % 10), hl.dsp.window.move({ workspace = i, follow = false })) end -- Send window to workspace (stay here)
