@@ -120,10 +120,14 @@ hl.window_rule({
   match    = { tag = "disguise-max" },
   rounding = 0,
 })
-hl.window_rule({
-  name   = "disguise-windows-float",
-  match  = { class = ".*" },
-  float  = true,
-  size   = "monitor_w*0.62 monitor_h*0.7",
-  center = true,
-})
+-- Only with the Hyprland feel: another feel (Style → Feel, e.g. niri's columns) tiles, and its keys
+-- replace the snap keys above (it loads after this file)
+if FEEL == nil or FEEL == "hyprland" then
+  hl.window_rule({
+    name   = "disguise-windows-float",
+    match  = { class = ".*" },
+    float  = true,
+    size   = "monitor_w*0.62 monitor_h*0.7",
+    center = true,
+  })
+end

@@ -1,0 +1,2 @@
+-- Feel "hyprland": Hyprland's own behaviour. Nothing to change: the setup's look.lua (dwindle),
+-- hyprland.lua and binds.lua already are this feel. See feel.lua.

@@ -36,6 +36,7 @@ anchor_right = true
 "menus:style" = 1    # grid from the previous panel sticks around
 "menus:setups" = 1
 "menus:displays" = 1
+"menus:feels" = 1
 "menus:themes" = 1
 "menus:wallpaper" = 1
 "menus:themetools" = 1
@@ -52,6 +53,7 @@ anchor_right = true
 "menus:trigger" = { input = "Trigger", list = "" }
 "menus:style" = { input = "Style", list = "" }
 "menus:displays" = { input = "Display profile", list = "" }
+"menus:feels" = { input = "Feel", list = "" }
 "menus:setups" = { input = "Setup", list = "No setups in ~/.config/theme/setups" }
 "menus:themes" = { input = "Theme", list = "No themes in this setup" }
 "menus:wallpaper" = { input = "Wallpaper", list = "" }

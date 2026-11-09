@@ -35,7 +35,9 @@ a lock screen, a polkit prompt, a workspace overview (which fits portrait monito
 **vulnerability watch + pending updates** (`arch-audit`, `checkupdates`; `qs ipc call updates sweep`
 in Sharp, Observatory, Memphis and Disguise, `status sweep` in Netrunner). **Display profiles** (`theme/display`, profiles in `hypr/displays/`) are shared by every setup: saved
 monitor layouts matched by monitor, applied automatically at login and on hotplug, so the same SSD
-comes up right on the PC and the laptop. The active setup's lock screen is also the login screen.
+comes up right on the PC and the laptop. The **feel** (Style → Feel) switches how windows behave in
+any setup: Hyprland's own tiling, or **niri**'s scrollable columns, vertical workspaces, keys, springs,
+touchpad gestures and hot corner (`hypr/feels/`). The active setup's lock screen is also the login screen.
 Wallpaper changes use each setup's
 transition (fade, wipe, iris, dissolve, glitch, burn, dots).
 

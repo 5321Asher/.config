@@ -23,6 +23,15 @@ Shared by every setup (don't fork these per setup): keybinds (`hypr/binds.lua`),
 **display profiles** (`theme/display`: named monitor layouts in `hypr/displays/<id>.json`, matched by
 monitor description not port; `display auto` runs at login and on hotplug so the same SSD comes up
 right on the PC and the laptop; Style → Display profile in the menus).
+The **feel** is shared too (Style → Feel, `theme/feel set <id>`): how windows behave, independent of the
+setup's look. `hyprland` = dwindle and the binds as they are; `niri` = niri's scrollable columns and keys
+(`hypr/feels/niri.lua`, on Hyprland's built-in `scrolling` layout; its cheat sheet `hypr/feels/niri.keys`
+shows first in Keybinds). `hyprland.lua` requires `hypr/feel.lua` (sets the global `FEEL` from
+`~/.local/state/theme/feel`) before the binds and `hypr/feels/<FEEL>.lua` after them, so the feel's keys
+win (it `hl.unbind`s first: two binds on one key both fire). A setup's look.lua still says
+`layout = "dwindle"`; the feel overrides it. A setup's `setup-binds.lua` that changes window behaviour
+must check `FEEL` (Disguise floats every window only when `FEEL == "hyprland"`). Each setup's
+overview must answer `qs ipc call overview toggle` (niri's SUPER + O, hot corner, 4-finger swipe).
 
 ```
 ~/.config/theme/theme setups                list setups (* = active)
@@ -371,6 +380,7 @@ Check `git status` for generated files before committing (§4.4).
 - **Quickshell live reload** misses files loaded by path; reference components as types, and
   `touch shell.qml` to force a reload. A missing `Theme.<prop>` silently evaluates to undefined
   (a tray menu once had width 0 because `trayMenuWidth` didn't exist) — check `qs log`.
+- **Elephant's Lua is 5.1** (gopher-lua): `f:read("l")` fails there, use `"*l"`; Hyprland's Lua is 5.4.
 - **zsh:** `echo ===` is special syntax; unmatched globs abort the command (`setopt nullglob`).
 - **The root disk is USB 2.0**: heavy I/O freezes things; pip installs are slow. If the shell
   "freezes", check `/proc/pressure/io` and D-state processes first.

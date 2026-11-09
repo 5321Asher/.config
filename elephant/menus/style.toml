@@ -23,6 +23,13 @@ keywords = ["theme", "colour", "color", "palette", "scheme", "switch"]
 submenu = "themes"
 
 [[entries]]
+text = "Feel"
+subtext = "how windows behave · Hyprland's tiling or niri's scrolling columns"
+icon = "󰕴"
+keywords = ["feel", "behaviour", "behavior", "niri", "hyprland", "scrolling", "columns", "tiling", "layout"]
+submenu = "feels"
+
+[[entries]]
 text = "Display profile"
 subtext = "monitor layouts · PC, laptop… · save the current one"
 icon = "󰍹"

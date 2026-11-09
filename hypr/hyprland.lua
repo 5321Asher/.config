@@ -202,9 +202,22 @@ hl.device({
 ---- KEYBINDINGS ----
 ---------------------
 
+-- The feel (Style → Feel): FEEL = "hyprland" or "niri", read before the binds so a setup's
+-- setup-binds.lua can check it (feel.lua)
+pcall(require, "feel")
+FEEL = FEEL or "hyprland"
+
 -- Keybinds live in binds.lua, built from scratch.
 -- Add them from Walker: SUPER + Space → Trigger → Add keybind (or edit binds.lua directly).
 pcall(require, "binds")
+
+-- The feel's own behaviour and keys, after every other bind so they win (feels/<id>.lua)
+do
+  local ok, err = pcall(require, "feels." .. FEEL)
+  if not ok then
+    hl.exec_cmd("notify-send -u critical 'Feel: " .. FEEL .. "' " .. string.format("%q", tostring(err)))
+  end
+end
 
 --------------------------------
 ---- WINDOWS AND WORKSPACES ----

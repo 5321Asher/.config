@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+"""Feels: how windows behave, separate from the setup's look. Shared by every setup and every colour
+theme (switching setup or theme keeps the feel; switching feel keeps the setup and theme).
+
+Feels:      ~/.config/hypr/feels/<id>.lua      loaded by hyprland.lua after every bind, so its keys win
+Active:     ~/.local/state/theme/feel          (no file = hyprland)
+Cheat sheet ~/.config/hypr/feels/<id>.keys     shown first in Keybinds (SUPER + SHIFT + / in niri)
+
+  feel                       list feels (* = active)
+  feel list                  same
+  feel current               the active feel's id
+  feel set <id>              switch: Hyprland reloads its config, windows re-tile in place
+  feel toggle                hyprland <-> niri
+  feel rows                  tab-separated rows for menus and shells: id, name, description, active (1/0)
+"""
+
+import os
+import subprocess
+import sys
+
+HOME = os.path.expanduser("~")
+FEELS = f"{HOME}/.config/hypr/feels"
+STATE = f"{os.environ.get('XDG_STATE_HOME', HOME + '/.local/state')}/theme/feel"
+
+# name and a one-line description; any other feels/<id>.lua shows under its id
+KNOWN = {
+    "hyprland": ("Hyprland", "windows split the screen between them · Hyprland's own keys"),
+    "niri": ("niri", "an endless strip of columns · workspaces stacked vertically · niri's keys"),
+}
+
+
+def feels():
+    ids = sorted(f[:-4] for f in os.listdir(FEELS) if f.endswith(".lua"))
+    # Hyprland first, then the rest as they come
+    return sorted(ids, key=lambda i: (i != "hyprland", i))
+
+
+def current():
+    try:
+        with open(STATE) as f:
+            fid = f.read().strip()
+    except OSError:
+        return "hyprland"
+    return fid if fid in feels() else "hyprland"
+
+
+def info(fid):
+    return KNOWN.get(fid, (fid, ""))
+
+
+def cmd_set(fid):
+    if fid not in feels():
+        print(f"feel: no feel '{fid}' (have: {', '.join(feels())})", file=sys.stderr)
+        sys.exit(1)
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    tmp = STATE + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(fid + "\n")
+    os.replace(tmp, STATE)
+    subprocess.run(["hyprctl", "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    name, _ = info(fid)
+    hint = "SUPER + SHIFT + / shows the keys" if fid == "niri" else "the usual keys are back"
+    subprocess.run(["notify-send", "-a", "Feel", f"Feel: {name}", hint],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def main():
+    args = sys.argv[1:]
+    cmd = args[0] if args else "list"
+    if cmd in ("-h", "--help", "help"):
+        print(__doc__)
+    elif cmd == "list":
+        cur = current()
+        for fid in feels():
+            name, desc = info(fid)
+            print(f"{'*' if fid == cur else ' '} {fid:10} {name:10} {desc}")
+    elif cmd == "current":
+        print(current())
+    elif cmd == "set" and len(args) == 2:
+        cmd_set(args[1])
+    elif cmd == "toggle":
+        cmd_set("niri" if current() == "hyprland" else "hyprland")
+    elif cmd == "rows":
+        cur = current()
+        for fid in feels():
+            name, desc = info(fid)
+            print("\t".join([fid, name, desc, "1" if fid == cur else "0"]))
+    else:
+        print(__doc__)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()
