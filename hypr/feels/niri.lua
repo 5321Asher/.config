@@ -24,7 +24,7 @@ hl.config({
     no_focus_fallback = true,
   },
   scrolling = {
-    column_width             = 1.0,                    -- set per new window below (fills the rest)
+    column_width             = 0.5,                    -- niri: default-column-width proportion 0.5
     explicit_column_widths   = "0.33333, 0.5, 0.66667", -- niri: preset-column-widths (SUPER + R)
     focus_fit_method         = 1,                      -- scroll just enough (center-focused-column "never")
     follow_focus             = true,
@@ -37,24 +37,6 @@ hl.config({
   input = { follow_mouse = 2 },
   cursor = { no_warps = true },
 })
-
-------------------------------------------------------------------------------------------------
--- A new window fills the rest of the screen (the user's choice, not niri's fixed ½): beside a ¾
--- column it opens at ¼, beside ⅔ at ⅓; alone, or beside a full-width column, it fills the screen.
--- window.open_early fires before the layout places the window, while focus is still on the old
--- one, so the default column width is set from that column just in time (no resize jump).
-local MIN_REST = 0.15 -- less room than this beside the focused column: the new window fills the screen
-hl.on("window.open_early", function(w)
-  local ws = w and w.workspace
-  if not ws then return end
-  local ref = hl.get_active_window()
-  if not (ref and ref.workspace and ref.workspace.id == ws.id) then ref = ws.last_window end
-  local l = ref and ref.address ~= w.address and ref.layout
-  local cw = l and l.column and l.column.width
-  local width = 1.0
-  if cw and 1 - cw >= MIN_REST then width = 1 - cw end
-  hl.config({ scrolling = { column_width = width } })
-end)
 
 ------------------------------------------------------------------------------------------------
 -- Motion: niri's default springs (critically damped: damping-ratio 1.0), ease-out-expo opening,

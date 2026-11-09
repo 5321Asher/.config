@@ -1,7 +1,6 @@
 # Keys of the niri feel (feels/niri.lua), shown first in the Keybinds cheat sheet while it's active.
 # Every other key is the same as in the Hyprland feel (binds.lua). Format: KEYS | description.
 
-(opening a window)              | It fills the rest of the screen: ¼ beside ¾, ⅓ beside ⅔; alone it fills it all
 SUPER + ← / →                   | Focus the column left / right (at the end: the monitor that way)
 SUPER + ↑ / ↓                   | Focus the window above / below in the column
 SUPER + SHIFT + ← / →           | Move the column left / right (at the end: onto an empty monitor)
