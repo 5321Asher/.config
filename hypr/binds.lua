@@ -86,6 +86,7 @@ hl.bind("SUPER + Z", hl.dsp.exec_cmd("voxtype record toggle")) -- Dictation star
 hl.bind("SUPER + SHIFT + Z", hl.dsp.exec_cmd("voxtype record cancel")) -- Cancel dictation
 hl.bind("SUPER + L", hl.dsp.exec_cmd("loginctl lock-session")) -- Lock screen
 hl.bind("SUPER + SHIFT + R", hl.dsp.exec_cmd("hyprctl reload")) -- Reload Hyprland
+hl.bind("SUPER + O", hl.dsp.exec_cmd("qs ipc call overview toggle")) -- Overview (every setup's)
 hl.bind("SUPER + SHIFT + Escape", hl.dsp.exec_cmd("kitty --class btop -e btop")) -- System monitor (btop)
 
 -- hyprbars (Disguise's Windows title bars) stays loaded across setup switches: off here, and the setup

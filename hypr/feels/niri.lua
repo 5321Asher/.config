@@ -310,3 +310,13 @@ NIRI = {
   maximize_column = maximize_column, floating_or_tiling = floating_or_tiling,
   focus = function(d) focus_dir(d)() end, move = function(d, long) move_dir(d, long)() end,
 }
+
+------------------------------------------------------------------------------------------------
+-- niri-only keys (chosen by the user, 2026-11-09). Free in binds.lua; in Disguise, SUPER + R (Run)
+-- gives way to the width presets while this feel is on.
+rebind("SUPER + R", msg("colresize +conf"))             -- column width: next preset (⅓ · ½ · ⅔)
+rebind("SUPER + ALT + R", msg("colresize -conf"))       -- column width: previous preset
+rebind("SUPER + CTRL + F", msg("fit expand"))           -- column fills the free space
+rebind("SUPER + ALT + C", msg("center"))                -- center the column
+rebind("SUPER + bracketleft", msg("consume_or_expel prev"))  -- window into the column left (or out)
+rebind("SUPER + bracketright", msg("consume_or_expel next")) -- window into the column right (or out)

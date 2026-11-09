@@ -7,6 +7,10 @@ SUPER + SHIFT + ← / →           | Move the column left / right (at the end: 
 SUPER + SHIFT + ↑ / ↓           | Move the window up / down in its column
 SUPER + CTRL + ← / →            | Column narrower / wider
 SUPER + CTRL + ↑ / ↓            | Window shorter / taller in its column
+SUPER + R / ALT + R             | Column width: next / previous preset (⅓ · ½ · ⅔)
+SUPER + CTRL + F                | Column fills the free space
+SUPER + ALT + C                 | Center the column
+SUPER + [ / ]                   | Window into the column left / right (or out of its column)
 Top-left screen corner          | Overview
 3 fingers ← / →                 | Scroll the strip of columns
 3 fingers ↑ / ↓                 | Workspace above / below
