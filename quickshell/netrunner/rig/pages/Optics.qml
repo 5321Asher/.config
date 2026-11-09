@@ -33,6 +33,32 @@ Column {
               Btn { text: "revert"; onClicked: Displays.revert() } }
     }
 
+    // display profiles: every screen's mode, position, scale, rotation under one name
+    Section {
+        title: "profiles"
+        jp: "設定"
+        trailing: "click to load · auto by screens"
+        Flow {
+            width: parent.width
+            spacing: 6
+            Repeater {
+                model: Displays.profiles
+                Btn { required property var modelData; text: modelData.name; glyph: modelData.fits ? "󰍹" : ""; on: modelData.active
+                      onClicked: { profileName.text = modelData.name; Displays.applyProfile(modelData.id); } }
+            }
+            Label { visible: !Displays.profiles.length; text: "no profiles yet: name this layout and save it" }
+        }
+        Row {
+            spacing: 8
+            Field { id: profileName; width: 200; placeholder: "profile name"; onAccepted: Displays.saveProfile(text) }
+            Btn { text: "save current"; primary: true; enabled: profileName.text.trim() !== ""; onClicked: Displays.saveProfile(profileName.text) }
+            Btn { text: "delete"; visible: Displays.profiles.some(p => p.name === profileName.text.trim())
+                  onClicked: { Displays.deleteProfile(Displays.profiles.find(p => p.name === profileName.text.trim()).id); profileName.text = ""; } }
+        }
+        Label { width: parent.width; wrapMode: Text.Wrap
+                text: (Displays.profiles.find(p => p.active)?.summary ?? "") }
+    }
+
     Section {
         title: "layout"
         jp: "配置"

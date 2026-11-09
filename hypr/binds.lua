@@ -72,7 +72,7 @@ hl.bind("SUPER + D", toggle_scratchpad) -- Toggle scratchpad
 hl.bind("SUPER + SHIFT + D", hl.dsp.window.move({ workspace = "special:magic" })) -- Move window to scratchpad
 hl.bind("SUPER + CTRL + Space", hl.dsp.exec_cmd("~/.config/theme/menu apps")) -- App launcher (the setup's: Walker, or its own)
 hl.bind("SUPER + Return", hl.dsp.exec_cmd("gtk-launch kitty")) -- kitty
-hl.bind("SUPER + B", hl.dsp.exec_cmd("gtk-launch brave-origin-nightly")) -- Brave Origin Nightly
+hl.bind("SUPER + B", hl.dsp.exec_cmd("gtk-launch brave-origin")) -- Brave Origin
 hl.bind("SUPER + N", hl.dsp.exec_cmd("gtk-launch obsidian")) -- Obsidian
 hl.bind("SUPER + E", hl.dsp.exec_cmd("thunar")) -- File manager (Thunar)
 hl.bind("SUPER + X", hl.dsp.window.float({ action = "toggle" })) -- Toggle floating

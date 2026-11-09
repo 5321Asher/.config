@@ -14,12 +14,14 @@ import ".."
 //                rotation; Apply / OK ask you to keep them (desk/windows/MonitorKeep.qml), and put
 //                them back after 15 s if you don't
 //   Brightness   each monitor's brightness (DDC/CI)
+//   Profiles     display profiles (~/.config/theme/display): the whole layout under a name (PC,
+//                Laptop…); load one, save the current layout, delete one
 Props {
     id: root
 
     title: "Display Properties"
     icon: "preferences-desktop-display"
-    tabs: ["Background", "Appearance", "Settings", "Brightness"]
+    tabs: ["Background", "Appearance", "Settings", "Brightness", "Profiles"]
     applyEnabled: (current === 1 && (scheme !== curScheme || setup !== curSetup)) || (current === 2 && Displays.dirty)
     onApplied: {
         if (current === 1) {
@@ -491,5 +493,47 @@ Props {
             }
         }
         Btn { text: "Look Again"; enabled: !Brightness.scanning; onClicked: Brightness.scan() }
+    }
+
+    // ---------------------------------------------------------------- Profiles
+    Column {
+        id: profilesTab
+        spacing: 10
+        property int sel: Displays.profiles.findIndex(p => p.active)
+        readonly property var picked: Displays.profiles[sel] ?? null
+        Txt {
+            width: parent.width
+            wrapMode: Text.Wrap
+            text: "A profile remembers every screen: its resolution, refresh rate, position, scale and rotation. "
+                + "The one that fits the screens plugged in is picked when you log on."
+        }
+        Group {
+            title: "Saved profiles"
+            width: parent.width
+            ListBox {
+                width: parent.width
+                height: 120
+                model: Displays.profiles
+                currentIndex: profilesTab.sel
+                iconOf: p => "video-display"
+                textOf: p => p.name + (p.active ? "  (current)" : "") + "  —  " + p.summary
+                onClicked: i => { profilesTab.sel = i; profileName.text = Displays.profiles[i].name; }
+                onActivated: i => Displays.applyProfile(Displays.profiles[i].id)
+            }
+            Row {
+                spacing: 6
+                Btn { text: "Load"; isDefault: true; enabled: !!profilesTab.picked; onClicked: Displays.applyProfile(profilesTab.picked.id) }
+                Btn { text: "Delete"; enabled: !!profilesTab.picked; onClicked: { Displays.deleteProfile(profilesTab.picked.id); profilesTab.sel = -1; } }
+            }
+        }
+        Group {
+            title: "Save the current layout as"
+            width: parent.width
+            Row {
+                spacing: 6
+                Field { id: profileName; width: 220; placeholder: "PC, Laptop…"; onAccepted: Displays.saveProfile(text) }
+                Btn { text: "Save"; enabled: profileName.text.trim() !== ""; onClicked: Displays.saveProfile(profileName.text) }
+            }
+        }
     }
 }

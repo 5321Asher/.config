@@ -50,7 +50,7 @@ Version=1.0
 Type=Application
 Name=$name
 Comment=Web app for $url
-Exec=brave-origin-nightly --app="$exec_url"
+Exec=brave-origin --app="$exec_url"
 Icon=$icon_value
 Terminal=false
 StartupNotify=true

@@ -11,6 +11,7 @@ cursors, icons, colour themes, wallpapers) switched with one command, each with 
 | **Netrunner** | a cyberdeck in Night City: red and cyan on black glass, cut-corner window frames, a bar with a live ticker of real system state, a DECK dashboard (SYS.DIAG, daily gigs, vulnerability watch, signal), a rig control panel, a quickhack-style hub and EXEC launcher; seven profiles |
 | **Disguise** | Windows 11: a centred taskbar on Acrylic, Start, Search, Quick Settings, the notification centre with calendar and Focus, Widgets, Task View, a Settings app, toasts, UAC, the Windows lock screen; Segoe UI Variable, Fluent icons, the Win11 icon theme and generated Bloom wallpapers; six themes (Windows light/dark, Glow, Sunrise, Flow, Captured Motion) |
 | **Grimoire** | a wizard's spellbook on a candlelit desk: a leather bar of chapters with a hanging silk ribbon, a spine of reagents (heat crystal, potion vials for CPU and memory, a mana tube for the battery) and a candle that burns down with your uptime; a tarot-spread root menu (the arcana) of lit leather and pressed gilt; a launcher that is nothing but each app's seal drawing itself in gold as you type (Witch Hat Atelier-style glyphs whose parts mean something); a commonplace book for the clipboard; an open-book codex whose pages really turn; notifications as sealed letters; the closed book as a lock screen; the burn transition; five themes (Oxblood, Nightshade, Verdigris, Ember, Vellum) |
+| **Glyph** | Nothing OS: black, white dots and one red; a vertical pill rail, a home screen of Doto numbers and dot-matrix widgets, the screen's edges as Glyph LED strips for volume, brightness and notifications, a rotary-dial root menu of dot-matrix words, quick settings from the right edge, a dashboard from the bottom, a lock where the desktop dissolves into dots; the dots transition; two themes (Dark, Light) |
 
 ```
 ~/.config/theme/theme setup observatory     switch setup (or Style → Setup in the menu)
@@ -20,7 +21,7 @@ cursors, icons, colour themes, wallpapers) switched with one command, each with 
 
 - `theme/` — the setup and theme system (`theme`, `writers.py`, `tui.py`, `iconkit.py`) and the
   setups themselves (`theme/setups/<setup>/`). How setups work, what every setup must provide and the step-by-step procedure for adding one: [theme/SETUPS.md](theme/SETUPS.md)
-- `quickshell/<setup>/` — each setup's shell ([Observatory's README](quickshell/observatory/README.md), [Memphis's](quickshell/memphis/README.md), [Netrunner's](quickshell/netrunner/README.md), [Disguise's](quickshell/disguise/README.md), [Grimoire's](quickshell/grimoire/README.md))
+- `quickshell/<setup>/` — each setup's shell ([Observatory's README](quickshell/observatory/README.md), [Memphis's](quickshell/memphis/README.md), [Netrunner's](quickshell/netrunner/README.md), [Disguise's](quickshell/disguise/README.md), [Grimoire's](quickshell/grimoire/README.md), [Glyph's](quickshell/glyph/README.md))
 - `hypr/` — Hyprland (Lua config); `look.lua` is linked in from the active setup
 - `elephant/menus/` — the menus every setup's launcher shows
 - `walker/themes/<setup>/` — each setup's Walker theme
@@ -32,14 +33,18 @@ Every setup has the same features in its own look: root menu and app launcher, n
 media, Wi-Fi / Bluetooth / Tailscale, screenshots and recording, dictation, focus timer, lighting,
 a lock screen, a polkit prompt, a workspace overview (which fits portrait monitors too), and a
 **vulnerability watch + pending updates** (`arch-audit`, `checkupdates`; `qs ipc call updates sweep`
-in Sharp, Observatory, Memphis and Disguise, `status sweep` in Netrunner). Wallpaper changes use each setup's
-transition (fade, wipe, iris, dissolve, glitch, burn).
+in Sharp, Observatory, Memphis and Disguise, `status sweep` in Netrunner). **Display profiles** (`theme/display`, profiles in `hypr/displays/`) are shared by every setup: saved
+monitor layouts matched by monitor, applied automatically at login and on hotplug, so the same SSD
+comes up right on the PC and the laptop. The active setup's lock screen is also the login screen.
+Wallpaper changes use each setup's
+transition (fade, wipe, iris, dissolve, glitch, burn, dots).
 
 Packages beyond Hyprland and Quickshell that the setups use: `arch-audit`, `pacman-contrib`,
 `noto-fonts-cjk` (Netrunner's Japanese), `chicago95-theme` and `oldschool-pc-font-ttf`
 (Memphis). Fonts that aren't packaged live in `~/.local/share/fonts` (W95FA; Chakra Petch and
 Rajdhani; Segoe UI Variable and Segoe Fluent Icons, Microsoft's designer downloads, for Disguise;
-Grimoire's, from Google Fonts: `theme/setups/grimoire/fonts.sh`).
+Grimoire's, from Google Fonts: `theme/setups/grimoire/fonts.sh`; Glyph's Doto, Space Grotesk and Space Mono
+in `~/.local/share/fonts/glyph`).
 Disguise's icons are the Win11 icon theme (yeyushengfan258/Win11-icon-theme, installed into
 `~/.local/share/icons`).
 

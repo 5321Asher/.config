@@ -96,6 +96,6 @@ hl.layer_rule({
 -- Brave's New Tab lets the desk show through
 hl.window_rule({
   name    = "grimoire-brave-newtab-glass",
-  match   = { class = "^brave-origin-nightly$", title = "^New (Private )?Tab - Brave Origin$" },
+  match   = { class = "^brave-origin$", title = "^New (Private )?Tab - Brave Origin$" },
   opacity = "0.6 override 0.6 override",
 })

@@ -19,6 +19,8 @@ import Quickshell.Wayland
 //             in the new accent and its complement, then drop out one by one (Netrunner)
 //   burn      the old picture burns away from a scatter of embers: a ragged front with a scorched
 //             band and a glowing lip in the new accent (Grimoire; a shader, burn.frag.qsb)
+//   dots      a wave from the centre collapses the old picture into round dots that drain to grey
+//             and shrink away (Glyph; a shader, dots.frag.qsb)
 // params.json (written by the theme tool, next to the snapshots): style, accent, duration, dir.
 ShellRoot {
     id: root
@@ -35,7 +37,7 @@ ShellRoot {
         running: false
         from: 0; to: 1
         duration: root.duration
-        easing.type: root.style === "fade" ? Easing.InOutQuad : root.style === "dissolve" || root.style === "glitch" ? Easing.Linear : root.style === "burn" ? Easing.InQuad : Easing.InOutCubic
+        easing.type: root.style === "fade" ? Easing.InOutQuad : root.style === "dissolve" || root.style === "glitch" ? Easing.Linear : root.style === "burn" ? Easing.InQuad : root.style === "dots" ? Easing.InOutSine : Easing.InOutCubic
         onFinished: cleanup.running = true
     }
     // The snapshots are ~10 MB each in RAM (tmpfs): gone with the overlay
@@ -134,7 +136,7 @@ ShellRoot {
             }
             MultiEffect {
                 anchors.fill: parent
-                visible: root.style !== "fade" && root.style !== "glitch" && root.style !== "burn"
+                visible: root.style !== "fade" && root.style !== "glitch" && root.style !== "burn" && root.style !== "dots"
                 source: shot
                 maskEnabled: true
                 maskSource: hole
@@ -194,6 +196,17 @@ ShellRoot {
                 property real seed: 0.37 + Quickshell.screens.indexOf(win.modelData) * 0.21
                 property color accent: root.accent
                 fragmentShader: root.style === "burn" ? Qt.resolvedUrl("burn.frag.qsb") : ""
+            }
+
+            // dots: the old picture collapses into a dot matrix and the dots shrink away
+            ShaderEffect {
+                anchors.fill: parent
+                visible: root.style === "dots"
+                property var source: shot
+                property real progress: root.progress
+                property size size: Qt.size(width, height)
+                property real pitch: Math.max(10, Math.min(win.width, win.height) / 90)
+                fragmentShader: root.style === "dots" ? Qt.resolvedUrl("dots.frag.qsb") : ""
             }
 
             // The edge, in the new accent

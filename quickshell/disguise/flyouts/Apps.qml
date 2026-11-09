@@ -44,8 +44,8 @@ Singleton {
     }
 
     // ---------------------------------------------------------------- pins
-    readonly property var defaultTaskbar: ["thunar", "brave-origin-nightly", "kitty", "obsidian"]
-    readonly property var defaultStart: ["brave-origin-nightly", "kitty", "thunar", "obsidian", "dev.zed.Zed", "webapp-claude",
+    readonly property var defaultTaskbar: ["thunar", "brave-origin", "kitty", "obsidian"]
+    readonly property var defaultStart: ["brave-origin", "kitty", "thunar", "obsidian", "dev.zed.Zed", "webapp-claude",
         "webapp-gmail", "webapp-youtube", "webapp-discord", "webapp-github", "webapp-deezer", "steam",
         "notepadqq", "org.gnome.gThumb", "org.qbittorrent.qBittorrent", "org.openrgb.OpenRGB", "btop", "virtualbox"]
     // not worth a tile when Start tops itself up

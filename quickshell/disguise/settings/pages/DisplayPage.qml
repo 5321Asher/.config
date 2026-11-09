@@ -115,6 +115,41 @@ Column {
         }
     }
 
+    // ---------------------------------------------------------------- display profiles
+    // every screen's resolution, refresh, position, scale and orientation under one name; Hyprland
+    // switches to the one that fits the screens plugged in at sign-in and on hotplug
+    Header { text: "Display profiles" }
+    SettingRow {
+        width: parent.width
+        glyph: ""
+        title: "Profile"
+        subtitle: Displays.profiles.length ? (Displays.profiles.find(p => p.active)?.summary ?? "Not using a saved profile")
+                                           : "Save this layout to switch back to it in one step"
+        last: false
+        Combo {
+            visible: Displays.profiles.length > 0
+            width: 220
+            model: Displays.profiles
+            textOf: p => p.name + (p.fits ? "" : " (other screens)")
+            currentIndex: Displays.profiles.findIndex(p => p.active)
+            onChosen: i => { profileName.text = Displays.profiles[i].name; Displays.applyProfile(Displays.profiles[i].id); }
+        }
+    }
+    SettingRow {
+        width: parent.width
+        glyph: ""
+        title: "Save current layout"
+        subtitle: "As a new profile, or over the one with the same name"
+        first: false
+        Row {
+            spacing: 8
+            Field { id: profileName; width: 180; placeholder: "PC, Laptop…"; onAccepted: Displays.saveProfile(text) }
+            Btn { kind: "accent"; text: "Save"; enabled: profileName.text.trim() !== ""; onClicked: Displays.saveProfile(profileName.text) }
+            Btn { text: "Delete"; visible: Displays.profiles.some(p => p.name === profileName.text.trim())
+                  onClicked: { Displays.deleteProfile(Displays.profiles.find(p => p.name === profileName.text.trim()).id); profileName.text = ""; } }
+        }
+    }
+
     // ---------------------------------------------------------------- brightness
     Header { text: "Brightness & color" }
     SettingRow {

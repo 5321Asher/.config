@@ -1,0 +1,130 @@
+/* Glyph — Walker as a Nothing panel: a rounded dark card, a search pill with the red caret, the
+   selected row the white pill with ink text (black / white in Light). Fonts come from colors.css.
+   Location: ~/.config/walker/themes/glyph/style.css
+   (Glyph's own menus are the index, the launcher, the clipboard and the prompt; Walker is the
+   fallback, and Find.) */
+
+@import url("file:///home/av/.config/walker/themes/glyph/colors.css");
+
+* {
+  all: unset;
+  font-size: 15px;
+}
+
+.box-wrapper {
+  background: @surface;
+  border: 1px solid @hover;
+  border-radius: 40px;
+  padding: 26px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.caption {
+  font-family: "Space Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: @fg_dim;
+  padding: 0 0 12px 14px;
+}
+
+popover {
+  background: @surface;
+  border: 1px solid @hover;
+  border-radius: 22px;
+  padding: 8px;
+}
+
+scrollbar { opacity: 0; }
+
+.normal-icons { -gtk-icon-size: 22px; }
+.large-icons { -gtk-icon-size: 34px; }
+
+.search-container { margin-bottom: 16px; }
+
+.input {
+  background: @hover;
+  color: @fg;
+  caret-color: @danger;
+  border-radius: 999px;
+  padding: 14px 22px;
+  font-size: 18px;
+}
+.input placeholder { color: @border; opacity: 1; }
+.input selection { background: @border; color: @fg; }
+
+.list { color: @fg; }
+.item-box { padding: 10px 16px; border-radius: 999px; }
+child:hover .item-box, row:hover .item-box { background: @hover; }
+child:selected .item-box,
+row:selected .item-box { background: @accent; }
+child:selected .item-text,
+row:selected .item-text { color: @accentText; }
+.item-subtext {
+  font-family: "Space Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: @fg_dim;
+}
+child:selected .item-subtext,
+row:selected .item-subtext { color: @accentText; opacity: 0.7; }
+
+.item-quick-activation {
+  background: @hover;
+  color: @fg_dim;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-family: "Space Mono", monospace;
+  font-size: 10px;
+}
+.item-image-text { font-size: 26px; }
+
+.preview-box, .elephant-hint, .placeholder { color: @fg_dim; }
+.preview { border-radius: 28px; color: @fg; background: @hover; padding: 12px; }
+.preview .large-icons { -gtk-icon-size: 64px; }
+
+.calc .item-text { font-family: "Doto"; font-weight: 900; font-size: 30px; }
+.symbols .item-image { font-size: 24px; }
+.todo.done .item-text-box { opacity: 0.35; }
+.todo.urgent { color: @danger; }
+.todo.active { font-weight: bold; }
+.bluetooth.disconnected { opacity: 0.5; }
+
+.keybinds { margin-top: 10px; font-family: "Space Mono", monospace; font-size: 10px; letter-spacing: 1px; color: @fg_dim; }
+.keybind-button { opacity: 0.7; }
+.keybind-button:hover { opacity: 1; }
+.keybind-bind { color: @fg_dim; }
+.keybind-label { padding: 2px 8px; border-radius: 999px; background: @hover; color: @fg; }
+
+/* the side picture: the theme's dots, in a rounded frame */
+.side-image {
+  background-image: url("file:///home/av/.config/walker/themes/glyph/side.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 30px;
+  margin: 0 0 0 18px;
+}
+
+.error { padding: 12px; border-radius: 18px; background: @hover; color: @danger; }
+
+.start-row { padding: 10px 16px; border-radius: 999px; }
+.start-icon { font-size: 18px; color: @fg_dim; }
+.start-text { font-size: 16px; }
+child:selected .start-icon { color: @accentText; }
+
+.list.grid .item-box {
+  padding: 14px 6px;
+  margin: 4px;
+  border-radius: 28px;
+  background: @hover;
+}
+.list.grid child:selected .item-box { background: @accent; }
+.list.grid child:selected .item-text,
+.list.grid child:selected .item-image-text { color: @accentText; }
+.list.grid .item-image-text { font-size: 18px; }
+.list.grid .item-text { font-size: 12px; }
+.list.grid .item-subtext { font-size: 0; }
+
+.kb-row { padding: 6px 14px; border-radius: 999px; }
+.kb-keys { font-family: "Space Mono", monospace; color: @fg; font-size: 12px; }
+.kb-desc { color: @fg_dim; }

@@ -82,6 +82,79 @@ Flickable {
             }
         }
 
+        // Display profiles: every monitor's mode, position, scale, rotation under one name
+        Card {
+            title: "Profiles"
+            trailing: "auto-picked by the screens plugged in"
+            trailingColor: Theme.border
+
+            Flow {
+                Layout.fillWidth: true
+                spacing: 6
+
+                Repeater {
+                    model: Displays.profiles
+
+                    IconButton {
+                        required property var modelData
+                        icon: modelData.fits ? root.glyph(0xf0379) : ""
+                        label: modelData.name
+                        primary: modelData.active
+                        onClicked: {
+                            profileName.text = modelData.name;
+                            Displays.applyProfile(modelData.id);
+                        }
+                    }
+                }
+
+                Text {
+                    visible: !Displays.profiles.length
+                    text: "No profiles yet: name this layout and save it"
+                    font.family: Theme.font
+                    font.pixelSize: 12
+                    color: Theme.dim
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 6
+
+                TextField {
+                    id: profileName
+                    Layout.fillWidth: true
+                    placeholder: "Profile name (PC, Laptop…)"
+                    onAccepted: Displays.saveProfile(text)
+                }
+
+                IconButton {
+                    primary: true
+                    label: "Save current"
+                    enabled: profileName.text.trim() !== ""
+                    onClicked: Displays.saveProfile(profileName.text)
+                }
+
+                IconButton {
+                    visible: Displays.profiles.some(p => p.name === profileName.text.trim())
+                    label: "Delete"
+                    onClicked: {
+                        Displays.deleteProfile(Displays.profiles.find(p => p.name === profileName.text.trim()).id);
+                        profileName.text = "";
+                    }
+                }
+            }
+
+            Text {
+                Layout.fillWidth: true
+                visible: text !== ""
+                text: Displays.profiles.find(p => p.active)?.summary ?? ""
+                wrapMode: Text.Wrap
+                font.family: Theme.font
+                font.pixelSize: 11
+                color: Theme.dim
+            }
+        }
+
         // Layout editor
         Card {
             title: "Arrangement"

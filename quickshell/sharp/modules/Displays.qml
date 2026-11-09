@@ -6,7 +6,8 @@ import Quickshell.Io
 import Quickshell.Hyprland
 
 // Monitor layout: read from Hyprland, edit a draft, apply live with a revert countdown,
-// and save to ~/.config/hypr/monitors.lua (required from hyprland.lua).
+// and save to ~/.config/hypr/monitors.lua (required from hyprland.lua). Named display profiles
+// (every monitor's mode, position, scale, rotation) go through ~/.config/theme/display.
 Singleton {
     id: root
 
@@ -21,6 +22,12 @@ Singleton {
     property var previous: []
     property int countdown: 0
     property string error: ""
+
+    // Display profiles (~/.config/theme/display, shared by every setup):
+    // [{ id, name, summary, active, fits }]
+    readonly property string profileTool: Quickshell.env("HOME") + "/.config/theme/display"
+    property var profiles: []
+    readonly property string activeProfile: (profiles.find(p => p.active) ?? { id: "" }).id
 
     readonly property bool dirty: JSON.stringify(strip(draft)) !== JSON.stringify(strip(monitors))
     readonly property bool confirming: countdown > 0
@@ -108,6 +115,30 @@ Singleton {
             + luaFor(list).split("\n").map(l => l.replace(/^hl\.monitor\(\{ /, "hl.monitor({\n  ").replace(/, /g, ",\n  ").replace(/ \}\)$/, "\n})")).join("\n\n") + "\n");
     }
 
+    function refreshProfiles() {
+        if (!profileReader.running)
+            profileReader.running = true;
+    }
+
+    // Switch to a saved profile (every monitor at once; no revert countdown: it's a known layout)
+    function applyProfile(id) {
+        profileRunner.command = [profileTool, "apply", id];
+        profileRunner.running = true;
+    }
+
+    // Save the live layout (not the draft) under a name; an existing name is overwritten
+    function saveProfile(name) {
+        if (!name.trim())
+            return;
+        profileRunner.command = [profileTool, "save", name.trim()];
+        profileRunner.running = true;
+    }
+
+    function deleteProfile(id) {
+        profileRunner.command = [profileTool, "delete", id];
+        profileRunner.running = true;
+    }
+
     // Parse "1920x1080@239.76Hz" into { width, height, refresh }
     function parseMode(s) {
         const m = /^(\d+)x(\d+)@([\d.]+)/.exec(s);
@@ -164,10 +195,42 @@ Singleton {
         onExited: refreshSoon.restart()
     }
 
+    Process {
+        id: profileReader
+        command: [root.profileTool, "rows"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.profiles = text.split("\n").filter(l => l).map(l => {
+                    const f = l.split("\t");
+                    return { id: f[0], name: f[1], summary: f[2], active: f[3] === "1", fits: f[4] === "1" };
+                });
+            }
+        }
+    }
+
+    Process {
+        id: profileRunner
+        stderr: StdioCollector {
+            onStreamFinished: {
+                const t = text.trim();
+                if (t)
+                    root.error = t.replace(/^display: /, "");
+            }
+        }
+        onStarted: root.error = ""
+        onExited: {
+            root.refreshProfiles();
+            refreshSoon.restart();
+        }
+    }
+
     Timer {
         id: refreshSoon
         interval: 600
-        onTriggered: root.refresh()
+        onTriggered: {
+            root.refresh();
+            root.refreshProfiles();
+        }
     }
 
     FileView {
@@ -197,5 +260,8 @@ Singleton {
         }
     }
 
-    Component.onCompleted: refresh()
+    Component.onCompleted: {
+        refresh();
+        refreshProfiles();
+    }
 }

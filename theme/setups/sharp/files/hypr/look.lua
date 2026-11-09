@@ -83,7 +83,7 @@ hl.animation({ leaf = "zoomFactor", enabled = true, speed = 7, bezier = "quick" 
 -- through cleanly. The rule follows title changes.
 hl.window_rule({
   name    = "brave-newtab-transparent",
-  match   = { class = "^brave-origin-nightly$", title = "^New (Private )?Tab - Brave Origin$" },
+  match   = { class = "^brave-origin$", title = "^New (Private )?Tab - Brave Origin$" },
   no_blur = true,
   opacity = "0.2 override 0.2 override",
 })

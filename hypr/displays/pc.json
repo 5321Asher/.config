@@ -1,0 +1,48 @@
+{
+  "name": "PC",
+  "saved": "2026-10-22 18:48",
+  "monitors": [
+    {
+      "desc": "Acer Technologies GF276 T8DAA0018511",
+      "output": "DP-3",
+      "model": "GF276",
+      "enabled": true,
+      "width": 1920,
+      "height": 1080,
+      "refresh": 74.97,
+      "x": 1920,
+      "y": -1440,
+      "scale": 0.75,
+      "transform": 2,
+      "mirror": ""
+    },
+    {
+      "desc": "GIGA-BYTE TECHNOLOGY CO. LTD. MO27Q28G 25502F000508",
+      "output": "DP-2",
+      "model": "MO27Q28G",
+      "enabled": true,
+      "width": 2560,
+      "height": 1440,
+      "refresh": 279.96,
+      "x": 1920,
+      "y": 0,
+      "scale": 1,
+      "transform": 0,
+      "mirror": ""
+    },
+    {
+      "desc": "Dell Inc. Dell AW2720HF JT27H43",
+      "output": "HDMI-A-1",
+      "model": "Dell AW2720HF",
+      "enabled": true,
+      "width": 1920,
+      "height": 1080,
+      "refresh": 239.76,
+      "x": 4480,
+      "y": -584,
+      "scale": 0.75,
+      "transform": 3,
+      "mirror": ""
+    }
+  ]
+}

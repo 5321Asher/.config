@@ -23,6 +23,13 @@ keywords = ["theme", "colour", "color", "palette", "scheme", "switch"]
 submenu = "themes"
 
 [[entries]]
+text = "Display profile"
+subtext = "monitor layouts · PC, laptop… · save the current one"
+icon = "󰍹"
+keywords = ["display", "monitor", "screen", "profile", "layout", "resolution", "laptop", "pc"]
+submenu = "displays"
+
+[[entries]]
 text = "Wallpaper"
 subtext = "pick · random · assign to themes"
 icon = "󰸉"

@@ -1,0 +1,34 @@
+// Template for ~/.config/fastfetch/config.jsonc, rendered by ~/.config/theme/theme on every theme
+// switch. Edit this file, not config.jsonc. {{role}} = the theme colour as "r;g;b".
+// Glyph (after the reference's): the mark as a ring of dots with the red one in the middle, keys in
+// grey caps, values white, the colour row as round dots.
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/master/doc/json_schema.json",
+  "logo": {
+    "type": "file",
+    "source": "~/.config/theme/setups/glyph/templates/logo.txt",
+    "color": { "1": "38;2;{{fg}}", "2": "38;2;{{danger}}" },
+    "padding": { "top": 1, "left": 2, "right": 6 }
+  },
+  "display": {
+    "separator": "",
+    "color": { "keys": "38;2;{{dim}}", "title": "38;2;{{fg}}", "output": "38;2;{{fg}}", "separator": "38;2;{{border}}" },
+    "percent": { "color": { "green": "38;2;{{fg}}", "yellow": "38;2;{{fg}}", "red": "38;2;{{danger}}" } }
+  },
+  "modules": [
+    "break",
+    { "type": "title", "color": { "user": "1;38;2;{{fg}}", "at": "38;2;{{dim}}", "host": "1;38;2;{{fg}}" } },
+    { "type": "separator", "string": "·", "outputColor": "38;2;{{dim}}" },
+    { "type": "os", "key": "OS        " },
+    { "type": "kernel", "key": "KERNEL    ", "format": "{release}" },
+    { "type": "wm", "key": "WM        ", "format": "{pretty-name}" },
+    { "type": "command", "key": "SHELL     ", "text": "echo quickshell · glyph" },
+    { "type": "terminal", "key": "TERM      ", "format": "{pretty-name}" },
+    { "type": "terminalfont", "key": "FONT      " },
+    { "type": "uptime", "key": "UPTIME    " },
+    { "type": "memory", "key": "MEMORY    " },
+    "break",
+    { "type": "colors", "symbol": "circle" },
+    "break"
+  ]
+}

@@ -37,8 +37,10 @@ Each setup remembers its last theme, each theme its last wallpaper.
   theme image <walker|fastfetch> <file|--clear> [id]
                              set (copy in) or clear a theme's image (default: the active theme)
   theme shell                (re)start the active setup's Quickshell
-  theme lock                 lock the screen the active setup's way (hypridle's lock_cmd)
-  theme openrgb              re-apply the OpenRGB colour only
+  theme lock [--boot]        lock the screen the active setup's way (hypridle's lock_cmd);
+                             --boot waits for Quickshell first (the login screen, from hyprland.lua)
+  theme openrgb [--boot]     re-apply the OpenRGB colour only;
+                             --boot skips it when lights don't follow the theme (from hyprland.lua)
 """
 
 import json
@@ -527,7 +529,7 @@ TRANSITION_DIR = f"{os.environ.get('XDG_RUNTIME_DIR', '/tmp')}/theme-transition"
 
 class Transition:
     """Hides a switch behind a snapshot of the screens, then reveals the result in the target setup's
-    style (setup.toml [transition] style = fade | wipe | iris | dissolve | glitch | burn, duration = ms). Reentrant: a theme
+    style (setup.toml [transition] style = fade | wipe | iris | dissolve | glitch | burn | dots, duration = ms). Reentrant: a theme
     switch inside a setup switch shares the setup's transition. Anything going wrong just means no
     transition, never a failed switch. settings.toml [transition] enabled = false turns it off."""
     depth = 0
@@ -763,8 +765,16 @@ def cmd_rows(what):
                              load_theme(current())["name"] if current() else "", "1" if sid == cur else "0"]))
 
 
-def cmd_lock():
+def cmd_lock(boot=False):
     cmd = load_setup(SETUP).get("lock", "pidof hyprlock || hyprlock")
+    if boot and "qs ipc" in cmd:
+        # At login Quickshell is still starting: wait (up to 20 s) for its lock IPC so the boot lock is
+        # the setup's own screen, not the hyprlock fallback.
+        for _ in range(80):
+            r = subprocess.run(["qs", "ipc", "show"], capture_output=True, text=True)
+            if r.returncode == 0 and "target lock" in r.stdout.splitlines():
+                break
+            time.sleep(0.25)
     os.execvp("sh", ["sh", "-c", cmd])
 
 
@@ -804,11 +814,12 @@ def main():
     elif cmd == "shell":
         restart_shell()
     elif cmd == "lock":
-        cmd_lock()
+        cmd_lock(boot="--boot" in args)
     elif cmd == "rows" and len(args) == 2:
         cmd_rows(args[1])
     elif cmd == "openrgb":
-        writers.apply_openrgb_only(load_theme(current()))
+        if "--boot" not in args or writers.rgb_follows():
+            writers.apply_openrgb_only(load_theme(current()))
     elif cmd in ("tui", "pool"):
         import tui
         tui.run(sys.modules[__name__], start_in_pool=cmd == "pool")

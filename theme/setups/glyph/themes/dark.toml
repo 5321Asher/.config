@@ -1,0 +1,67 @@
+# Dark: the reference's own. Black, white dots, one red.
+name = "Dark"
+appearance = "dark"
+wallpaper = "glyph-dark-dots.png"
+
+[palette]
+bg          = "#000000"
+bgDark      = "#000000"
+surface     = "#0E0E0E"
+hover       = "#1A1A1A"
+border      = "#2A2A2A"
+dim         = "#8C8C8C"
+fg          = "#F2F2F2"
+accent      = "#F2F2F2"
+accentText  = "#000000"
+accentMuted = "#2A2A2A"
+purple      = "#D71921"
+warn        = "#D9C38A"
+danger      = "#D71921"
+green       = "#9BB59A"
+# Glyph's own (Quickshell reads these; the reference's names)
+s1             = "#0E0E0E"
+s2             = "#1A1A1A"
+s3             = "#2A2A2A"
+mute           = "#4A4A4A"
+grey           = "#8C8C8C"
+ink            = "#000000"
+red            = "#D71921"
+activeBorder   = "#F2F2F2"
+inactiveBorder = "#2A2A2A"
+
+# kitty, btop, Neovim: the terminal sits on the panel grey (#0E0E0E) as in the reference
+[terminal]
+bg     = "#0E0E0E"
+bgDark = "#0E0E0E"
+purple = "#8C8C8C"
+
+# the reference's ANSI: pastels only for the terminal
+[ansi]
+black          = "#0E0E0E"
+red            = "#D71921"
+green          = "#9BB59A"
+yellow         = "#D9C38A"
+blue           = "#8EA3C2"
+magenta        = "#B79BC2"
+cyan           = "#8FB8B8"
+white          = "#C9C9C9"
+bright_black   = "#4A4A4A"
+bright_red     = "#F0434B"
+bright_green   = "#B5CCB4"
+bright_yellow  = "#E8D6A8"
+bright_blue    = "#AABBD4"
+bright_magenta = "#CDB6D6"
+bright_cyan    = "#ABCDCD"
+bright_white   = "#F2F2F2"
+
+[syntax]
+keyword   = "#F2F2F2"
+function  = "#C9C9C9"
+string    = "#9BB59A"
+type      = "#8EA3C2"
+constant  = "#D9C38A"
+property  = "#B79BC2"
+tag       = "#D71921"
+attribute = "#8FB8B8"
+operator  = "#8C8C8C"
+comment   = "#4A4A4A"

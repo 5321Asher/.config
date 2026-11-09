@@ -1,0 +1,408 @@
+#!/usr/bin/env python3
+"""Display profiles: save the whole monitor layout under a name and bring it back in one step.
+
+A profile holds every monitor: which one (make, model, serial), on or off, resolution, refresh rate,
+position, scale, rotation and mirroring. Monitors are matched by their description (make + model +
+serial), not by port, so a profile still fits when a cable moves to another socket, and the same
+SSD can boot the PC and the laptop. Shared by every setup (each setup's display panel, the Style →
+Display profile menu and this command all use it).
+
+Profiles:   ~/.config/hypr/displays/<id>.json
+Applied:    live through `hyprctl eval`, and written to ~/.config/hypr/monitors.lua (so a reload or
+            the next login keeps it)
+Active:     ~/.local/state/theme/display
+
+  display                    list profiles (* = active, + = fits the monitors plugged in now)
+  display list               same
+  display save <name>        save the current layout as <name> (overwrites a profile of that name)
+  display apply <name>       switch to a profile
+  display auto [--force]     apply the profile that fits the monitors plugged in now (Hyprland runs
+                             this at login and on every hotplug). Does nothing if none fits, or if
+                             the active profile still fits (so display-panel tweaks survive a
+                             login); --force re-applies the fitting profile anyway
+  display delete <name>      delete a profile
+  display show <name>        print a profile's monitors
+  display current            the active profile's id
+  display rows               tab-separated rows for menus and shells:
+                             id, name, summary, active (1/0), fits (1/0)
+"""
+
+import fcntl
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+
+HOME = os.path.expanduser("~")
+PROFILES = f"{HOME}/.config/hypr/displays"
+MONITORS_LUA = f"{HOME}/.config/hypr/monitors.lua"
+STATE_DIR = f"{os.environ.get('XDG_STATE_HOME', HOME + '/.local/state')}/theme"
+STATE = f"{STATE_DIR}/display"
+LOCK = f"{os.environ.get('XDG_RUNTIME_DIR', '/tmp')}/display-profile.lock"
+
+TRANSFORMS = ["normal", "90°", "180°", "270°", "flipped", "flipped 90°", "flipped 180°", "flipped 270°"]
+
+
+def die(msg):
+    global last_error
+    last_error = msg
+    print(f"display: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+last_error = ""
+
+
+def slug(name):
+    s = re.sub(r"[^a-z0-9]+", "-", name.strip().lower()).strip("-")
+    if not s:
+        die(f"not a usable name: {name!r}")
+    return s
+
+
+def num(x):
+    """0.75 -> '0.75', 1.0 -> '1', 239.757 -> '239.76'"""
+    return f"{round(float(x), 2):g}" if float(x) != int(x) else str(int(x))
+
+
+# ---------------------------------------------------------------------- live state
+
+def live():
+    out = subprocess.run(["hyprctl", "monitors", "all", "-j"], capture_output=True, text=True, timeout=10)
+    try:
+        return json.loads(out.stdout)
+    except json.JSONDecodeError:
+        die("can't read monitors from hyprctl (is Hyprland running?)")
+
+
+def parse_mode(s):
+    m = re.match(r"^(\d+)x(\d+)@([\d.]+)", s)
+    return (int(m[1]), int(m[2]), float(m[3])) if m else None
+
+
+def snapshot(mons):
+    """Hyprland's monitor list -> profile monitors"""
+    by_name = {m["name"]: m for m in mons}
+    result = []
+    for m in mons:
+        # the listed mode closest to the live rate, so the value round-trips exactly
+        modes = [x for x in map(parse_mode, m.get("availableModes", [])) if x]
+        same = [x for x in modes if x[0] == m["width"] and x[1] == m["height"]]
+        best = min(same, key=lambda x: abs(x[2] - m["refreshRate"]), default=None)
+        mirror = m.get("mirrorOf") or "none"
+        result.append({
+            "desc": m.get("description", ""),
+            "output": m["name"],
+            "model": m.get("model") or m.get("make") or "",
+            "enabled": not m.get("disabled", False),
+            "width": m["width"],
+            "height": m["height"],
+            "refresh": best[2] if best else round(m["refreshRate"], 2),
+            "x": m["x"],
+            "y": m["y"],
+            "scale": m["scale"],
+            "transform": m["transform"],
+            # the mirrored screen, by description too
+            "mirror": by_name[mirror].get("description", mirror) if mirror in by_name else "",
+        })
+    return sorted(result, key=lambda p: (p["x"], p["y"]))
+
+
+# ---------------------------------------------------------------------- profiles
+
+def path(pid):
+    return f"{PROFILES}/{pid}.json"
+
+
+def load(pid):
+    try:
+        with open(path(pid)) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        die(f"no profile '{pid}' (see: display list)")
+
+
+def profiles():
+    if not os.path.isdir(PROFILES):
+        return []
+    result = []
+    for f in sorted(os.listdir(PROFILES)):
+        if f.endswith(".json"):
+            try:
+                with open(f"{PROFILES}/{f}") as fh:
+                    p = json.load(fh)
+                p["id"] = f[:-5]
+                result.append(p)
+            except (OSError, json.JSONDecodeError):
+                pass
+    return result
+
+
+def active():
+    try:
+        with open(STATE) as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def set_active(pid):
+    os.makedirs(STATE_DIR, exist_ok=True)
+    with open(STATE, "w") as f:
+        f.write(pid + "\n")
+
+
+def key(m):
+    return m["desc"] or m["output"]
+
+
+def fits(profile, mons):
+    """True when exactly the profile's monitors are plugged in"""
+    return sorted(key(m) for m in profile["monitors"]) == sorted(m.get("description") or m["name"] for m in mons)
+
+
+def summary(profile):
+    on = [m for m in profile["monitors"] if m["enabled"]]
+    parts = [f"{m['width']}x{m['height']}@{round(m['refresh'])}" for m in on]
+    return f"{len(on)} screen{'s' if len(on) != 1 else ''} · " + " + ".join(parts)
+
+
+# ---------------------------------------------------------------------- applying
+
+def lua_string(s):
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def rules(profile, mons):
+    """Profile -> list of hl.monitor rule bodies (one per monitor, connected or not)"""
+    descs = [m.get("description", "") for m in mons]
+    by_desc = {m.get("description"): m["name"] for m in mons}
+
+    def target(pm):
+        # by description, unless two plugged-in screens share it (no serial): then by port
+        if pm["desc"] and descs.count(pm["desc"]) <= 1:
+            return "desc:" + pm["desc"]
+        return pm["output"]
+
+    out = []
+    for pm in profile["monitors"]:
+        if not pm["enabled"]:
+            out.append([f"output = {lua_string(target(pm))}", "disabled = true"])
+            continue
+        mirror = pm.get("mirror") or ""
+        # Hyprland mirrors by port name; resolve the description now (the .lua is rewritten on
+        # every apply, so this stays right)
+        mirror = by_desc.get(mirror) or (mirror if mirror in by_desc.values() else "")
+        out.append([
+            f"output = {lua_string(target(pm))}",
+            f"mode = \"{pm['width']}x{pm['height']}@{num(pm['refresh'])}\"",
+            f"position = \"{round(pm['x'])}x{round(pm['y'])}\"",
+            f"scale = \"{num(pm['scale'])}\"",
+            f"transform = {pm['transform']}",
+            # always stated: a rule without them neither re-enables a screen nor ends mirroring
+            "disabled = false",
+            f"mirror = {lua_string(mirror)}",
+        ])
+    return out
+
+
+def write_lua(profile, body):
+    text = (f"-- Monitor layout: display profile \"{profile['name']}\" (~/.config/theme/display).\n"
+            "-- Rewritten by `display apply` and the Quickshell display panel; edit freely.\n\n"
+            + "\n\n".join("hl.monitor({\n  " + ",\n  ".join(r) + "\n})" for r in body) + "\n")
+    tmp = MONITORS_LUA + ".tmp"
+    with open(tmp, "w") as f:
+        f.write(text)
+    os.replace(tmp, MONITORS_LUA)
+
+
+def apply(pid, quiet=False):
+    profile = load(pid)
+    mons = live()
+    plugged = {m.get("description") or m["name"] for m in mons}
+    missing = [m["model"] or m["desc"] for m in profile["monitors"] if key(m) not in plugged]
+    body = rules(profile, mons)
+    # only plugged-in screens live: a rule for an absent one is harmless but noisy
+    live_body = [r for r, pm in zip(body, profile["monitors"]) if key(pm) in plugged]
+    if not any(pm["enabled"] for pm in profile["monitors"] if key(pm) in plugged):
+        die(f"'{pid}' would leave no screen on with the monitors plugged in now")
+    lua = "\n".join("hl.monitor({ " + ", ".join(r) + " })" for r in live_body)
+    res = subprocess.run(["hyprctl", "eval", lua], capture_output=True, text=True, timeout=15)
+    msg = res.stdout.strip()
+    if res.returncode != 0 or (msg and msg != "ok"):
+        die(f"Hyprland refused the layout: {msg or res.stderr.strip()}")
+    write_lua(profile, body)
+    set_active(pid)
+    if not quiet:
+        print(f"applied {profile['name']}" + (f" (not plugged in: {', '.join(missing)})" if missing else ""))
+    return missing
+
+
+def matches_live(profile, mons):
+    now = {key(m): m for m in snapshot(mons)}
+    for pm in profile["monitors"]:
+        m = now.get(key(pm))
+        if not m or m["enabled"] != pm["enabled"]:
+            return False
+        if not pm["enabled"]:
+            continue
+        for k in ("width", "height", "x", "y", "transform", "mirror"):
+            if m[k] != pm[k]:
+                return False
+        if abs(m["refresh"] - pm["refresh"]) > 0.05 or abs(m["scale"] - pm["scale"]) > 0.001:
+            return False
+    return True
+
+
+def notify(text):
+    subprocess.Popen(["notify-send", "-a", "Displays", "-i", "video-display", "Display profile", text],
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def auto(force=False):
+    # hotplugs come in bursts (a dock adds several screens): one run at a time, after things settle
+    with open(LOCK, "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        time.sleep(1.5)
+        mons = live()
+        cands = [p for p in profiles() if fits(p, mons)]
+        if not cands:
+            return
+        # several fit (unlikely): prefer the active one
+        cur = active()
+        pick = next((p for p in cands if p["id"] == cur), cands[0])
+        if not force:
+            # the active profile still fits: same machine, same screens. Keep the layout as it is
+            # (monitors.lua may hold tweaks made in the display panel since)
+            if pick["id"] == cur:
+                return
+            if matches_live(pick, mons):
+                set_active(pick["id"])
+                return
+        apply(pick["id"], quiet=True)
+        notify(f"{pick['name']} · {summary(pick)}")
+
+
+# ---------------------------------------------------------------------- commands
+
+def cmd_list():
+    mons = live()
+    cur = active()
+    ps = profiles()
+    if not ps:
+        print("no profiles yet: display save <name>")
+    for p in ps:
+        mark = ("*" if p["id"] == cur else " ") + ("+" if fits(p, mons) else " ")
+        print(f"{mark} {p['id']:<14} {p['name']:<16} {summary(p)}")
+
+
+def cmd_rows():
+    mons = live()
+    cur = active()
+    for p in profiles():
+        print("\t".join([p["id"], p["name"], summary(p), "1" if p["id"] == cur else "0",
+                         "1" if fits(p, mons) else "0"]))
+
+
+def cmd_save(name):
+    pid = slug(name)
+    os.makedirs(PROFILES, exist_ok=True)
+    profile = {"name": name.strip(), "saved": time.strftime("%Y-%m-%d %H:%M"), "monitors": snapshot(live())}
+    tmp = path(pid) + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(profile, f, indent=2)
+        f.write("\n")
+    os.replace(tmp, path(pid))
+    set_active(pid)
+    print(f"saved {profile['name']} ({pid}): {summary(profile)}")
+
+
+def cmd_show(pid):
+    p = load(slug(pid))
+    print(f"{p['name']}  (saved {p.get('saved', '?')})")
+    for m in p["monitors"]:
+        if not m["enabled"]:
+            print(f"  {m['model'] or m['desc']:<20} off")
+            continue
+        extra = f"  mirrors {m['mirror']}" if m.get("mirror") else ""
+        print(f"  {m['model'] or m['desc']:<20} {m['width']}x{m['height']}@{num(m['refresh'])}Hz"
+              f"  at {m['x']},{m['y']}  scale {num(m['scale'])}  {TRANSFORMS[m['transform'] % 8]}{extra}"
+              f"   [{m['desc']}]")
+
+
+def ask(placeholder, options=None):
+    """Ask through theme/prompt (the active setup's own UI, or Walker)"""
+    args = [f"{HOME}/.config/theme/prompt", "--placeholder", placeholder]
+    if options is None:
+        args.append("--input")
+    res = subprocess.run(args, input="\n".join(options or []), capture_output=True, text=True)
+    return res.stdout.strip()
+
+
+def cmd_menu(what):
+    """Style → Display profile entries (elephant/menus/displays.lua)"""
+    try:
+        if what.startswith("apply:"):
+            pid = what[6:]
+            missing = apply(pid, quiet=True)
+            p = load(pid)
+            notify(f"{p['name']} · {summary(p)}" + (f"\nnot plugged in: {', '.join(missing)}" if missing else ""))
+        elif what == "save":
+            name = ask("Save this layout as… (a name, e.g. PC, Laptop, Desk)")
+            if name:
+                cmd_save(name)
+                notify(f"saved {name} · {summary(load(slug(name)))}")
+        elif what == "delete":
+            ps = profiles()
+            pick = ask("Delete which display profile?", [f"{p['name']}  ·  {summary(p)}" for p in ps])
+            p = next((p for p in ps if pick.startswith(p["name"] + "  ·")), None)
+            if p:
+                os.remove(path(p["id"]))
+                if active() == p["id"]:
+                    os.remove(STATE)
+                notify(f"deleted {p['name']}")
+    except SystemExit:
+        notify(f"couldn't do it: {last_error}")
+
+
+def main(argv):
+    cmd = argv[0] if argv else "list"
+    arg = " ".join(argv[1:]).strip()
+    if cmd in ("list", "ls"):
+        cmd_list()
+    elif cmd == "rows":
+        cmd_rows()
+    elif cmd == "current":
+        print(active())
+    elif cmd == "save":
+        if not arg:
+            die("usage: display save <name>")
+        cmd_save(arg)
+    elif cmd in ("apply", "set", "load"):
+        if not arg:
+            die("usage: display apply <name>")
+        apply(slug(arg))
+    elif cmd == "auto":
+        auto(force="--force" in argv[1:])
+    elif cmd in ("delete", "rm"):
+        pid = slug(arg)
+        if not os.path.exists(path(pid)):
+            die(f"no profile '{pid}'")
+        os.remove(path(pid))
+        if active() == pid:
+            os.remove(STATE)
+        print(f"deleted {pid}")
+    elif cmd == "show":
+        cmd_show(arg or active() or die("no active profile"))
+    elif cmd == "menu":
+        cmd_menu(arg)
+    elif cmd in ("-h", "--help", "help"):
+        print(__doc__.strip())
+    else:
+        die(f"unknown command '{cmd}' (display help)")
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

@@ -15,8 +15,12 @@
 ------------------
 
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
--- Monitor layout lives in monitors.lua (managed by the Quickshell display panel)
+-- Monitor layout lives in monitors.lua (managed by the Quickshell display panel and display
+-- profiles: ~/.config/theme/display). At login and on every hotplug, `display auto` switches to the
+-- saved profile that fits the screens plugged in (PC <-> laptop, same SSD).
 require("monitors")
+hl.on("monitor.added", function() hl.exec_cmd("~/.config/theme/display auto") end)
+hl.on("monitor.removed", function() hl.exec_cmd("~/.config/theme/display auto") end)
 
 
 ---------------------
@@ -34,11 +38,16 @@ local menu        = "hyprlauncher"
 -------------------
 
 hl.on("hyprland.start", function()
+  -- Login screen: tty1 autologs in, so the active setup's lock screen is the login. Unlocking it also
+  -- unlocks the GNOME keyring (its PAM has pam_gnome_keyring).
+  hl.exec_cmd("~/.config/theme/theme lock --boot")
+  hl.exec_cmd("~/.config/theme/display auto") -- display profile that fits these screens
   hl.exec_cmd("elephant")
   hl.exec_cmd("walker --gapplication-service")
   hl.exec_cmd("qs") -- Quickshell: bar, side panel, notifications, wallpaper theming
   hl.exec_cmd("~/.config/theme/titlebars.sh") -- title bars (hyprbars) for setups that want them
   hl.exec_cmd("hypridle") -- Idle: dim, lock (hyprlock), screen off, suspend
+  hl.exec_cmd("~/.config/theme/theme openrgb --boot") -- RGB lights to the theme accent (skipped when "lights follow" is off)
   hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY DISPLAY XDG_CURRENT_DESKTOP && systemctl --user start voxtype") -- Voxtype: push-to-talk dictation daemon
 end)
 

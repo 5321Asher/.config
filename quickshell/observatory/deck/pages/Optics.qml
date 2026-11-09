@@ -60,6 +60,70 @@ Column {
         }
     }
 
+    // ---------------------------------------------------------------- profiles
+    // every monitor's mode, position, scale and rotation under one name (PC, laptop…);
+    // Hyprland picks the one that fits the screens plugged in at login and on hotplug
+    Section {
+        title: "profiles"
+        trailing: "chosen by the screens plugged in"
+        Flow {
+            width: parent.width
+            spacing: 6
+            Repeater {
+                model: Displays.profiles
+                Link {
+                    required property var modelData
+                    glyph: modelData.fits ? "\u{f0379}" : ""
+                    text: modelData.name
+                    primary: modelData.active
+                    onClicked: { profileName.text = modelData.name; Displays.applyProfile(modelData.id); }
+                }
+            }
+        }
+        Text {
+            width: parent.width
+            wrapMode: Text.Wrap
+            text: Displays.profiles.length ? (Displays.profiles.find(p => p.active)?.summary ?? "") : "no saved profiles yet"
+            color: Theme.dim
+            font.family: Theme.fontData
+            font.pixelSize: Theme.dataSizeSmall
+        }
+        Row {
+            spacing: 8
+            Rectangle {
+                width: 220; height: 28; radius: 4
+                color: Theme.alpha(Theme.bgDark, 0.9)
+                border.width: 1
+                border.color: profileName.activeFocus ? Theme.brassBright : Theme.border
+                Text {
+                    anchors.left: parent.left; anchors.leftMargin: 10
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: profileName.text === ""
+                    text: "profile name"
+                    color: Theme.dim
+                    font.family: Theme.fontData
+                    font.pixelSize: Theme.dataSizeSmall
+                }
+                TextInput {
+                    id: profileName
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    verticalAlignment: TextInput.AlignVCenter
+                    color: Theme.fg
+                    font.family: Theme.fontData
+                    font.pixelSize: Theme.dataSize
+                    onAccepted: Displays.saveProfile(text)
+                }
+            }
+            Link { text: "save current"; primary: true; enabled: profileName.text.trim() !== ""; onClicked: Displays.saveProfile(profileName.text) }
+            Link {
+                text: "delete"
+                visible: Displays.profiles.some(p => p.name === profileName.text.trim())
+                onClicked: { Displays.deleteProfile(Displays.profiles.find(p => p.name === profileName.text.trim()).id); profileName.text = ""; }
+            }
+        }
+    }
+
     // ---------------------------------------------------------------- layout
     Section {
         title: "arrangement"

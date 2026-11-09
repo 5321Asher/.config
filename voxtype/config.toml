@@ -112,7 +112,7 @@ translate = false
 # Load model on-demand when recording starts (true) or keep loaded (false)
 # When true, model is loaded when recording starts and unloaded after transcription
 # When false, model is kept in memory for faster response times (default)
-on_demand_loading = false
+on_demand_loading = true
 
 # GPU memory isolation mode
 # Enable on laptops with hybrid graphics to let dGPU sleep between transcriptions.

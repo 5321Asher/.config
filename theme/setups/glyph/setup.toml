@@ -1,0 +1,48 @@
+# Glyph: after Nothing OS, faithful to Shykid002's Nothing-rice ("Glyph": black, white dots, one red).
+# A vertical pill rail, a home of Doto numbers and dot-matrix widgets, the screen's edges as Glyph
+# strips for volume, brightness and notifications, and menus that are dials of dot-matrix words.
+# Red marks the one live thing on screen; nothing else is coloured.
+name = "Glyph"
+description = "black · white dots · one red"
+default_theme = "dark"
+icon = "󰝥"
+
+# Run by `theme lock` (hypridle's lock_cmd, SUPER+L, the power screen): Glyph's own lock
+# (Quickshell); hyprlock if Glyph's Quickshell isn't answering.
+lock = "qs ipc call lock lock || pidof hyprlock || hyprlock"
+
+# Doto (the dot-matrix display face, Nothing's), Space Grotesk for text, Space Mono for labels and the
+# terminal (fonts in ~/.local/share/fonts/glyph, from the reference repo, OFL). Icons come from
+# JetBrainsMono Nerd Font by name in the shell.
+[fonts]
+mono    = "Space Mono"
+sans    = "Space Grotesk"
+serif   = "Space Grotesk"
+display = "Doto"
+size    = 11
+
+# style.py draws the cursors (Glyph-Cursors: a white dot-and-ring arrow) and the icons (Papirus with
+# round dotted folders); these are only the fallbacks.
+[cursor]
+theme = "Adwaita"
+size  = 24
+
+[icons]
+theme = "Papirus-Dark"
+
+# White (dark) / black (light) hairline on the focused window, the grey line on the rest
+[hyprland]
+border = "palette"
+
+# What SUPER + Space, SUPER + CTRL + Space and SUPER + V open here (~/.config/theme/menu)
+[menus]
+root = "qs ipc call index toggle"
+apps = "qs ipc call exec toggle"
+clipboard = "qs ipc call clipboard toggle"
+prompt = "qs ipc call prompt ask"
+
+# Switching to Glyph, or between Dark and Light, is revealed as a field of dots: the old picture
+# breaks into a dot matrix whose dots shrink away (transition style "dots")
+[transition]
+style    = "dots"
+duration = 900

@@ -48,6 +48,31 @@ Column {
               Btn { text: "revert"; onClicked: Displays.revert() } }
     }
 
+    // display profiles: every screen's mode, place, scale and turning under one name; at login and on
+    // hotplug the one that fits the screens plugged in is taken up by itself
+    Section {
+        title: "the arrangements"
+        trailing: "chosen by the screens present"
+        Flow {
+            width: parent.width
+            spacing: 6
+            Repeater {
+                model: Displays.profiles
+                Btn { required property var modelData; text: modelData.name; glyph: modelData.fits ? "󰍹" : ""; on: modelData.active
+                      onClicked: { profileName.text = modelData.name; Displays.applyProfile(modelData.id); } }
+            }
+        }
+        Body { width: parent.width; wrapMode: Text.Wrap
+               text: Displays.profiles.length ? (Displays.profiles.find(p => p.active)?.summary ?? "") : "None written down yet: name this arrangement and keep it." }
+        Row {
+            spacing: 8
+            Field { id: profileName; width: 200; placeholder: "a name (PC, laptop…)"; onAccepted: Displays.saveProfile(text) }
+            Btn { text: "write it down"; primary: true; enabled: profileName.text.trim() !== ""; onClicked: Displays.saveProfile(profileName.text) }
+            Btn { text: "strike out"; visible: Displays.profiles.some(p => p.name === profileName.text.trim())
+                  onClicked: { Displays.deleteProfile(Displays.profiles.find(p => p.name === profileName.text.trim()).id); profileName.text = ""; } }
+        }
+    }
+
     Section {
         title: "the screens"
         trailing: "drag to move them"

@@ -103,6 +103,6 @@ hl.window_rule({
 -- Brave's New Tab lets the Bloom show through a little, blurred, like a Mica page
 hl.window_rule({
   name    = "disguise-brave-newtab",
-  match   = { class = "^brave-origin-nightly$", title = "^New (Private )?Tab - Brave Origin$" },
+  match   = { class = "^brave-origin$", title = "^New (Private )?Tab - Brave Origin$" },
   opacity = "0.9 override 0.9 override",
 })

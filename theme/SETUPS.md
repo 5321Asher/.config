@@ -19,7 +19,10 @@ colour theme or a config file). A theme recolours everything inside its setup an
 wallpapers.
 
 Shared by every setup (don't fork these per setup): keybinds (`hypr/binds.lua`), the menu *contents*
-(elephant menus, `elephant/menus/`), hypridle, the GNOME keyring, the theme tool itself.
+(elephant menus, `elephant/menus/`), hypridle, the GNOME keyring, the theme tool itself, and
+**display profiles** (`theme/display`: named monitor layouts in `hypr/displays/<id>.json`, matched by
+monitor description not port; `display auto` runs at login and on hotplug so the same SSD comes up
+right on the PC and the laptop; Style → Display profile in the menus).
 
 ```
 ~/.config/theme/theme setups                list setups (* = active)
@@ -41,6 +44,7 @@ Existing setups, as references:
 | **netrunner** | 3 (fully custom) | Cyberpunk: red/cyan on black glass, cut corners, HUD of real system state; Chakra Petch + JetBrains Mono + Noto CJK | `quickshell/netrunner/` (bar with ticker, window frames overlay, deck dashboard on special:deck, rig control panel) | BREACH PROTOCOL root menu (code matrix) + EXEC quickhack scanner + DATA SHARDS clipboard + INPUT REQUIRED prompt | own Quickshell lock (pic-4 style) | gtk3/gtk4/qss/satty + folder icons + cursors |
 | **disguise** | 3 (fully custom) | Windows 11: Mica/Acrylic, centred taskbar, Fluent controls; Segoe UI Variable + Segoe Fluent Icons + Cascadia | `quickshell/disguise/` (taskbar, flyout layer: Start, Search, Quick Settings, notification centre, Widgets, tray; Settings as a real FloatingWindow; Task View; toasts; OSD) | own Start menu + Search | own Quickshell lock (curtain + sign-in) | gtk3/gtk4/qss/satty (WinUI) + Win11 icons + cursors |
 | **grimoire** | 3 (fully custom) | a spellbook on a candlelit desk: oxblood leather, parchment, gold leaf, glowing runes; Cardo + UnifrakturMaguntia + Cormorant Garamond + Cinzel + IBM Plex Mono + Noto Runic | `quickshell/grimoire/` (bar with chapter ribbon, spine of reagents + the uptime candle, codex = open-book control panel with a page-curl shader, sealed-letter notifications, gilt flourishes on the focused window; paper, leather, lit covers, wax and the flame are shaders) | own arcana (tarot-spread root menu) + seal-book launcher (generated glyph per app) + commonplace book (clipboard) + prompt | own Quickshell lock (the closed book) | gtk3/gtk4/qss/satty + leather-bound folders + gilded cursors |
+| **glyph** | 3 (fully custom) | Nothing OS: black, white dots, one red; Doto + Space Grotesk + Space Mono | `quickshell/glyph/` (vertical pill rail, home screen of Doto numbers + dot-matrix bento widgets, the screen edges as Glyph strips for volume/brightness/notifications + the island, quick settings, settings, a dashboard from the bottom; dot-matrix text is a shader) | own index (rotary dial of dot-matrix words) + app launcher + clipboard + prompt | own Quickshell lock (desktop dissolves into dots) | gtk3/gtk4/qss/satty + round dotted folders + dot cursors |
 
 ---
 
@@ -119,7 +123,7 @@ With where they live, so you can port them (`S` = `quickshell/sharp/modules/`,
 | volume per app, outputs / inputs, mic test | `S/MediaTab.qml` | deck `Media.qml` | `M/desk/windows/VolumeControl.qml`, applet `Multimedia.qml` |rig `Airwaves.qml` |
 | media player (MPRIS) + visualiser (cava) | `S/MediaPanel.qml`, `S/Cava.qml` | deck `Media.qml`, `O/services/Radio.qml` (waveform on the horizon) | `M/desk/windows/MediaPlayer.qml`, applet `Multimedia.qml` |rig `Airwaves.qml`, deck `SignalPanel.qml` |
 | monitor brightness (ddcutil) | `S/Brightness.qml` | `O/services/Brightness.qml` | applet `Display.qml` (Brightness) |rig `Helm.qml`, `Optics.qml` |
-| display layout (resolution, refresh, scale, rotation, arrangement, revert timer) | `S/DisplayTab.qml` | deck `Optics.qml` | applet `Display.qml` (Settings) |rig `Optics.qml` |
+| display layout (resolution, refresh, scale, rotation, arrangement, revert timer) + **display profiles** (list/load, save current as, delete: `Displays.profiles`, `applyProfile`, `saveProfile`, `deleteProfile`) | `S/DisplayTab.qml` | deck `Optics.qml` | applet `Display.qml` (Settings, Profiles tab) |rig `Optics.qml` |
 | capture: region / screen screenshots, OCR, screen recording + REC indicator | `S/Capture.qml` | `O/services/Capture.qml`, `O/bar/Beacons.qml` | `M/services/Capture.qml`, REC in `NotifyArea.qml` |`N/services/Capture.qml`, REC in the bar |
 | dictation (voxtype) overlay **with a live mic meter** | `S/VoxtypeOsd.qml`, `S/MicLevel.qml` | `O/utilities/DictationOsd.qml`, `O/services/MicLevel.qml` | `M/utilities/DictationOsd.qml` |`N/utilities/DictationOsd.qml` |
 | weather + 7-day + **moon phase** | `S/WeatherTab.qml` | deck `Almanac.qml` | applet `DateTime.qml` (Weather) |rig `Almanac.qml` |
@@ -139,6 +143,9 @@ Grimoire (`G` = `quickshell/grimoire/`) has every row too: its README's mapping 
 chapters `G/codex/pages/`: Sanctum = quick toggles/levels/capture/power, Sendings = net, Minstrelsy =
 media, Letters = notifications, Almanac, Alchemy = stats + vulnerability watch/updates, Reliquary,
 Scrying, Lanterns, Hourglass, Familiar; the bar and spine for indicators).
+Glyph (`Y` = `quickshell/glyph/`) has every row too: its README's mapping table says where (quick settings
+`Y/quick/Quick.qml`, settings sections `Y/prefs/pages/`, OSDs and notifications on the edges `Y/edges/Edges.qml`,
+the power screen `Y/power/Power.qml`, the rail for indicators).
 Disguise (`D` = `quickshell/disguise/`) has every row too: its README's mapping table says where (Quick Settings
 `D/flyouts/QuickSettings.qml`, Settings pages `D/settings/pages/`, Task View `D/utilities/TaskViewLayer.qml`…).
 
@@ -147,7 +154,8 @@ Voxtype, Weather, MicLevel, ClaudeStatus, Config, Updates, Elephant, StayAwake) 
 new shell (a setup never imports another setup's files) and write only the UI.
 
 ### 3.4 Lock screen rules
-- `setup.toml` → `lock = "…"` is what `theme lock` runs (hypridle's `lock_cmd`, SUPER+L, suspend).
+- `setup.toml` → `lock = "…"` is what `theme lock` runs (hypridle's `lock_cmd`, SUPER+L, suspend, and
+  the login screen at boot: §3.5).
 - **hyprlock** (levels 1–2): nothing else to do; `/etc/pam.d/hyprlock` → `login` already unlocks
   the keyring.
 - **Own Quickshell lock** (level 3):
@@ -169,9 +177,13 @@ new shell (a setup never imports another setup's files) and write only the UI.
 
 ### 3.5 GNOME keyring (all setups)
 Session-wide, nothing per setup except the lock (above). Brave/Chromium use it via
-`~/.config/{brave-origin-nightly,brave,chromium}-flags.conf` (`--password-store=gnome-libsecret`; Brave Origin Nightly reads its file as one argument: one flag, no comments); `gh` and git use it.
-The session autologs in on tty1, so the first app needing a secret after boot prompts once, or
-unlocking the lock screen unlocks it. Setting it up again on a new machine needs sudo (the user
+`~/.config/{brave-origin,brave,chromium}-flags.conf` (`--password-store=gnome-libsecret`; one flag per line, `#` comments allowed); `gh` and git use it.
+**The lock screen is the login screen** (2026-10-24). tty1 autologs in (`getty@tty1.service.d/override.conf`)
+and `~/.zprofile` execs start-hyprland; hyprland.lua's start hook runs `theme lock --boot`, which waits
+for Quickshell's `lock` IPC and then runs the setup's `lock`. So every setup's own lock (and its colour
+theme) is its login screen for free; a new setup needs nothing extra. Unlocking it unlocks the keyring
+(the daemon is already up from `/etc/pam.d/login`'s session line). Without that lock at start, autologin
+leaves the keyring locked and Brave asks for its password after every boot. Setting it up again on a new machine needs sudo (the user
 runs it): `pacman -S gnome-keyring seahorse`, two `pam_gnome_keyring` lines in `/etc/pam.d/login`
 (auth optional; session optional auto_start), `systemctl --user enable --now gnome-keyring-daemon.socket`.
 
@@ -268,7 +280,7 @@ All are in `.gitignore`. New themeable app? Add a writer to `theme/writers.py` (
 `theme set` / `theme setup` freeze the screens on a snapshot (`theme/transition/shell.qml`, its
 own `qs -p` process), switch underneath, then reveal in the target setup's `[transition]` style:
 `fade` (crossfade), `wipe` (hard edge from the left + accent line — Sharp), `iris` (circle from
-the centre with an accent ring — Observatory), `dissolve` (square blocks in random order — Memphis), `glitch` (torn, jittering bands with red/cyan edges — Netrunner), `burn` (the old picture burns away from embers with a glowing edge — Grimoire; a ShaderEffect, `burn.frag` compiled to `.qsb` by `quickshell/grimoire/shaders/build.sh`). A new style = a new branch in that QML file
+the centre with an accent ring — Observatory), `dissolve` (square blocks in random order — Memphis), `glitch` (torn, jittering bands with red/cyan edges — Netrunner), `burn` (the old picture burns away from embers with a glowing edge — Grimoire; a ShaderEffect, `burn.frag` compiled to `.qsb` by `quickshell/grimoire/shaders/build.sh`), `dots` (a wave from the centre collapses the old picture into round dots that drain to grey and shrink away — Glyph; `dots.frag.qsb`). A new style = a new branch in that QML file
 (keep it generic: it only gets `style`, `accent`, `duration`). Skipped automatically when the
 screens are off. `settings.toml [transition] enabled = false` turns it off.
 
@@ -503,3 +515,9 @@ Check `git status` for generated files before committing (§4.4).
   dropped, but the draft never changes and Apply never appears). Use `drag.onActiveChanged: if
   (!drag.active) …`, and never give the MouseArea the id `drag` (then `drag.active` is undefined). Every
   setup's display arrangement had this until 2026-09-30.
+- **Never switch setups while the session is locked by the old setup's Quickshell lock.** `loginctl`'s
+  LockedHint stays "no" for Quickshell locks, and screens being DPMS-off says nothing either. The switch
+  stops the old shell, its lock client dies, and Hyprland shows "lockscreen died" (still locked, safe).
+  Recover by starting the new setup's lock (`qs ipc call lock lock`; `misc.allow_session_lock_restore` is
+  on), never `hl.clear_crashed_lockscreen()`. Check first: `qs ipc call lock` state, or just wait for the
+  user (2026-10-28).
