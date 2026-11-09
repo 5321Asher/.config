@@ -7,11 +7,11 @@
 -- Hyprland's built-in "scrolling" layout does the columns (layoutmsg focus/swapcol/consume/expel/
 -- colresize/fit/center); this file sets it up like niri and binds niri's keys. It loads after
 -- binds.lua and the setup's setup-binds.lua, takes over the keys it needs (hl.unbind first: two
--- binds on one key would both fire) and leaves the rest (apps, clipboard, capture, dictation,
--- scratchpad, menus) as they are. The cheat sheet for these keys: feels/niri.keys.
+-- binds on one key would both fire) only where the column way needs it; every other key stays as
+-- binds.lua has it. The cheat sheet for these keys: feels/niri.keys.
 --
--- Not possible on Hyprland, so not here: tabbed columns (SUPER + W makes a window group instead),
--- per-window heights in a column by preset (SUPER + SHIFT + R), "center visible columns".
+-- Not possible on Hyprland, so not here: tabbed columns (a window group, SUPER + G, is the nearest),
+-- per-window heights in a column by preset, "center visible columns".
 
 local HOT_CORNER = true -- pushing the pointer into a screen's top-left corner opens the overview
 
@@ -189,15 +189,6 @@ local function maximize_column()
   end
 end
 
--- niri's set-window-height ±10%: the focused window's share of its column
-local function window_height(sign)
-  return function()
-    local mon = hl.get_active_monitor()
-    if not mon then return end
-    hl.dispatch(hl.dsp.window.resize({ x = 0, y = sign * math.floor(mon.height * 0.1), relative = true }))
-  end
-end
-
 -- niri's switch-focus-between-floating-and-tiling
 local function floating_or_tiling()
   local mon = hl.get_active_monitor()
@@ -226,94 +217,72 @@ local function wheel(fn)
 end
 
 ------------------------------------------------------------------------------------------------
--- Keys: niri's defaults (Mod = SUPER). Arrows and H J K L do the same.
+-- Keys. The feel keeps binds.lua: a function both feels have stays on the same key (SUPER + C closes,
+-- SUPER + F fullscreens, SUPER + G groups, SUPER + L locks, SUPER + 1…0 workspaces…). Only these two
+-- sets change what they do, so they work on columns:
+--   SUPER + arrows          focus: the column left / right, the window up / down in the column; at the
+--                           end of the strip, the monitor that way (as Hyprland's focus does)
+--   SUPER + SHIFT + arrows  move: the column left / right, the window up / down in its column; at the
+--                           end, onto an empty monitor that way (as binds.lua's swap_or_move does)
+-- SUPER + CTRL + arrows (resize) already work on columns: width left / right, height up / down.
+-- niri-only actions (preset widths, maximize column, workspaces up / down…) are the NIRI.* functions;
+-- their keys go in the block at the end of this file.
 
-local dirs = {
-  { "left", "H", "l", "left" }, { "right", "L", "r", "right" },
-  { "up", "K", "u", "up" }, { "down", "J", "d", "down" },
-}
-for _, d in ipairs(dirs) do
-  local arrow, vim, short, long = d[1], d[2], d[3], d[4]
-  for _, key in ipairs({ arrow, vim }) do
-    -- focus: columns left/right, windows in the column up/down
-    rebind("SUPER + " .. key, msg("focus " .. short))
-    -- move: the column left/right, the window up/down in its column
-    if short == "l" or short == "r" then
-      rebind("SUPER + CTRL + " .. key, msg("swapcol " .. short))
-    else
-      rebind("SUPER + CTRL + " .. key, hl.dsp.window.move({ direction = long }))
+-- an empty monitor that way, for a window leaving the end of the strip
+local function empty_monitor(dir)
+  local cur = hl.get_active_monitor()
+  if not cur then return nil end
+  local cx, cy = cur.x + cur.width / 2, cur.y + cur.height / 2
+  for _, m in ipairs(hl.get_monitors()) do
+    local mx, my = m.x + m.width / 2, m.y + m.height / 2
+    local beside = (dir == "l" and mx < cx) or (dir == "r" and mx > cx)
+      or (dir == "u" and my < cy) or (dir == "d" and my > cy)
+    if m.id ~= cur.id and beside and (not m.active_workspace or m.active_workspace.is_empty) then
+      return m.name
     end
-    -- monitors
-    rebind("SUPER + SHIFT + " .. key, hl.dsp.focus({ monitor = short }))
-    rebind("SUPER + SHIFT + CTRL + " .. key, hl.dsp.window.move({ monitor = short }))
+  end
+  return nil
+end
+
+local function focus_dir(d)
+  return function()
+    local before = hl.get_active_window()
+    hl.dispatch(hl.dsp.layout("focus " .. d))
+    local after = hl.get_active_window()
+    -- nothing that way on this workspace: the monitor that way, if there is one
+    if not before or not after or after.address == before.address then
+      hl.dispatch(hl.dsp.focus({ monitor = d }))
+    end
   end
 end
 
--- first / last column
-rebind("SUPER + Home", focus_end(false))
-rebind("SUPER + End", focus_end(true))
-rebind("SUPER + CTRL + Home", move_col_to_end(false))
-rebind("SUPER + CTRL + End", move_col_to_end(true))
-
--- workspaces, stacked vertically
-for _, k in ipairs({ "Page_Down", "U" }) do
-  rebind("SUPER + " .. k, focus_ws(below))
-  rebind("SUPER + CTRL + " .. k, move_to_ws(below))
-  rebind("SUPER + SHIFT + " .. k, swap_ws(below))
+local function move_dir(d, long)
+  return function()
+    local w = hl.get_active_window()
+    if not w then return end
+    local l = w.layout
+    local function where()
+      local a = hl.get_active_window()
+      local al = a and a.layout
+      return al and al.column and (al.column.index .. ":" .. tostring(al.index_in_column)) or ""
+    end
+    local before = where()
+    if d == "l" or d == "r" then
+      hl.dispatch(hl.dsp.layout("swapcol " .. d))
+    elseif l and l.column then
+      hl.dispatch(hl.dsp.window.move({ direction = long }))
+    end
+    if where() == before then
+      local mon = empty_monitor(d)
+      if mon then hl.dispatch(hl.dsp.window.move({ monitor = mon })) end
+    end
+  end
 end
-for _, k in ipairs({ "Page_Up", "I" }) do
-  rebind("SUPER + " .. k, focus_ws(above))
-  rebind("SUPER + CTRL + " .. k, move_to_ws(above))
-  rebind("SUPER + SHIFT + " .. k, swap_ws(above))
+
+for _, d in ipairs({ { "left", "l" }, { "right", "r" }, { "up", "u" }, { "down", "d" } }) do
+  rebind("SUPER + " .. d[1], focus_dir(d[2]))
+  rebind("SUPER + SHIFT + " .. d[1], move_dir(d[2], d[1]))
 end
-for i = 1, 9 do
-  rebind("SUPER + CTRL + " .. i, hl.dsp.window.move({ workspace = i })) -- move column to workspace N
-end
-rebind("SUPER + Tab", hl.dsp.focus({ workspace = "previous" }))
-
--- the mouse wheel: workspaces up/down, columns sideways (and with SHIFT)
-rebind("SUPER + mouse_down", wheel(focus_ws(below)))
-rebind("SUPER + mouse_up", wheel(focus_ws(above)))
-rebind("SUPER + CTRL + mouse_down", wheel(move_to_ws(below)))
-rebind("SUPER + CTRL + mouse_up", wheel(move_to_ws(above)))
-rebind("SUPER + mouse_right", msg("focus r"))
-rebind("SUPER + mouse_left", msg("focus l"))
-rebind("SUPER + SHIFT + mouse_down", msg("focus r"))
-rebind("SUPER + SHIFT + mouse_up", msg("focus l"))
-rebind("SUPER + CTRL + SHIFT + mouse_down", msg("swapcol r"))
-rebind("SUPER + CTRL + SHIFT + mouse_up", msg("swapcol l"))
-
--- columns: take windows in, push them out
-rebind("SUPER + bracketleft", msg("consume_or_expel prev"))
-rebind("SUPER + bracketright", msg("consume_or_expel next"))
-rebind("SUPER + comma", msg("consume"))
-rebind("SUPER + period", msg("expel"))
-
--- sizes
-rebind("SUPER + R", msg("colresize +conf"))
-rebind("SUPER + SHIFT + R", msg("colresize -conf"))
-rebind("SUPER + F", maximize_column)
-rebind("SUPER + SHIFT + F", hl.dsp.window.fullscreen())
-rebind("SUPER + CTRL + F", msg("fit expand"))
-rebind("SUPER + C", msg("center"))
-rebind("SUPER + minus", msg("colresize -0.1"), { repeating = true })
-rebind("SUPER + equal", msg("colresize +0.1"), { repeating = true })
-rebind("SUPER + SHIFT + minus", window_height(-1), { repeating = true })
-rebind("SUPER + SHIFT + equal", window_height(1), { repeating = true })
-
--- windows
-rebind("SUPER + Q", hl.dsp.window.close())
-rebind("SUPER + SHIFT + V", floating_or_tiling)
-rebind("SUPER + W", hl.dsp.group.toggle()) -- niri's tabbed column, as a Hyprland group
-rebind("SUPER + T", hl.dsp.exec_cmd("gtk-launch kitty"))
-rebind("SUPER + O", hl.dsp.exec_cmd("qs ipc call overview toggle"))
-rebind("SUPER + SHIFT + slash", hl.dsp.exec_cmd("walker -m menus:keybinds"))
-
--- what niri's keys pushed aside (SUPER + L locked, SUPER + K picked a wallpaper): niri's own lock key
-rebind("SUPER + ALT + L", hl.dsp.exec_cmd("loginctl lock-session"))
-rebind("SUPER + ALT + W", hl.dsp.exec_cmd("gtk-launch skwd-wall-v2"))
--- SUPER + I toggled the dwindle split, SUPER + P pseudo-tiled: both meaningless in columns
-pcall(hl.unbind, "SUPER + P")
 
 ------------------------------------------------------------------------------------------------
 -- Hot corner: niri opens the overview when the pointer is pushed into the top-left corner.
@@ -339,4 +308,5 @@ NIRI = {
   move_down = move_to_ws(below), move_up = move_to_ws(above),
   swap_down = swap_ws(below), swap_up = swap_ws(above),
   maximize_column = maximize_column, floating_or_tiling = floating_or_tiling,
+  focus = function(d) focus_dir(d)() end, move = function(d, long) move_dir(d, long)() end,
 }

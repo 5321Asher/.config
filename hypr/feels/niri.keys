@@ -1,44 +1,13 @@
 # Keys of the niri feel (feels/niri.lua), shown first in the Keybinds cheat sheet while it's active.
-# Format: KEYS | description. Arrows and H J K L do the same.
+# Every other key is the same as in the Hyprland feel (binds.lua). Format: KEYS | description.
 
-SUPER + ←/→ or H/L              | Focus the column left / right
-SUPER + ↑/↓ or K/J              | Focus the window above / below in the column
-SUPER + CTRL + ←/→ or H/L       | Move the column left / right
-SUPER + CTRL + ↑/↓ or K/J       | Move the window up / down in its column
-SUPER + Home / End              | Focus the first / last column
-SUPER + CTRL + Home / End       | Move the column to the start / end
-SUPER + [ / ]                   | Push the window into the column left / right (or out of its column)
-SUPER + ,                       | Take the next column's top window into this column
-SUPER + .                       | Push the bottom window out into its own column
-SUPER + R / SHIFT + R           | Column width: next / previous preset (⅓ · ½ · ⅔)
-SUPER + - / =                   | Column width −10 % / +10 %
-SUPER + SHIFT + - / =           | Window height −10 % / +10 % (in a column)
-SUPER + F                       | Maximize the column (again: back to its width)
-SUPER + CTRL + F                | Expand the column to fill the free space
-SUPER + SHIFT + F               | Fullscreen
-SUPER + C                       | Center the column
-SUPER + Page_Down / U           | Workspace below (a new one under the last)
-SUPER + Page_Up / I             | Workspace above
-SUPER + CTRL + Page_Down / U    | Move the window to the workspace below
-SUPER + CTRL + Page_Up / I      | Move the window to the workspace above
-SUPER + SHIFT + Page_Down / U   | Swap this workspace with the one below
-SUPER + SHIFT + Page_Up / I     | Swap this workspace with the one above
-SUPER + 1…9                     | Go to workspace N
-SUPER + CTRL + 1…9              | Move the window to workspace N
-SUPER + Tab                     | Previous workspace
-SUPER + SHIFT + ←/→/↑/↓         | Focus the monitor that way
-SUPER + SHIFT + CTRL + arrows   | Move the window to the monitor that way
-SUPER + wheel ↑/↓               | Workspace above / below
-SUPER + SHIFT + wheel           | Focus columns left / right
-SUPER + CTRL + wheel            | Move the window to the workspace above / below
-SUPER + O (or top-left corner)  | Overview
-SUPER + Q                       | Close the window
-SUPER + SHIFT + V               | Switch focus between floating and tiled windows
-SUPER + W                       | Window group (tabs), niri's tabbed column
-SUPER + T                       | Terminal
-SUPER + ALT + L                 | Lock (SUPER + L is focus right here)
-SUPER + ALT + W                 | Wallpaper picker (SUPER + K is focus up here)
-SUPER + SHIFT + /               | This cheat sheet
-3 fingers ←/→                   | Scroll the strip of columns
-3 fingers ↑/↓                   | Workspace above / below
-4 fingers ↑/↓                   | Overview
+SUPER + ← / →                   | Focus the column left / right (at the end: the monitor that way)
+SUPER + ↑ / ↓                   | Focus the window above / below in the column
+SUPER + SHIFT + ← / →           | Move the column left / right (at the end: onto an empty monitor)
+SUPER + SHIFT + ↑ / ↓           | Move the window up / down in its column
+SUPER + CTRL + ← / →            | Column narrower / wider
+SUPER + CTRL + ↑ / ↓            | Window shorter / taller in its column
+Top-left screen corner          | Overview
+3 fingers ← / →                 | Scroll the strip of columns
+3 fingers ↑ / ↓                 | Workspace above / below
+4 fingers ↑ / ↓                 | Overview
