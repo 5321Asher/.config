@@ -386,6 +386,14 @@ Check `git status` for generated files before committing (§4.4).
 - **Hyprland is Lua.** `hyprctl dispatch <old syntax>` fails; use `hyprctl eval '<lua>'`.
   `hyprctl eval` rejects unknown rule keys, so it's a good validator. When two window rules set
   the same property, the **first** one wins — keep such rules in one place (per setup look.lua).
+- **kitty `background_blur` must stay 0** in every setup; blur comes from Hyprland (look.lua
+  `decoration.blur`). Hyprland 0.57 clips the region a client asks to have blurred
+  (ext-background-effect) to its *pixel* size (`src/render/OpenGL.cpp`, `protocolBlur.intersect`),
+  so on a monitor scaled below 1 (DP-3 and HDMI-A-1 at 0.75) only the top-left 75% of the terminal
+  blurred and the rest showed through sharp. Open kitty windows keep it until they're reopened.
+  Also in 0.57: a *floating or special-workspace* window with alpha < 1 (inactive_opacity, an opacity
+  rule) on such a monitor gets live blur over the top-left 75% only (`ElementRenderer.cpp`,
+  `inverseOpaque` scaled twice). No clean config fix (an `xray` rule dodges it but changes the look).
 - **Never `pkill -f <pattern>`** where the pattern is in your own command line (kills your shell).
   Kill by PID, or `qs kill -c <config>`.
 - **grim hangs forever when monitors are off** (hypridle: dim 2.5 min, lock 5 min, DPMS off 5.5
