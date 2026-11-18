@@ -101,6 +101,10 @@ hl.env("KITTY_CACHE_DIRECTORY", "/run/user/1000/kitty")
 -- downscaled from the 0.67 logical size, which blurs text
 hl.config({ xwayland = { force_zero_scaling = true } })
 
+-- Don't flip a monitor into HDR when a fullscreen app (HDR YouTube in the
+-- browser) asks for it: the monitors run 8-bit, so the switch blacks them out
+hl.config({ render = { cm_auto_hdr = 0 } })
+
 -- Gaps, borders, rounding, blur, shadows, animations: owned by the active setup
 -- (~/.config/theme/setups/<setup>/files/hypr/look.lua, linked in by `theme setup`)
 pcall(require, "look")
