@@ -9,6 +9,7 @@ Item {
     property alias input: input
     property string placeholder: ""
     property bool password: false
+    property color accent: Theme.red
     signal accepted()
     signal edited()
 
@@ -22,9 +23,9 @@ Item {
         cut: Theme.chamferSmall
         corners: "br"
         fill: Theme.alpha(Theme.bgDark, 0.8)
-        stroke: input.activeFocus ? Theme.alpha(Theme.red, 0.8) : Theme.line
+        stroke: input.activeFocus ? Theme.alpha(root.accent, 0.8) : Theme.line
     }
-    Rectangle { width: 2; height: parent.height; color: input.activeFocus ? Theme.red : "transparent" }
+    Rectangle { width: 2; height: parent.height; color: input.activeFocus ? root.accent : "transparent" }
 
     TextInput {
         id: input
@@ -44,7 +45,7 @@ Item {
         onTextEdited: root.edited()
         cursorDelegate: Rectangle {
             width: 8
-            color: Theme.alpha(Theme.red, 0.8)
+            color: Theme.alpha(root.accent, 0.8)
             visible: input.activeFocus
             SequentialAnimation on opacity { loops: Animation.Infinite; running: input.activeFocus
                 NumberAnimation { to: 0; duration: 1 } PauseAnimation { duration: 450 }

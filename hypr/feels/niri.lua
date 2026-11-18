@@ -13,7 +13,17 @@
 -- Not possible on Hyprland, so not here: tabbed columns (a window group, SUPER + G, is the nearest),
 -- per-window heights in a column by preset, "center visible columns".
 
-local HOT_CORNER = true -- pushing the pointer into a screen's top-left corner opens the overview
+-- Pushing the pointer into a screen's top-left corner opens the overview, except in setups whose shell
+-- has a click corner of its own instead (Netrunner: quickshell/netrunner/utilities/Corner.qml).
+-- The setup is read when the config loads; a setup switch reloads it.
+local function active_setup()
+  local f = io.open(os.getenv("HOME") .. "/.local/state/theme/setup", "r")
+  if not f then return "" end
+  local s = f:read("l") or ""
+  f:close()
+  return s
+end
+local HOT_CORNER = ({ netrunner = true })[active_setup()] == nil
 
 ------------------------------------------------------------------------------------------------
 -- Layout and behaviour

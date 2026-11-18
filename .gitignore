@@ -58,3 +58,15 @@ __pycache__/
 /qt6ct/colors/
 /qt6ct/qss/
 /satty/overrides.css
+
+# the test bench's build and run output (theme/bench/)
+/theme/bench/vptr
+/theme/bench/vp.h
+/theme/bench/vp.c
+/theme/bench/*.log
+/theme/bench/*.png
+/theme/bench/sig
+/theme/bench/wl
+/theme/bench/hypr.pid
+/theme/bench/answer*
+/theme/bench/dbus

@@ -1,0 +1,346 @@
+// THE PREVIOUS LOCK FACE (black ICE: relic glitch, hex wall, ICE core, Kiroshi optics boot), kept to
+// go back to: rename this to LockFace.qml (it uses shaders/lockfx.frag.qsb, which stays built).
+import QtQuick
+import QtQuick.Shapes
+import Quickshell
+import "../theme"
+import "../widgets"
+import "../services"
+
+// What every monitor shows while locked. Locking: the desktop (a snapshot from just before) tears
+// apart like a relic malfunction while a wall of black ICE seals over it, hex by hex from the left
+// (shaders/lockfx.frag); then the clock decodes inside the ICE core (three rings turning) and, on the
+// main screen, the passphrase line slides up. Typing lights a segment of the core per character and
+// adds a byte to the buffer (random bytes: nothing about what you typed). Wrong: the seams and the
+// core flash red and the line shakes; after five, a cooldown counts down round the core. Right: the
+// optics boot, as the game opens: a calibration reticle draws itself, KIROSHI OPTICS calibrates,
+// and the wall opens from the centre onto the desktop. Once sealed, nothing of the desktop shows.
+Item {
+    id: root
+
+    property string screenName: ""
+    property bool main: true
+    property bool preview: false
+
+    SystemClock { id: clock; precision: SystemClock.Seconds }
+
+    // ---------------------------------------------------------------- the clocks
+    Driver { id: intro; until: Theme.lockIntro }
+    Driver { id: outro; until: LockState.leaveKind === "unlock" ? Theme.lockOutro : Theme.lockClose }
+    Driver { id: alertFx; until: 650 }
+    property real time: 0
+    FrameAnimation { running: root.visible; onTriggered: root.time += Math.min(frameTime, 1 / 20) }
+    Connections {
+        target: LockState
+        function onRevealedChanged() { if (LockState.revealed && !LockState.leaving) { outro.stop(); intro.play(); clockText.replay(); } }
+        function onLeavingChanged() { if (LockState.leaving) { intro.stop(); outro.play(); } }
+        function onStatusChanged() { if (LockState.status === "denied" || LockState.status === "error" || LockState.status === "cooldown") alertFx.play(); }
+    }
+
+    readonly property bool hasShot: shot.status === Image.Ready
+    readonly property bool unlocking: LockState.leaving && LockState.leaveKind === "unlock"
+    readonly property real i: intro.ms
+    readonly property real o: outro.ms
+    readonly property bool idle: !intro.running && !outro.running
+    // before the intro starts: the snapshot exactly as it was (the first frame looks like the desktop)
+    readonly property bool before: !LockState.revealed && !LockState.leaving && hasShot
+    readonly property real glitch: intro.running ? Theme.seg(i, 0, 450)
+        : unlocking && outro.running ? 0.35 * (1 - Theme.seg(o, 560, 1100)) : 0
+    readonly property real cover: before ? 0
+        : intro.running ? (hasShot ? Theme.out3(Theme.seg(i, 250, 850)) : 1)
+        : outro.running ? (unlocking ? 1 - Theme.inOut(Theme.seg(o, 560, 1060)) : 1 - Theme.seg(o, 40, 380))
+        : LockState.leaving ? 0 : 1
+    readonly property real dir: outro.running || LockState.leaving ? 1 : 0
+    readonly property real build: intro.running ? Theme.out3(Theme.seg(i, 720, 1300)) : outro.running ? 1 - Theme.seg(o, 0, unlocking ? 220 : 150) : LockState.leaving ? 0 : 1
+    readonly property real boot: unlocking && outro.running ? Theme.seg(o, 150, 1000) : 0
+    readonly property bool bad: LockState.status === "denied" || LockState.status === "error" || LockState.status === "cooldown"
+    readonly property real alert: (alertFx.running ? 1 - Theme.seg(alertFx.ms, 0, 650) : 0) + (LockState.status === "cooldown" || LockState.coolLeft > 0 ? 0.35 : 0)
+
+    // ---------------------------------------------------------------- the desktop and the ICE
+    Rectangle { anchors.fill: parent; color: Theme.bgDark }
+    Item {
+        id: shotLayer
+        anchors.fill: parent
+        visible: false
+        Image {
+            id: shot
+            anchors.fill: parent
+            cache: false
+            source: root.screenName ? LockState.shotPath(root.screenName) : ""
+        }
+    }
+    ShaderEffectSource { id: shotTex; sourceItem: shotLayer; hideSource: true; live: true }
+    ShaderEffect {
+        anchors.fill: parent
+        fragmentShader: Qt.resolvedUrl("../shaders/lockfx.frag.qsb")
+        property vector2d size: Qt.vector2d(width, height)
+        property real glitch: root.glitch
+        property real cover: root.cover
+        property real dir: root.dir
+        property real alert: Math.min(1, root.alert)
+        property real time: root.time
+        property real hasShot: root.hasShot ? 1 : 0
+        property color ice: Theme.cyan
+        property color red: Theme.red
+        property color base: Theme.bgDark
+        property var shot: shotTex
+    }
+
+    // the word over the tearing desktop
+    Text {
+        anchors.centerIn: parent
+        visible: intro.running && root.i < 820
+        opacity: Theme.seg(root.i, 60, 160) * (1 - Theme.seg(root.i, 700, 820)) * (Math.random() < 0.15 ? 0.3 : 1)
+        text: "BLACK ICE  //  SEALING SESSION"
+        color: Theme.red
+        font.family: Theme.display; font.pixelSize: 40; font.weight: Font.Bold; font.letterSpacing: 6
+        style: Text.Outline; styleColor: Theme.bgDark
+    }
+
+    // ---------------------------------------------------------------- the face
+    Item {
+        id: face
+        anchors.fill: parent
+        opacity: root.build
+        visible: opacity > 0.01
+
+        Column {
+            x: 36; y: 36
+            spacing: 8
+            Hazard { width: 96; height: 10 }
+            Row {
+                spacing: 14
+                Label { text: "BLACK ICE"; strong: true; color: Theme.bright }
+                Label { text: "//  SESSION SEALED"; strong: true; color: Theme.red }
+            }
+            Jp { text: "防壁封鎖 // セッション停止" }
+        }
+        Column {
+            anchors.right: parent.right; anchors.rightMargin: 36
+            y: 40
+            spacing: 8
+            Label { anchors.right: parent.right; text: "HOST " + Status.host + "  //  UPLINK " + (Net.ssid || "WIRED") }
+            Label { anchors.right: parent.right; text: "PROFILE  //  " + (Status.profile || "—") }
+        }
+
+        // ---- the ICE core: three rings round the clock, a segment per character typed
+        Item {
+            id: core
+            anchors.centerIn: parent
+            anchors.verticalCenterOffset: -60
+            width: 640; height: 640
+            scale: 0.85 + 0.15 * root.build
+            readonly property color tint: root.alert > 0.05 ? Theme.red : Theme.cyan
+            Repeater {
+                model: [
+                    { r: 250, w: 2, gap: 40, speed: 6, segs: 3 },
+                    { r: 282, w: 1, gap: 14, speed: -10, segs: 6 },
+                    { r: 306, w: 6, gap: 4, speed: 3, segs: 16 },
+                ]
+                Item {
+                    id: ring
+                    required property var modelData
+                    required property int index
+                    anchors.fill: parent
+                    rotation: root.time * modelData.speed
+                    Repeater {
+                        model: ring.modelData.segs
+                        Shape {
+                            id: seg
+                            required property int index
+                            anchors.fill: parent
+                            preferredRendererType: Shape.CurveRenderer
+                            readonly property bool lit: ring.index === 2 && (LockState.coolLeft > 0
+                                ? index < Math.ceil(16 * LockState.coolLeft / 60) : index < LockState.buffer.length)
+                            ShapePath {
+                                strokeColor: seg.lit ? (LockState.coolLeft > 0 ? Theme.red : Theme.bright) : Theme.alpha(core.tint, ring.index === 2 ? 0.28 : 0.55)
+                                strokeWidth: ring.modelData.w
+                                fillColor: "transparent"
+                                capStyle: ShapePath.FlatCap
+                                PathAngleArc {
+                                    centerX: core.width / 2; centerY: core.height / 2
+                                    radiusX: ring.modelData.r; radiusY: ring.modelData.r
+                                    startAngle: seg.index * 360 / ring.modelData.segs
+                                    sweepAngle: 360 / ring.modelData.segs - ring.modelData.gap / (ring.modelData.segs > 6 ? 1 : 2)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Column {
+                anchors.centerIn: parent
+                spacing: 4
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    Scramble {
+                        id: clockText
+                        target: Qt.formatTime(clock.date, "HH:mm")
+                        duration: 420
+                        color: Theme.bright
+                        font.family: Theme.display; font.pixelSize: 150; font.weight: Font.Bold
+                    }
+                    Text {
+                        anchors.bottom: parent.bottom; anchors.bottomMargin: 30
+                        text: Qt.formatTime(clock.date, "ss")
+                        color: Theme.red
+                        font.family: Theme.display; font.pixelSize: 36; font.weight: Font.Bold
+                    }
+                }
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 10
+                    Label { text: Qt.formatDate(clock.date, "ddd  MM.dd.yy"); strong: true; color: Theme.fg }
+                    Label { text: "//"; color: Theme.alpha(Theme.dim, 0.6) }
+                    Label { text: "OPERATOR " + LockState.user; strong: true; color: Theme.cyan }
+                }
+            }
+        }
+
+        // ---- the passphrase line (main screen)
+        Item {
+            id: auth
+            visible: root.main
+            width: 620
+            height: 128
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: core.y + core.height - 50 + (1 - root.build) * 40
+            transform: Translate { x: root.alertFx_shake }
+
+            Chamfer { anchors.fill: parent; cut: 14; corners: "tr bl"; fill: Theme.alpha(Theme.bgDark, 0.86); stroke: root.bad ? Theme.red : Theme.alpha(Theme.cyan, 0.5) }
+            Row {
+                x: 18; y: 14
+                spacing: 10
+                Tag { anchors.verticalCenter: parent.verticalCenter; text: "BREACH"; height: 18; pixelSize: 10; color: root.bad ? Theme.red : Theme.cyan }
+                Label { anchors.verticalCenter: parent.verticalCenter; text: "ENTER PASSPHRASE"; strong: true; color: Theme.bright }
+                Jp { anchors.verticalCenter: parent.verticalCenter; text: "認証" }
+            }
+            Label {
+                anchors.right: parent.right; anchors.rightMargin: 18; y: 16
+                text: LockState.attempts > 0 ? "FAILED " + LockState.attempts : "BUFFER " + LockState.buffer.length
+                color: LockState.attempts > 0 ? Theme.red : Theme.dim
+            }
+            // the buffer: a byte per character (random: they say nothing about what was typed)
+            Row {
+                id: bytes
+                x: 18; y: 46
+                spacing: 5
+                Repeater {
+                    model: Math.min(14, LockState.buffer.length)
+                    Rectangle {
+                        required property int index
+                        width: 36; height: 26
+                        color: Theme.alpha(root.bad ? Theme.red : Theme.cyan, 0.16)
+                        border.width: 1; border.color: root.bad ? Theme.red : Theme.cyan
+                        Text {
+                            anchors.centerIn: parent
+                            text: ((LockState.session * 131 + index * 97 + 41) % 256).toString(16).toUpperCase().padStart(2, "0")
+                            color: Theme.bright
+                            font.family: Theme.mono; font.pixelSize: 12; font.weight: Font.Bold
+                        }
+                    }
+                }
+                Rectangle {           // the caret
+                    width: 12; height: 26
+                    color: "transparent"
+                    visible: LockState.status !== "verifying"
+                    Rectangle {
+                        anchors.bottom: parent.bottom; width: 12; height: 3; color: Theme.red
+                        opacity: Math.round(root.time * 2) % 2
+                    }
+                }
+            }
+            Label {
+                x: 18
+                anchors.bottom: parent.bottom; anchors.bottomMargin: 14
+                text: LockState.status === "verifying" ? "VERIFYING  //  BREACHING ICE…"
+                    : LockState.coolLeft > 0 ? "LOCKOUT  //  TRY AGAIN IN " + LockState.coolLeft + " S"
+                    : LockState.status === "denied" ? "ACCESS DENIED  //  TRY AGAIN"
+                    : LockState.status === "error" ? "AUTH ERROR  //  " + (LockState.detail || "TRY AGAIN")
+                    : LockState.status === "granted" ? "ACCESS GRANTED"
+                    : root.preview ? "PREVIEW  //  ESC CLOSES" : "ENTER RESUMES THE SESSION  //  ESC CLEARS"
+                color: root.bad ? Theme.red : LockState.status === "verifying" || LockState.status === "granted" ? Theme.cyan : Theme.dim
+            }
+        }
+
+        Row {
+            x: 24
+            anchors.bottom: parent.bottom; anchors.bottomMargin: 20
+            spacing: 24
+            Label { text: "QUEUE " + Queue.cleared + "/" + Queue.total + " CLEARED" }
+            Label { text: Status.auditAvailable ? "VULN " + Status.vulnCount + " AFFECTED" : "VULN SCAN OFFLINE"; strong: true; color: Theme.fg }
+            Label { text: "ICE " + Status.ice }
+        }
+        Label {
+            anchors.right: parent.right; anchors.rightMargin: 24
+            anchors.bottom: parent.bottom; anchors.bottomMargin: 20
+            text: "SESSION " + Status.session
+        }
+    }
+    readonly property real alertFx_shake: alertFx.running ? Math.sin(alertFx.ms / 18) * 10 * (1 - Theme.seg(alertFx.ms, 0, 500)) : 0
+
+    // ---------------------------------------------------------------- the optics booting (unlock)
+    Item {
+        id: optics
+        anchors.fill: parent
+        visible: root.boot > 0 && root.boot < 1
+        opacity: 1 - Theme.seg(root.o, 880, 1060)
+        readonly property real b: root.boot
+        // calibration lines sweeping down
+        Repeater {
+            model: 3
+            Rectangle {
+                required property int index
+                width: root.width; height: 1
+                y: ((optics.b * 1.6 + index * 0.33) % 1) * root.height
+                color: Theme.alpha(Theme.cyan, 0.35)
+            }
+        }
+        Item {
+            id: reticle
+            anchors.centerIn: parent
+            width: 300; height: 300
+            Shape {
+                anchors.fill: parent
+                preferredRendererType: Shape.CurveRenderer
+                ShapePath {
+                    strokeColor: Theme.cyan; strokeWidth: 2; fillColor: "transparent"
+                    PathAngleArc { centerX: 150; centerY: 150; radiusX: 110; radiusY: 110; startAngle: -90; sweepAngle: 360 * Theme.seg(optics.b, 0, 0.45) }
+                }
+                ShapePath {
+                    strokeColor: Theme.alpha(Theme.cyan, 0.5); strokeWidth: 1; fillColor: "transparent"
+                    PathAngleArc { centerX: 150; centerY: 150; radiusX: 135; radiusY: 135; startAngle: 90; sweepAngle: -360 * Theme.seg(optics.b, 0.1, 0.55) }
+                }
+            }
+            // the crosshair growing out
+            Repeater {
+                model: 4
+                Rectangle {
+                    required property int index
+                    readonly property real len: 70 * Theme.out3(Theme.seg(optics.b, 0.2, 0.55))
+                    x: index === 0 ? 150 + 40 : index === 1 ? 150 - 40 - len : 149
+                    y: index === 2 ? 150 + 40 : index === 3 ? 150 - 40 - len : 149
+                    width: index < 2 ? len : 2
+                    height: index < 2 ? 2 : len
+                    color: Theme.cyan
+                }
+            }
+            Rectangle { x: 146; y: 146; width: 8; height: 8; color: Theme.red; visible: optics.b > 0.4 }
+        }
+        Column {
+            anchors.right: reticle.left; anchors.rightMargin: 30
+            anchors.verticalCenter: reticle.verticalCenter
+            spacing: 6
+            Text { anchors.right: parent.right; text: "KIROSHI OPTICS"; color: Theme.bright; font.family: Theme.display; font.pixelSize: 26; font.weight: Font.Bold; font.letterSpacing: 3 }
+            Label { anchors.right: parent.right; text: "MK.V  //  ACCESS GRANTED"; color: Theme.cyan; strong: true }
+        }
+        Column {
+            anchors.left: reticle.right; anchors.leftMargin: 30
+            anchors.verticalCenter: reticle.verticalCenter
+            spacing: 6
+            Label { text: "CALIBRATING  " + Math.round(Theme.seg(optics.b, 0, 0.8) * 100) + "%"; color: Theme.bright; strong: true }
+            Blocks { count: 20; blockWidth: 8; blockHeight: 8; value: Theme.seg(optics.b, 0, 0.8); color: Theme.cyan }
+            Label { text: optics.b > 0.8 ? "OPTICS ONLINE" : "SYNCING NEURAL LINK"; color: optics.b > 0.8 ? Theme.cyan : Theme.dim }
+        }
+    }
+}

@@ -2,27 +2,29 @@
 # Ask the user something in the active setup's own UI: the web-app and keybind scripts call this
 # instead of `walker --dmenu`, so a setup with its own launcher also asks its own questions.
 #
-#   prompt [--input] [--index] [--placeholder TEXT]   < options, one per line
+#   prompt [--input] [--index] [--placeholder TEXT] [--from NAME]   < options, one per line
 #
 #   --input        free text only (no options are read)
 #   --index        print the chosen option's line number (from 0) instead of its text
 #   --placeholder  the question
+#   --from         who is asking (default: the calling script's name), for setups that show a caller
 #
 # Prints the answer (nothing when cancelled). Typing something that matches no option and pressing
 # Enter answers with the typed text, as Walker does.
 #
 # A setup opts in with setups/<setup>/setup.toml:  [menus] prompt = "qs ipc call prompt ask"
 # That command gets one argument, a request directory holding request.json
-#   {"placeholder": "...", "options": [...], "index": bool, "input": bool}
+#   {"placeholder": "...", "options": [...], "index": bool, "input": bool, "from": "..."}
 # and a FIFO named reply; the UI writes the answer (or nothing, to cancel) into reply.
 # Without it, Walker's dmenu asks.
 
-input=false; index=false; placeholder=""
+input=false; index=false; placeholder=""; from=""
 while [ $# -gt 0 ]; do
     case $1 in
         --input) input=true ;;
         --index) index=true ;;
         --placeholder) placeholder=$2; shift ;;
+        --from) from=$2; shift ;;
         *) echo "prompt: unknown option $1" >&2; exit 2 ;;
     esac
     shift
@@ -41,12 +43,29 @@ if [ -z "$cmd" ]; then
     exit 0
 fi
 
+# Who's asking: the first thing in the parent's command line that isn't an interpreter or a flag
+# (webapp.sh -> webapp, python3 keybind.py -> keybind), looking up two levels for $(…) subshells
+caller() {
+    pid=$PPID
+    for _ in 1 2 3; do
+        name=$(ps -o args= -p "$pid" 2>/dev/null | tr ' ' '\n' | while read -r a; do
+            b=${a##*/}
+            case $b in ''|-*|sh|bash|zsh|dash|env|python|python3|python3.*|lua|perl|node|timeout) continue ;; esac
+            echo "${b%.*}"; break
+        done)
+        [ -n "$name" ] && { echo "$name"; return; }
+        pid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+        { [ -z "$pid" ] || [ "$pid" -le 1 ]; } && return
+    done
+}
+[ -z "$from" ] && from=$(caller)
+
 req=$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/theme-prompt.XXXXXX") || exit 1
 trap 'rm -rf "$req"' EXIT INT TERM
 mkfifo "$req/reply"
 if $input; then options='[]'; else options=$(jq -R . | jq -s .); fi
-jq -n --arg p "$placeholder" --argjson o "$options" --argjson i "$index" --argjson t "$input" \
-    '{placeholder: $p, options: $o, index: $i, input: $t}' >"$req/request.json"
+jq -n --arg p "$placeholder" --argjson o "$options" --argjson i "$index" --argjson t "$input" --arg f "$from" \
+    '{placeholder: $p, options: $o, index: $i, input: $t, from: $f}' >"$req/request.json"
 
 sh -c "$cmd \"\$1\"" _ "$req" >/dev/null 2>&1 || exit 0
 # Blocks until the UI answers; gives up after 10 minutes (the shell died or restarted)

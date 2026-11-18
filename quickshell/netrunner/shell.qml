@@ -34,17 +34,17 @@ ShellRoot {
         Deck {}
     }
 
-    // the rig: qs ipc call deck open <page>
-    Rig {}
+    // the rig (RIPPERDOC): qs ipc call deck toggle | open <page>
+    Ripperdoc {}
 
     // BREACH PROTOCOL, the root menu (SUPER + Space): qs ipc call hub toggle
     Breach {}
 
-    // EXEC, the app launcher (SUPER + CTRL + Space): qs ipc call exec toggle
-    Exec {}
+    // FAST TRAVEL, the app launcher (SUPER + CTRL + Space): qs ipc call exec toggle
+    FastTravel {}
 
-    // DATA SHARDS, clipboard history (SUPER + V): qs ipc call clipboard toggle
-    Shards {}
+    // BRAINDANCE, clipboard history (SUPER + V): qs ipc call clipboard toggle
+    Braindance {}
 
     // INPUT REQUIRED, the web-app / keybind scripts' questions: qs ipc call prompt ask <dir>
     Prompt {}
@@ -54,6 +54,10 @@ ShellRoot {
 
     // subnet map (overview), voice (dictation), root access (polkit)
     Overview {}
+    Variants {                     // the subnet map's click corner, top left of every screen
+        model: Quickshell.screens
+        Corner {}
+    }
     DictationOsd {}
     PolkitPrompt {}
 

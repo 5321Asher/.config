@@ -35,6 +35,7 @@ Scope {
     }
 
     WlSessionLock {
+        id: sessionLock
         locked: LockState.locked
 
         WlSessionLockSurface {
@@ -48,6 +49,9 @@ Scope {
             Keyboard { Component.onCompleted: forceActiveFocus() }
         }
     }
+
+    // whether the compositor has confirmed the lock (LockState.takeover re-locks when it hasn't)
+    Binding { target: LockState; property: "secure"; value: sessionLock.secure }
 
     PanelWindow {
         id: previewWindow

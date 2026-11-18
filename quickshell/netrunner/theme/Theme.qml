@@ -81,8 +81,14 @@ Singleton {
     readonly property int glitch: 180          // text scramble on arrival
     readonly property int sysInterval: 2000
 
-    readonly property int lockIntro: 600
-    readonly property int lockOutro: 450
+    // Hand-driven motion (widgets/Driver.qml clocks): where t lies between a and b as 0..1, and curves
+    function seg(t, a, b) { return Math.max(0, Math.min(1, (t - a) / (b - a))); }
+    function out3(x) { return 1 - Math.pow(1 - x, 3); }
+    function inOut(x) { return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+
+    readonly property int lockIntro: 1300      // the desktop tears, the ICE seals, the core builds
+    readonly property int lockOutro: 1100      // the optics boot and the ICE opens (unlocking)
+    readonly property int lockClose: 400       // the ICE opens (closing a preview)
 
     // ---------------------------------------------------------------- palette file
     FileView {

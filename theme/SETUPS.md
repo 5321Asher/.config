@@ -50,7 +50,7 @@ Existing setups, as references:
 | **sharp** | 2 (styled) | flat, square, quick; tabbed top bar; Cascadia | `quickshell/sharp/` (bar + side ControlPanel with tabs) | Walker | hyprlock | icons + cursors |
 | **observatory** | 3 (fully custom) | brass instruments, orbits, phosphor; JetBrains + Cormorant | `quickshell/observatory/` (horizon line, dome sundial, orbital workspaces, gauges, control deck) | own console + star-chart launcher | own Quickshell lock | gtk3/gtk4/qss/satty + icons + cursors |
 | **memphis** | 3 (fully custom) | Windows 98: grey bevels, Start button, Control Panel; W95FA + IBM VGA | `quickshell/memphis/` (taskbar, Start menu, shell windows: Control Panel + Properties sheets, Run…, Inbox, Media Player) | own Start menu + Run… launcher | own Quickshell lock (98 logon box) | gtk3/gtk4/qss/satty (98 widgets) + Chicago95 icons + pixel cursors |
-| **netrunner** | 3 (fully custom) | Cyberpunk: red/cyan on black glass, cut corners, HUD of real system state; Chakra Petch + JetBrains Mono + Noto CJK | `quickshell/netrunner/` (bar with ticker, window frames overlay, deck dashboard on special:deck, rig control panel) | BREACH PROTOCOL root menu (code matrix) + EXEC quickhack scanner + DATA SHARDS clipboard + INPUT REQUIRED prompt | own Quickshell lock (pic-4 style) | gtk3/gtk4/qss/satty + folder icons + cursors |
+| **netrunner** | 3 (fully custom) | Cyberpunk: red/cyan on black glass, cut corners, HUD of real system state; Chakra Petch + JetBrains Mono + Noto CJK | `quickshell/netrunner/` (bar with ticker, window frames overlay, deck dashboard on special:deck, RIPPERDOC rig: a Qt Quick 3D hologram body with the pages as implant slots) | BREACH PROTOCOL root menu (code matrix) + FAST TRAVEL launcher (apps as buildings in a 3D city) + BRAINDANCE clipboard (a scrubbable tape) + holocall prompts (INPUT REQUIRED, ROOT ACCESS polkit) | own Quickshell lock (pic-4 style) | gtk3/gtk4/qss/satty + folder icons + cursors |
 | **disguise** | 3 (fully custom) | Windows 11: Mica/Acrylic, centred taskbar, Fluent controls; Segoe UI Variable + Segoe Fluent Icons + Cascadia | `quickshell/disguise/` (taskbar, flyout layer: Start, Search, Quick Settings, notification centre, Widgets, tray; Settings as a real FloatingWindow; Task View; toasts; OSD) | own Start menu + Search | own Quickshell lock (curtain + sign-in) | gtk3/gtk4/qss/satty (WinUI) + Win11 icons + cursors |
 | **grimoire** | 3 (fully custom) | a spellbook on a candlelit desk: oxblood leather, parchment, gold leaf, glowing runes; Cardo + UnifrakturMaguntia + Cormorant Garamond + Cinzel + IBM Plex Mono + Noto Runic | `quickshell/grimoire/` (bar with chapter ribbon, spine of reagents + the uptime candle, codex = open-book control panel with a page-curl shader, sealed-letter notifications, gilt flourishes on the focused window; paper, leather, lit covers, wax and the flame are shaders) | own arcana (tarot-spread root menu) + seal-book launcher (generated glyph per app) + commonplace book (clipboard) + prompt | own Quickshell lock (the closed book) | gtk3/gtk4/qss/satty + leather-bound folders + gilded cursors |
 | **glyph** | 3 (fully custom) | Nothing OS: black, white dots, one red; Doto + Space Grotesk + Space Mono | `quickshell/glyph/` (vertical pill rail, home screen of Doto numbers + dot-matrix bento widgets, the screen edges as Glyph strips for volume/brightness/notifications + the island, quick settings, settings, a dashboard from the bottom; dot-matrix text is a shader) | own index (rotary dial of dot-matrix words) + app launcher + clipboard + prompt | own Quickshell lock (desktop dissolves into dots) | gtk3/gtk4/qss/satty + round dotted folders + dot cursors |
@@ -340,6 +340,21 @@ reads `colors.json` (with fallbacks). One QML file per component. Implement §3.
 polishing. Level 3: build component by component, screenshot each.
 Test next to the running shell without switching: `qs -c <id> -d` (it can't own notifications /
 tray while the other shell runs — that's expected), then stop it by PID (`qs kill -c <id>`).
+**Or test on the bench (`theme/bench/`, 2026-11-17), which never touches the session:** a nested
+Hyprland with one headless output (`bench.sh up 1366x768@60 0.67`; portrait `1080x1920@60 0.75`,
+desktop `2560x1440@60 1`), a copy of the shell in it (`BENCH_SHELL=<copy>/shell.qml shell.sh start`,
+then `shell.sh ready`), keys with `shell.sh key` (wtype), a real pointer with `shell.sh ptr move X Y
+click` (vptr, a wlr virtual pointer), screenshots with `shell.sh shot`, prompts with `ask.sh '<json>'`.
+Nothing appears on your screens and nothing takes your keyboard, so it's fine while the user works.
+The copy runs on its own D-Bus session, so it owns notifications there: `shell.sh notify <notify-send
+args>`. A real session lock in the bench only locks the bench (`hyprctl locked` with its signature),
+which is how lock security is tested (wrong passwords, Esc, IPC, killing the shell under the lock,
+the boot handover with `THEME_QS_IPC="-p <copy>" theme lock --boot`).
+Frame pacing: `TIMING=1 shell.sh start`, act, `perf2.py qs.log <line>`. A laptop-class GPU on the
+desktop: prefix `DRI_PRIME=pci-0000_74_00_0 __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json`
+(the Ryzen's Radeon 610M; check `QSG_INFO` says radeonsi, not llvmpipe). Give each UI a `state()` IPC
+so tests can assert instead of reading screenshots. Keep the copy out of /tmp (a reboot wipes it).
+Don't `eval $(bench.sh env)` in your own shell: the next `bench.sh up` then nests inside the bench.
 
 **3. Style** (levels 2–3): `style.py` with icons + cursors via iconkit; test the builders
 directly before switching (see how in git history: import writers, `configure(setup)`, call
@@ -531,3 +546,41 @@ Check `git status` for generated files before committing (§4.4).
   Recover by starting the new setup's lock (`qs ipc call lock lock`; `misc.allow_session_lock_restore` is
   on), never `hl.clear_crashed_lockscreen()`. Check first: `qs ipc call lock` state, or just wait for the
   user (2026-10-28).
+- **Qt Quick 3D (qt6-quick3d, installed 2026-11-17) aborts when a View3D's window is hidden and shown
+  again** (6.12: `QSSGGlobalRenderNodeData::reindex` assertion; the whole shell dies). Put the View3D
+  in a `Loader { active: window.visible }` so each open builds a fresh one (Netrunner's FastTravel,
+  Ripperdoc); it costs one ~40-55 ms frame per open on a laptop GPU (Ripperdoc's skinned body and
+  vessels: ~60-110 ms, ~235 ms on the first open while its shaders compile), so drive intros with
+  clocks that play through (Netrunner's `widgets/Driver.qml`).
+- **No meshes from files without assimp:** balsam and RuntimeLoader need `libassimp.so.6` (the assimp
+  package isn't installed), so they import nothing. Make geometry a `ProceduralMesh` (QtQuick3D.Helpers)
+  from arrays: Netrunner's body is a JSON of positions / normals / indexes / joints / weights made by
+  `setups/netrunner/body.py` (MakeHuman's CC0 mesh, skeleton and weights), parsed once into vector
+  lists in a singleton; its poses come from `setups/netrunner/poses.py` (run it after body.py).
+- **Skinning a custom material:** give the Model a `Skin` (joints: Nodes; inverseBindPoses) and the
+  ProceduralMesh `joints`/`weights` (vector4d lists). A vertex shader that writes `POSITION` must skin
+  by hand: `BONE_TRANSFORMS[int(JOINTS.x)] * WEIGHTS.x + …` (`int()`: the joints come in as floats);
+  `BONE_NORMAL_TRANSFORMS[i]` is a mat4 here (take `mat3(...)`), and there's no `VIEWPROJECTION_MATRIX`
+  (use `MODELVIEWPROJECTION_MATRIX` with the model at the origin). VERTEX is the rest pose, handy for
+  effects that should stick to the body. To see one transparent model through another, give it a big
+  `depthBias` (sorts it as further away, so it draws first) and `NeverDepthDraw`.
+- **Qt Quick 3D custom materials:** a fragment shader that writes `FRAGCOLOR` fails to compile for the
+  depth pre-pass (`depthDrawMode: Material.OpaquePrePassDepthDraw`: "'fragOutput' undeclared"); use
+  `AlwaysDepthDraw` + back-face culling. Shader files are snippets compiled at run time (keep them out
+  of a folder that a qsb build script globs). `half` is a reserved word in GLSL. Labels over a 3D view:
+  `view.mapFrom3DScene()` each frame, guarded for a view without a camera yet.
+- **A shell that crashes while exiting gets restarted by Quickshell's crash handler**, so `theme shell`
+  can leave two shells (two bars; the second can't own notifications or polkit). Seen twice
+  (2026-09-27, 2026-11-17), both `QWindow::unsetCursor` fatal during teardown. Check `qs list`; recover
+  with `kill -9` on every instance (SIGKILL can't trigger the handler) and `theme shell`.
+- **Syncing many files into a live shell's folder** makes live reload run on half-written states:
+  stop the bench copies first (they'd take the notification server), copy, then `theme shell`.
+- **Login lock (2026-11-17):** `theme lock --boot` (hyprland.lua's start hook) runs hyprlock at once with
+  `--grace 0` and, when the setup's Quickshell lock answers, SIGKILLs hyprlock and calls
+  `qs ipc call lock takeover`: the session stays locked throughout (Hyprland keeps a lock whose client
+  died; allow_session_lock_restore lets the new one claim it). A setup with its own lock must answer
+  `lock takeover` (lock at once, no snapshot) or the handover leaves hyprlock in place. hypridle has
+  `inhibit_sleep = 3` so sleep waits until the lock is up.
+- **Lock state machines:** never let a timer unlock without checking it belongs to the lock in
+  progress (Netrunner's LockState.session): a preview's close outro once unlocked a real lock that
+  engaged within half a second of it.

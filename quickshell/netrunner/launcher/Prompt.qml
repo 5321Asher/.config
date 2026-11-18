@@ -6,9 +6,11 @@ import "../theme"
 import "../widgets"
 
 // INPUT REQUIRED 入力: Netrunner's answer to `walker --dmenu`, for the questions the web-app and
-// keybind scripts ask through ~/.config/theme/prompt (PromptState). A cut-corner terminal with the
-// question, an entry line and, when there are choices, an address list to pick from. Type to
-// filter, ↑ ↓ / Tab choose, Enter answers, Esc cancels. No match: Enter answers with what you typed.
+// keybind scripts ask through ~/.config/theme/prompt (PromptState). The question arrives as a
+// holocall (widgets/Holocall.qml) from the script that asks (request.json's `from`): it speaks the
+// question, and you answer on the reply line or, when there are options, pick one of them as the
+// game's dialogue choices. Type to filter, ↑ ↓ / Tab choose, Enter answers (the call hangs up),
+// Esc cancels (the signal drops). No match: Enter answers with what you typed.
 PanelWindow {
     id: root
 
@@ -17,7 +19,7 @@ PanelWindow {
         value: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
         restoreMode: Binding.RestoreNone
     }
-    visible: PromptState.open || shown > 0.01
+    visible: PromptState.open || call.busy
 
     anchors { top: true; bottom: true; left: true; right: true }
     color: "transparent"
@@ -25,9 +27,8 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "netrunner-prompt"
     WlrLayershell.keyboardFocus: PromptState.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
-
-    property real shown: PromptState.open ? 1 : 0
-    Behavior on shown { NumberAnimation { duration: Theme.normal; easing.type: Theme.easing } }
+    mask: PromptState.open ? null : noInput
+    Region { id: noInput }
 
     readonly property var req: PromptState.request
     readonly property bool choosing: !req.input && (req.options ?? []).length > 0
@@ -44,12 +45,29 @@ PanelWindow {
     }
     onQueryChanged: sel = 0
 
+    // who's calling: the script that asked, with a face to match
+    readonly property string from: (req.from ?? "").trim()
+    function avatarFor(name) {
+        if (/key/i.test(name)) return "preferences-desktop-keyboard-shortcuts";
+        if (/web|url|brow/i.test(name)) return "applications-internet";
+        if (/theme|setup|wall/i.test(name)) return "preferences-desktop-theme";
+        return "dialog-question";
+    }
+
+    // the call ends first: answering closes PromptState, which would otherwise read as a drop
     function submit() {
+        if (!PromptState.open) return;
+        call.hangUp();
         if (choosing && filtered.length > 0) {
             const o = filtered[Math.min(sel, filtered.length - 1)];
             PromptState.answer(req.index ? String(o.i) : o.text);
         } else if (req.index) PromptState.answer("");
         else PromptState.answer(query);
+    }
+    function cancel() {
+        if (!PromptState.open) return;
+        call.drop();
+        PromptState.cancel();
     }
     function step(d) {
         const n = filtered.length;
@@ -58,105 +76,125 @@ PanelWindow {
 
     Connections {
         target: PromptState
-        function onDirChanged() { if (PromptState.open) { root.query = ""; root.sel = 0; field.focusField(); title.replay(); } }
+        function onDirChanged() {
+            if (PromptState.open) {
+                root.query = "";
+                root.sel = 0;
+                root.pointer = Qt.point(-1, -1);
+                field.focusField();
+                call.call();
+            } else call.drop();      // cancelled from outside (qs ipc call prompt cancel)
+        }
     }
 
-    Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.bgDark, 0.6 * root.shown) }
-    MouseArea { anchors.fill: parent; onClicked: PromptState.cancel() }
+    Rectangle { anchors.fill: parent; color: Theme.alpha(Theme.bgDark, 0.6 * call.presence) }
+    MouseArea { anchors.fill: parent; onClicked: root.cancel() }
+    MouseArea { x: call.x; y: call.y; width: call.width; height: call.height }     // clicks on the call stay there
 
-    Item {
-        id: box
-        width: Math.min(760, root.width - 64)
-        height: 132 + (root.choosing ? Math.max(30, Math.min(list.contentHeight, 44 * 9)) + 12 : 0)
+    Holocall {
+        id: call
+        width: Math.min(900, root.width - 64)
+        height: implicitHeight
         anchors.horizontalCenter: parent.horizontalCenter
-        y: Math.round(root.height * 0.22)
-        opacity: root.shown
-        transform: Translate { y: (1 - root.shown) * -16 }
-        MouseArea { anchors.fill: parent }
+        y: Math.round(root.height * 0.2)
+        caller: (root.from || "unknown caller").toUpperCase()
+        avatar: root.avatarFor(root.from)
+        line: root.req.placeholder || "Enter a value."
+        tint: Theme.cyan
+        tag: "INPUT REQUIRED"
+        jp: "入力"
+        hints: root.choosing ? "↑↓ CHOOSE   //   ENTER ANSWER   //   ESC HANG UP" : "ENTER ANSWER   //   ESC HANG UP"
 
-        Chamfer { anchors.fill: parent; cut: 18; corners: "tr bl"; fill: Theme.alpha(Theme.bgDark, 0.95); stroke: Theme.alpha(Theme.yellow, 0.7) }
-        Hazard { x: parent.width - 120; y: parent.height - 6; width: 90; height: 6 }
-
-        Row {
-            x: 18; y: 16
+        Column {
+            width: parent.width
             spacing: 10
-            Tag { anchors.verticalCenter: parent.verticalCenter; text: "INPUT REQUIRED"; height: 22; color: Theme.yellow }
-            Jp { anchors.verticalCenter: parent.verticalCenter; text: "入力" }
-        }
-        Scramble {
-            id: title
-            x: 18; y: 50
-            width: parent.width - 36
-            elide: Text.ElideRight
-            target: (root.req.placeholder || "enter value").toUpperCase()
-            color: Theme.bright
-            font.family: Theme.condensed; font.pixelSize: 22; font.weight: Font.DemiBold; font.letterSpacing: 1
-        }
-        Field {
-            id: field
-            x: 18; y: 84
-            width: parent.width - 36
-            height: 36
-            text: root.query
-            placeholder: root.choosing ? "type to filter  //  ↑↓ choose  //  enter answers  //  esc cancels" : "type  //  enter answers  //  esc cancels"
-            onEdited: root.query = text
-            onAccepted: root.submit()
-            input.font.pixelSize: 16
-            input.Keys.onPressed: e => {
-                if (e.key === Qt.Key_Escape) { PromptState.cancel(); e.accepted = true; }
-                else if (e.key === Qt.Key_Down || e.key === Qt.Key_Tab) { root.step(1); e.accepted = true; }
-                else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab) { root.step(-1); e.accepted = true; }
-            }
-        }
-        ListView {
-            id: list
-            visible: root.choosing
-            x: 18; y: 132
-            width: parent.width - 36
-            height: Math.min(contentHeight, 44 * 9)
-            clip: true
-            spacing: 4
-            boundsBehavior: Flickable.StopAtBounds
-            model: root.choosing ? root.filtered : []
-            currentIndex: root.sel
-            delegate: Item {
-                id: row
-                required property var modelData
-                required property int index
-                readonly property bool sel: index === root.sel
-                width: list.width
-                height: 40
-                Chamfer {
-                    anchors.fill: parent
-                    cut: 8; corners: "tr bl"
-                    fill: row.sel ? Theme.alpha(Theme.yellow, 0.16) : Theme.alpha(Theme.bg, 0.6)
-                    stroke: row.sel ? Theme.yellow : Theme.alpha(Theme.line, 0.9)
-                }
-                Text {
-                    x: 12; anchors.verticalCenter: parent.verticalCenter
-                    text: "0x" + row.modelData.i.toString(16).toUpperCase().padStart(2, "0")
-                    color: row.sel ? Theme.yellow : Theme.dim
-                    font.family: Theme.mono; font.pixelSize: Theme.label
-                }
-                Text {
-                    x: 60; width: parent.width - 72
-                    anchors.verticalCenter: parent.verticalCenter
-                    elide: Text.ElideRight
-                    text: row.modelData.text
-                    color: row.sel ? Theme.bright : Theme.fg
-                    font.family: Theme.sans; font.pixelSize: Theme.data + 1
-                }
-                MouseArea {
-                    anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                    onPositionChanged: m => { const p = mapToGlobal(m.x, m.y); if (p.x !== root.pointer.x || p.y !== root.pointer.y) { root.pointer = p; root.sel = row.index; } }
-                    onClicked: { root.sel = row.index; root.submit(); }
+
+            Field {
+                id: field
+                width: parent.width
+                height: 38
+                opacity: call.appear(0)
+                text: root.query
+                accent: Theme.cyan
+                placeholder: root.choosing ? "type to filter" : "reply"
+                onEdited: root.query = text
+                onAccepted: root.submit()
+                input.font.pixelSize: 16
+                input.Keys.onPressed: e => {
+                    if (e.key === Qt.Key_Escape) { root.cancel(); e.accepted = true; }
+                    else if (e.key === Qt.Key_Down || e.key === Qt.Key_Tab) { root.step(1); e.accepted = true; }
+                    else if (e.key === Qt.Key_Up || e.key === Qt.Key_Backtab) { root.step(-1); e.accepted = true; }
                 }
             }
-        }
-        Label {
-            visible: root.choosing && root.filtered.length === 0
-            x: 18; y: 140
-            text: root.req.index ? "NO MATCH" : "NO MATCH  //  ENTER ANSWERS WITH WHAT YOU TYPED"
+
+            // the dialogue choices
+            ListView {
+                id: list
+                visible: root.choosing
+                width: parent.width
+                height: Math.min(contentHeight, 42 * 8)
+                clip: true
+                spacing: 2
+                boundsBehavior: Flickable.StopAtBounds
+                model: root.choosing ? root.filtered : []
+                currentIndex: root.sel
+                highlightMoveDuration: Theme.fast
+                delegate: Item {
+                    id: row
+                    required property var modelData
+                    required property int index
+                    readonly property bool sel: index === root.sel
+                    readonly property real arrived: call.appear(index + 1)
+                    width: list.width
+                    height: 40
+                    opacity: arrived
+                    Rectangle {
+                        x: (1 - row.arrived) * 22
+                        width: parent.width - x
+                        height: parent.height
+                        color: row.sel ? Theme.alpha(Theme.yellow, 0.2) : "transparent"
+                        Rectangle { visible: row.sel; width: 3; height: parent.height; color: Theme.yellow }
+                        Text {
+                            x: 14
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: String(row.modelData.i + 1).padStart(2, "0")
+                            color: row.sel ? Theme.yellow : Theme.alpha(Theme.yellow, 0.45)
+                            font.family: Theme.mono; font.pixelSize: Theme.label
+                        }
+                        Text {
+                            x: 46
+                            width: parent.width - x - 64
+                            anchors.verticalCenter: parent.verticalCenter
+                            elide: Text.ElideRight
+                            text: row.modelData.text
+                            color: row.sel ? Theme.bright : Theme.alpha(Theme.yellow, 0.85)
+                            font.family: Theme.condensed; font.pixelSize: 19; font.weight: Font.DemiBold
+                        }
+                        Rectangle {
+                            visible: row.sel
+                            anchors.right: parent.right; anchors.rightMargin: 10
+                            anchors.verticalCenter: parent.verticalCenter
+                            width: 34; height: 22
+                            color: "transparent"
+                            border.width: 1; border.color: Theme.yellow
+                            Text { anchors.centerIn: parent; text: "↵"; color: Theme.yellow; font.family: Theme.mono; font.pixelSize: 13; font.weight: Font.Bold }
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                        onPositionChanged: m => {         // only a pointer that really moves picks (not one that sat there as the call opened)
+                            const p = mapToGlobal(m.x, m.y);
+                            if (root.pointer.x < 0) root.pointer = p;
+                            else if (p.x !== root.pointer.x || p.y !== root.pointer.y) { root.pointer = p; root.sel = row.index; }
+                        }
+                        onClicked: { root.sel = row.index; root.submit(); }
+                    }
+                }
+            }
+            Label {
+                visible: root.choosing && root.filtered.length === 0
+                text: root.req.index ? "NO MATCH" : "NO MATCH  //  ENTER ANSWERS WITH WHAT YOU TYPED"
+            }
         }
     }
 }

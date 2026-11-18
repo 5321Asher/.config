@@ -768,14 +768,65 @@ def cmd_rows(what):
 def cmd_lock(boot=False):
     cmd = load_setup(SETUP).get("lock", "pidof hyprlock || hyprlock")
     if boot and "qs ipc" in cmd:
-        # At login Quickshell is still starting: wait (up to 20 s) for its lock IPC so the boot lock is
-        # the setup's own screen, not the hyprlock fallback.
-        for _ in range(80):
-            r = subprocess.run(["qs", "ipc", "show"], capture_output=True, text=True)
-            if r.returncode == 0 and "target lock" in r.stdout.splitlines():
-                break
-            time.sleep(0.25)
+        boot_lock(cmd)
+        return
     os.execvp("sh", ["sh", "-c", cmd])
+
+
+def qs_ipc(*args):
+    # THEME_QS_IPC="-p /path/to/shell.qml" points this at a test shell (theme/bench) instead of the live one
+    extra = os.environ.get("THEME_QS_IPC", "").split()
+    return subprocess.run(["qs", "ipc", *extra, *args], capture_output=True, text=True)
+
+
+def lock_can_take_over():
+    """Whether the shell's `lock` IPC target has takeover() (lock at once, claiming a dead lock)."""
+    lines = qs_ipc("show").stdout.splitlines()
+    if "target lock" not in lines:
+        return False
+    for line in lines[lines.index("target lock") + 1:]:
+        if not line.startswith(" "):
+            return False
+        if line.strip().startswith("function takeover("):
+            return True
+    return False
+
+
+def boot_lock(cmd):
+    """The login lock without a gap. tty1 logs in by itself, so until a lock is up the desktop is
+    open to whoever sits down; Quickshell can take seconds to start (longer on the laptop's USB 2
+    disk). So hyprlock locks at once (no grace: any key would unlock it), and once the setup's own
+    lock answers, hyprlock is killed and Quickshell takes the lock over. Killing a locker leaves the
+    session locked (Hyprland's "lockscreen died"), and misc.allow_session_lock_restore lets the new
+    one claim it: the desktop is never shown. Unlocked in hyprlock first? Then that's that. Quickshell
+    never answers? hyprlock stays."""
+    bridge = None
+    if shutil.which("hyprlock"):
+        bridge = subprocess.Popen(["hyprlock", "--grace", "0", "--immediate-render", "--no-fade-in"],
+                                  stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    for _ in range(120):                       # up to 30 s for the shell's lock IPC
+        if bridge and bridge.poll() is not None:
+            return                             # unlocked in hyprlock already
+        r = qs_ipc("show")
+        if r.returncode == 0 and "target lock" in r.stdout.splitlines():
+            break
+        time.sleep(0.25)
+    else:
+        if bridge is None:
+            os.execvp("sh", ["sh", "-c", cmd])
+        return                                 # the shell never came: hyprlock stays the lock
+    if bridge is None:
+        os.execvp("sh", ["sh", "-c", cmd])
+    if bridge.poll() is not None:
+        return
+    if not lock_can_take_over():
+        return                                 # this setup's lock can't take a lock over: hyprlock stays
+    bridge.kill()                              # SIGKILL: no unlock, the lock just loses its client
+    bridge.wait()
+    if qs_ipc("call", "lock", "takeover").returncode != 0:
+        # the shell went away between the check and now: put hyprlock back on the dead lock
+        subprocess.Popen(["hyprlock", "--grace", "0", "--immediate-render", "--no-fade-in"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
 
 def main():

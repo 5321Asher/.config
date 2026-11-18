@@ -5,12 +5,17 @@ import Quickshell.Wayland
 import "../theme"
 import "../services"
 
-// The messages, top right of the focused screen under the bar, newest on top. Only mapped while
-// one is showing.
+// The messages (notifications/Message.qml), top right of the focused screen under the bar, newest on
+// top. Only mapped while one is showing; follows the focused screen only while hidden (moving a shown
+// window rebuilds its surface).
 PanelWindow {
     id: root
 
-    screen: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+    Binding on screen {
+        when: !root.visible
+        value: Quickshell.screens.find(s => s.name === Hyprland.focusedMonitor?.name) ?? Quickshell.screens[0]
+        restoreMode: Binding.RestoreNone
+    }
     visible: Notifs.model.count > 0
 
     anchors { top: true; right: true }
@@ -28,7 +33,7 @@ PanelWindow {
     Column {
         id: stack
         x: 36
-        spacing: 2
+        spacing: 4
         move: Transition { NumberAnimation { properties: "y"; duration: Theme.normal; easing.type: Theme.easing } }
         Repeater {
             model: Notifs.model

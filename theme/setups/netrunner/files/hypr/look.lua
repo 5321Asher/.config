@@ -72,10 +72,11 @@ hl.animation({ leaf = "layers", enabled = true, speed = 1.5, bezier = "snap" })
 hl.animation({ leaf = "zoomFactor", enabled = true, speed = 2, bezier = "snap" })
 
 -- Netrunner's panels (namespace netrunner-*) are translucent: blur what's behind them, and let
--- Quickshell do their motion. The frames layer is all lines: no blur there.
+-- Quickshell do their motion. The frames layer is all lines: no blur there; FAST TRAVEL (exec) and
+-- the RIPPERDOC rig cover the screen with their own 3D scene, so blurring under them is wasted work.
 hl.layer_rule({
   name         = "netrunner-blur",
-  match        = { namespace = "^netrunner-(bar|deck|rig|exec|messages|menu|polkit|voice|overview)$" },
+  match        = { namespace = "^netrunner-(bar|deck|messages|menu|polkit|voice|overview)$" },
   blur         = true,
   ignore_alpha = 0.3,
 })
