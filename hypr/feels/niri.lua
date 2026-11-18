@@ -35,7 +35,7 @@ hl.config({
   },
   scrolling = {
     column_width             = 0.5,                    -- niri: default-column-width proportion 0.5
-    explicit_column_widths   = "0.33333, 0.5, 0.66667", -- niri: preset-column-widths (SUPER + R)
+    explicit_column_widths   = "0.33333, 0.5, 0.66667, 1.0", -- niri presets + full width (SUPER + R)
     focus_fit_method         = 1,                      -- scroll just enough (center-focused-column "never")
     follow_focus             = true,
     fullscreen_on_one_column = false,                  -- a lone window is still half the screen
@@ -324,9 +324,8 @@ NIRI = {
 ------------------------------------------------------------------------------------------------
 -- niri-only keys (chosen by the user, 2026-11-09). Free in binds.lua; in Disguise, SUPER + R (Run)
 -- gives way to the width presets while this feel is on.
-rebind("SUPER + R", msg("colresize +conf"))             -- column width: next preset (⅓ · ½ · ⅔)
+rebind("SUPER + R", msg("colresize +conf"))             -- column width: next preset (⅓ · ½ · ⅔ · full)
 rebind("SUPER + ALT + R", msg("colresize -conf"))       -- column width: previous preset
-rebind("SUPER + CTRL + F", msg("fit expand"))           -- column fills the free space
 rebind("SUPER + ALT + C", msg("center"))                -- center the column
 rebind("SUPER + bracketleft", msg("consume_or_expel prev"))  -- window into the column left (or out)
 rebind("SUPER + bracketright", msg("consume_or_expel next")) -- window into the column right (or out)
