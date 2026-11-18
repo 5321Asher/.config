@@ -6,6 +6,7 @@
 !/brave-flags.conf
 !/brave-origin-flags.conf
 !/chromium-flags.conf
+!/electron-flags.conf
 !/theme/
 !/quickshell/
 !/walker/
